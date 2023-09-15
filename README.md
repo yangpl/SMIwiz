@@ -33,9 +33,34 @@ Code structure:
 * run_rtm: Example for 2D RTM
 
 * run_fbrec3d: Example for reproducing 3D wavefield reconstruction via deimation and interpolation
+
   Note that you must first generate acquisition file acqui.txt in run_fbrec3d/survey by running: 
   gfortran generate_acqui.f90; ./a.out. 
-  Please copy it to /run_fbrec3d before numerical test.
+  Please copy it to /run_fbrec3d before numerical test. (This is because acqui.txt for this test is too large (400 shots * 10000 receivers) to be uploaded)
 
 Instructions to run
 ===================
+
+1. go to /src and compile:
+
+cd /src;
+
+make
+	
+2. go to running template and test:
+
+cd ../run_fwi2d
+
+bash run.sh
+
+To do FWI/RTM, you first need to generate observed data from true models using mode=0.
+
+Then, you start FWI in mode=1 with initial models.
+
+
+To run RTM, you need:
+
+cd ../run_rtm
+
+bash run.sh
+	
