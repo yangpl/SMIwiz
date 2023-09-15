@@ -1,0 +1,17 @@
+import matplotlib.pyplot as plt
+import numpy as np
+
+#-----------------------------------------------
+it, rmse1 = np.loadtxt('out_iter1.txt', skiprows=0, unpack=True)
+it, rmse2 = np.loadtxt('out_iter30.txt', skiprows=0, unpack=True)
+
+
+plt.stem(it, rmse1, 'k', label='iteration-1')
+plt.stem(it, rmse2, 'b', label='iteration-30')
+plt.legend()
+plt.xlabel('# receiver')
+plt.ylabel('$\|W(d-Ru)\|$')
+
+plt.savefig('rmse.png', bbox_inches='tight')
+plt.show()
+

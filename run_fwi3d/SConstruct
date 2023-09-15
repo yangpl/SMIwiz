@@ -1,0 +1,148 @@
+from rsf.proj import *
+
+####################################################################
+n1=61
+n2=201
+n3=201
+h1=0.05
+h2=0.05
+h3=0.05
+
+Flow('vp',None,
+	'''
+	echo in=vp n1=%d n2=%d n3=%d data_format=binary_float |
+	sfdd form=native | 
+	sfput d1=%g d2=%g d3=%g o1=0 o2=0 o3=0
+	label1=Z label2=X label3=Y unit1=km unit2=km unit3=km
+	'''%(n1,n2,n3,h1,h2,h3))
+Flow('vpinit',None,
+	'''
+	echo in=vp_init n1=%d n2=%d n3=%d data_format=binary_float |
+	sfdd form=native | 
+	sfput d1=%g d2=%g d3=%g o1=0 o2=0 o3=0
+	label1=Z label2=X label3=Y unit1=km unit2=km unit3=km
+	'''%(n1,n2,n3,h1,h2,h3))
+
+iz=25
+ix=n2/2
+iy=n3/2
+
+Plot('vp',
+       '''
+       byte allpos=y gainpanel=all scalebar=y bar=bar.rsf|
+       grey3 flat=y frame1=%d frame2=%d frame3=%d bar=bar.rsf scalebar=y color=j mean=y title="(a)" point1=0.3 point2=0.4
+       '''%(iz,ix,iy))
+Plot('vpinit',
+       '''
+       byte allpos=y gainpanel=all scalebar=y bar=bar.rsf|
+       grey3 flat=y frame1=%d frame2=%d frame3=%d bar=bar.rsf scalebar=y color=j mean=y title="(b)" point1=0.3 point2=0.4
+       '''%(iz,ix,iy))
+Result('model', 'vp vpinit ', 'SideBySideIso')
+
+Flow('vpinv1',None,
+	'''
+	echo in=param_final1 n1=%d n2=%d n3=%d data_format=binary_float |
+	sfdd form=native | 
+	sfput d1=%g d2=%g d3=%g o1=0 o2=0 o3=0
+	label1=Z label2=X label3=Y unit1=km unit2=km unit3=km
+	'''%(n1,n2,n3,h1,h2,h3))
+Flow('vpinv2',None,
+	'''
+	echo in=param_final2 n1=%d n2=%d n3=%d data_format=binary_float |
+	sfdd form=native | 
+	sfput d1=%g d2=%g d3=%g o1=0 o2=0 o3=0
+	label1=Z label2=X label3=Y unit1=km unit2=km unit3=km
+	'''%(n1,n2,n3,h1,h2,h3))
+
+Flow('vpinv3',None,
+	'''
+	echo in=param_final3 n1=%d n2=%d n3=%d data_format=binary_float |
+	sfdd form=native | 
+	sfput d1=%g d2=%g d3=%g o1=0 o2=0 o3=0
+	label1=Z label2=X label3=Y unit1=km unit2=km unit3=km
+	'''%(n1,n2,n3,h1,h2,h3))
+Flow('vpinv4',None,
+	'''
+	echo in=param_final4 n1=%d n2=%d n3=%d data_format=binary_float |
+	sfdd form=native | 
+	sfput d1=%g d2=%g d3=%g o1=0 o2=0 o3=0
+	label1=Z label2=X label3=Y unit1=km unit2=km unit3=km
+	'''%(n1,n2,n3,h1,h2,h3))
+Flow('vpinv5',None,
+	'''
+	echo in=param_final5 n1=%d n2=%d n3=%d data_format=binary_float |
+	sfdd form=native | 
+	sfput d1=%g d2=%g d3=%g o1=0 o2=0 o3=0
+	label1=Z label2=X label3=Y unit1=km unit2=km unit3=km
+	'''%(n1,n2,n3,h1,h2,h3))
+
+Flow('vpinv6',None,
+	'''
+	echo in=param_final6 n1=%d n2=%d n3=%d data_format=binary_float |
+	sfdd form=native | 
+	sfput d1=%g d2=%g d3=%g o1=0 o2=0 o3=0
+	label1=Z label2=X label3=Y unit1=km unit2=km unit3=km
+	'''%(n1,n2,n3,h1,h2,h3))
+Flow('vpinv7',None,
+	'''
+	echo in=param_final7 n1=%d n2=%d n3=%d data_format=binary_float |
+	sfdd form=native | 
+	sfput d1=%g d2=%g d3=%g o1=0 o2=0 o3=0
+	label1=Z label2=X label3=Y unit1=km unit2=km unit3=km
+	'''%(n1,n2,n3,h1,h2,h3))
+
+Flow('vpinv8',None,
+	'''
+	echo in=param_final8 n1=%d n2=%d n3=%d data_format=binary_float |
+	sfdd form=native | 
+	sfput d1=%g d2=%g d3=%g o1=0 o2=0 o3=0
+	label1=Z label2=X label3=Y unit1=km unit2=km unit3=km
+	'''%(n1,n2,n3,h1,h2,h3))
+
+
+
+Plot('vpinv1',
+       '''
+       byte allpos=y gainpanel=all scalebar=y bar=bar.rsf|
+       grey3 flat=y frame1=%d frame2=%d frame3=%d bar=bar.rsf scalebar=y color=j mean=y title="(b)" point1=0.3 point2=0.4
+       '''%(iz,ix,iy))
+Plot('vpinv2',
+       '''
+       byte allpos=y gainpanel=all scalebar=y bar=bar.rsf|
+       grey3 flat=y frame1=%d frame2=%d frame3=%d bar=bar.rsf scalebar=y color=j mean=y title="(b)" point1=0.3 point2=0.4
+       '''%(iz,ix,iy))
+
+Plot('vpinv3',
+       '''
+       byte allpos=y gainpanel=all scalebar=y bar=bar.rsf|
+       grey3 flat=y frame1=%d frame2=%d frame3=%d bar=bar.rsf scalebar=y color=j mean=y title="(b)" point1=0.3 point2=0.4
+       '''%(iz,ix,iy))
+Plot('vpinv4',
+       '''
+       byte allpos=y gainpanel=all scalebar=y bar=bar.rsf|
+       grey3 flat=y frame1=%d frame2=%d frame3=%d bar=bar.rsf scalebar=y color=j mean=y title="(b)" point1=0.3 point2=0.4
+       '''%(iz,ix,iy))
+Plot('vpinv5',
+       '''
+       byte allpos=y gainpanel=all scalebar=y bar=bar.rsf|
+       grey3 flat=y frame1=%d frame2=%d frame3=%d bar=bar.rsf scalebar=y color=j mean=y title="(b)" point1=0.3 point2=0.4
+       '''%(iz,ix,iy))
+Plot('vpinv6',
+       '''
+       byte allpos=y gainpanel=all scalebar=y bar=bar.rsf|
+       grey3 flat=y frame1=%d frame2=%d frame3=%d bar=bar.rsf scalebar=y color=j mean=y title="(b)" point1=0.3 point2=0.4
+       '''%(iz,ix,iy))
+Plot('vpinv7',
+       '''
+       byte allpos=y gainpanel=all scalebar=y bar=bar.rsf|
+       grey3 flat=y frame1=%d frame2=%d frame3=%d bar=bar.rsf scalebar=y color=j mean=y title="(b)" point1=0.3 point2=0.4
+       '''%(iz,ix,iy))
+Plot('vpinv8',
+       '''
+       byte allpos=y gainpanel=all scalebar=y bar=bar.rsf|
+       grey3 flat=y frame1=%d frame2=%d frame3=%d bar=bar.rsf scalebar=y color=j mean=y title="(b)" point1=0.3 point2=0.4
+       '''%(iz,ix,iy))
+
+Result('final', 'vpinv1 vpinv2 vpinv3 vpinv4 vpinv5 vpinv6 vpinv7 vpinv8', 'TwoRows')
+
+End()
