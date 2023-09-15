@@ -53,14 +53,15 @@ cd ../run_fwi2d
 
 bash run.sh
 
-To do FWI/RTM, you first need to generate observed data from true models using mode=0.
-
-Then, you start FWI in mode=1 with initial models.
-
-
 To run RTM, you need:
 
 cd ../run_rtm
+
+To do FWI/RTM, you first need to generate observed data from true models using mode=0.
+
+Then, you start FWI in mode=1 with initial models (or RTM in mode=2).
+
+
 
 bash run.sh
 	
