@@ -11,7 +11,7 @@ Operating System: Linux
 
 Software dependencies: MPI, FFTW
 
-Solution method: High-order finite-dfference time-domain (FDTD) on staggered non-uniform grid
+Solution method: High-order finite-dfference time-domain (FDTD) on staggered grid
 
 Governing equation: 1st order acoustic wave equation
 
