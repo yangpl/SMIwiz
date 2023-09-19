@@ -1,5 +1,5 @@
 # SMIwiz
-Seismic modelling and imaging wiz
+Seismic Modelling and Imaging wiz: An integrated toolbox
 
 Author: Pengliang Yang, Harbin Institute of Technology, China
 
@@ -18,7 +18,7 @@ Governing equation: 1st order acoustic wave equation
 Code structure:
 ===============
 
-* src: the source code in .c and .cu/.cuh.
+* src: the source code in .c 
 
 * include: the header files in .h
 
@@ -26,7 +26,7 @@ Code structure:
 
 * bin: the folderto store executable after compilation
 
-* run_fwi2d: a quick FWI example in layered medium, special acquisition geometry allows you to do FWI using only 1 shot, completing 50 iterations within 2 min.
+* run_fwi2d: a quick FWI example in layered medium, special acquisition geometry allows you to do FWI using only 1 shot, completing 50 iterations within 2 min on your laptop.
 
 * run_marmousi: Example for 2D FWI on Marmousi model
 
@@ -57,11 +57,11 @@ To run RTM, you need:
 
 cd ../run_rtm
 
+bash run.sh
+
+
 To do FWI/RTM, you first need to generate observed data from true models using mode=0.
 
 Then, you start FWI in mode=1 with initial models (or RTM in mode=2).
 
-
-
-bash run.sh
 	
