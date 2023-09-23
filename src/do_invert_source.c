@@ -1,4 +1,5 @@
-/*
+/*  Source wavelet estimation according to Pratt 1999 Geophysics paper
+ *
  *  Copyright (c) Pengliang Yang, 2020, Harbin Institute of Technology, China
  *  Copyright (c) Pengliang Yang, 2018, University Grenoble Alpes, France
  *  Homepage: https://yangpl.wordpress.com
