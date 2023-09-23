@@ -1,4 +1,4 @@
-/* 2D/3D seismic modelling, RTM and FWI code
+/* Set up convolutional PML coefficients
  *-----------------------------------------------------------------------
  *
  * Copyright (c) 2021 Harbin Institute of Technology. All rights reserved.
