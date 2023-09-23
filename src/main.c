@@ -23,7 +23,6 @@ void do_fwi(sim_t *sim, acq_t *acq);
 void do_rtm(sim_t *sim, acq_t *acq);
 void do_lsrtm(sim_t *sim, acq_t *acq);
 void do_invert_source(sim_t *sim, acq_t *acq);
-void do_modelling_ps(sim_t *sim, acq_t *acq);
 
 
 int main(int argc, char* argv[])
@@ -58,7 +57,6 @@ int main(int argc, char* argv[])
     else if(sim->mode==3) printf(" LSRTM (Linearized waveform inversion) \n");
     else if(sim->mode==4) printf(" FWI gradient building \n");
     else if(sim->mode==5) printf(" Source inversion \n");
-    else if(sim->mode==6) printf(" Modelling by PS decomposition\n");
     printf("=====================================================\n");
   }
   if(!getparfloat("fm",&sim->fm)) sim->fm = 50;//maximum frequency in modelling/inversion
@@ -154,7 +152,6 @@ int main(int argc, char* argv[])
   else if(sim->mode==3) do_lsrtm(sim, acq);
   else if(sim->mode==4) do_fwi(sim, acq); 
   else if(sim->mode==5) do_invert_source(sim, acq);
-  else if(sim->mode==6) do_modelling_ps(sim, acq);
   //===========================================================
 
   ierr = MPI_Barrier(MPI_COMM_WORLD);
