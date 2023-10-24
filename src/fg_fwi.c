@@ -322,9 +322,9 @@ float fg_fwi(float *x, float *g)
 	for(i1=0; i1<sim->n1; i1++){
 	  i1_ = i1+sim->nb;
 	  g1[i3][i2][i1] += sim->p2[i3_][i2_][i1_]*sim->divv[i3_][i2_][i1_];
-	  g2[i3][i2][i1] += sim->vz2[i3_][i2_][i1_]*sim->dvzdt[i3_][i2_][i1_] + sim->vz2[i3_][i2_][i1_-1]*sim->dvzdt[i3_][i2_][i1_-1];
-	  g2[i3][i2][i1] += sim->vx2[i3_][i2_][i1_]*sim->dvxdt[i3_][i2_][i1_] + sim->vx2[i3_][i2_-1][i1_]*sim->dvxdt[i3_][i2_-1][i1_];
-	  if(sim->n3>1) g2[i3][i2][i1] += sim->vz2[i3_][i2_][i1_]*sim->dvzdt[i3_][i2_][i1_] + sim->vz2[i3_-1][i2_][i1_]*sim->dvzdt[i3_-1][i2_][i1_];
+	  g2[i3][i2][i1] += (sim->vz2[i3_][i2_][i1_] + sim->vz2[i3_][i2_][i1_-1])*(sim->dvzdt[i3_][i2_][i1_] + sim->dvzdt[i3_][i2_][i1_-1]);
+	  g2[i3][i2][i1] += (sim->vx2[i3_][i2_][i1_] + sim->vx2[i3_][i2_-1][i1_])*(sim->dvxdt[i3_][i2_][i1_] + sim->dvxdt[i3_][i2_-1][i1_]);
+	  if(sim->n3>1) g2[i3][i2][i1] += (sim->vz2[i3_][i2_][i1_] + sim->vz2[i3_-1][i2_][i1_])*(sim->dvzdt[i3_][i2_][i1_] + sim->dvzdt[i3_-1][i2_][i1_]);
 	}
       }
     }
@@ -336,9 +336,9 @@ float fg_fwi(float *x, float *g)
 	  for(i1=0; i1<sim->n1; i1++){
 	    i1_ = i1+sim->nb;
 	    h1[i3][i2][i1] += sim->divv[i3_][i2_][i1_]*sim->divv[i3_][i2_][i1_];
-	    h2[i3][i2][i1] += sim->dvzdt[i3_][i2_][i1_]*sim->dvzdt[i3_][i2_][i1_] + sim->dvzdt[i3_][i2_][i1_-1]*sim->dvzdt[i3_][i2_][i1_-1];
-	    h2[i3][i2][i1] += sim->dvxdt[i3_][i2_][i1_]*sim->dvxdt[i3_][i2_][i1_] + sim->dvxdt[i3_][i2_-1][i1_]*sim->dvxdt[i3_][i2_-1][i1_];
-	    if(sim->n3>1) h2[i3][i2][i1] += sim->dvzdt[i3_][i2_][i1_]*sim->dvzdt[i3_][i2_][i1_] + sim->dvzdt[i3_-1][i2_][i1_]*sim->dvzdt[i3_-1][i2_][i1_];
+	    h2[i3][i2][i1] += (sim->dvzdt[i3_][i2_][i1_] + sim->dvzdt[i3_][i2_][i1_-1])*(sim->dvzdt[i3_][i2_][i1_] + sim->dvzdt[i3_][i2_][i1_-1]);
+	    h2[i3][i2][i1] += (sim->dvxdt[i3_][i2_][i1_] + sim->dvxdt[i3_][i2_-1][i1_])*(sim->dvxdt[i3_][i2_][i1_] + sim->dvxdt[i3_][i2_-1][i1_]);
+	    if(sim->n3>1) h2[i3][i2][i1] += (sim->dvzdt[i3_][i2_][i1_] + sim->dvzdt[i3_-1][i2_][i1_])*(sim->dvzdt[i3_][i2_][i1_] + sim->dvzdt[i3_-1][i2_][i1_]);
 	  }
 	}
       }
@@ -358,7 +358,7 @@ float fg_fwi(float *x, float *g)
       for(i1=0; i1<sim->n1; i1++){
 	tmp = sim->volume*sim->dt;
 	g1[i3][i2][i1] *= tmp;//dJ/dln(kappa)
-	g2[i3][i2][i1] *= sim->rho[i3][i2][i1]*0.5*tmp;//dJ/dln(rho)
+	g2[i3][i2][i1] *= sim->rho[i3][i2][i1]*0.25*tmp;//dJ/dln(rho)
 	if(i1<= fwi->ibathy[i3][i2]){//reset again to avoid leakage
 	  g1[i3][i2][i1] = 0.;
 	  g2[i3][i2][i1] = 0.;
@@ -395,7 +395,7 @@ float fg_fwi(float *x, float *g)
 	  s1 = sim->rho[i3][i2][i1]*sim->vp[i3][i2][i1]*sim->vp[i3][i2][i1];
 	  s2 = sim->rho[i3][i2][i1];
 	  h1[i3][i2][i1] *= s1*s1*tmp;//H_{ln(kappa),ln(kappa)}
-	  h2[i3][i2][i1] *= s2*s2*0.5*tmp;//H_{ln(rho),ln(rho)}
+	  h2[i3][i2][i1] *= s2*s2*0.25*tmp;//H_{ln(rho),ln(rho)}
 	}
       }
     }

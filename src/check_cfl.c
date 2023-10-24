@@ -31,14 +31,16 @@ void check_cfl(sim_t *sim)
   }
 
   /* CFL = dt*vmax* \sum_i |c_i|/dx, where c_i are finite difference coefficients */
+  if(sim->n3>1)
+    tmp = 1./(sim->d1*sim->d1) + 1./(sim->d2*sim->d2) + 1./(sim->d3*sim->d3);
+  else
+    tmp = 1./(sim->d1*sim->d1) + 1./(sim->d2*sim->d2);
+  sim->cfl = sim->dt*sim->vmax*sqrt(tmp);
   if(sim->order==4) tmp = 1.125 + 0.041666666666666664;
   else tmp = (1.196289062500000 + 0.079752604166667 + 0.009570312500000 + 0.000697544642857);
-  if(sim->n3>1)
-    tmp *= 1./(sim->d1*sim->d1) + 1./(sim->d2*sim->d2) + 1./(sim->d3*sim->d3);
-  else
-    tmp *= 1./(sim->d1*sim->d1) + 1./(sim->d2*sim->d2);
-  sim->cfl = sim->dt*sim->vmax*sqrt(tmp);
+  sim->cfl *= tmp;
 
+  
   freqmax = sim->fm;//estimate maximum frequency=2*fpeak frequency
   lambda_min = sim->vmin/freqmax;//minimum wavelength
   ppw1 = lambda_min/sim->d1;

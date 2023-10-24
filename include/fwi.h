@@ -30,6 +30,7 @@ typedef struct {
   
   int preco;//0=no precondition; 1=depth precondition; 2=pseudo-Hessian precondition
   int objopt;
+  int restart;
 } fwi_t;
 
 #endif
