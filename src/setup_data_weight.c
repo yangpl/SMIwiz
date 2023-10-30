@@ -27,9 +27,12 @@ void setup_data_weight(acq_t *acq, sim_t *sim)
   int nt = sim->nt;
   float dt = sim->dt;
   //data weighting parameters
-  if(!getparfloat("dxwdat",&dxwdat)) err("must give dxwdat= ");
-  if(!(nxwdat = countparval("xwdat"))) err("must give xwdat= vector");
-  xwdat=alloc1float(nxwdat); getparfloat("xwdat",xwdat);
+  if(!getparfloat("dxwdat",&dxwdat)) dxwdat = 100;
+  if(!(nxwdat = countparval("xwdat"))) nxwdat = 6;
+  xwdat = alloc1float(nxwdat);
+  if(!getparfloat("xwdat",xwdat)){
+    for(k=0; k<nxwdat; k++) xwdat[k] = 1.;
+  }
 
   acq->xweight=alloc1float(acq->nrec);
   acq->wdat=alloc2float(nt,acq->nrec);
