@@ -11,7 +11,9 @@ Operating System: Linux
 
 Software dependencies: MPI, FFTW
 
-Solution method: High-order finite-dfference time-domain (FDTD) on staggered grid
+Solution method: High-order finite-dfference time-domain (FDTD) for modelling
+on staggered grid; Quasi-Newton LBFGS algorithm for nonlinear optimization;
+line search to estimate step length based on Wolfe condition
 
 Governing equation: 1st order acoustic wave equation
 
