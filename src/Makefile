@@ -1,10 +1,13 @@
 CC=mpicc # Intel compiler
 CFLAGS= -g -Wall 
 
+#assume your FFTW has been installed and the path is setup as variable $(fftw)
+fftw3_lib = $(fftw)/lib
+fftw3_inc = $(fftw)/include
 
 BIN = ../bin
-LIB =  -lm -fopenmp -lpthread -lfftw3 -lmpi
-INC = -I../include
+LIB = -L$(fftw3_lib) -lfftw3 -lm -fopenmp -lpthread  -lmpi
+INC = -I../include -I$(fftw3_inc)
 SRC = $(wildcard *.c)
 OBJ = $(SRC:.c=.o)
 
