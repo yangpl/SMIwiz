@@ -17,6 +17,10 @@ line search to estimate step length based on Wolfe condition
 
 Governing equation: 1st order acoustic wave equation
 
+Credit:
+
+* Pengliang Yang, SMIwiz: An integrated toolbox for multidimensional seismic modelling and imaging, Computer Physics Communications, 2024, DOI: 10.1016/j.cpc.2023.109011
+
 Code structure:
 ===============
 
