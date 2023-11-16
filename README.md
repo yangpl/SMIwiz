@@ -19,7 +19,7 @@ Governing equation: 1st order acoustic wave equation
 
 Credit:
 
-* Pengliang Yang, SMIwiz: An integrated toolbox for multidimensional seismic modelling and imaging, Computer Physics Communications, 2024, DOI: 10.1016/j.cpc.2023.109011
+* Pengliang Yang, SMIwiz: An integrated toolbox for multidimensional seismic modelling and imaging, Computer Physics Communications 2024, volume 295, 109011 DOI: 10.1016/j.cpc.2023.109011
 
 Code structure:
 ===============
