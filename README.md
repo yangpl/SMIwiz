@@ -21,6 +21,9 @@ Credit:
 
 * Pengliang Yang, SMIwiz: An integrated toolbox for multidimensional seismic modelling and imaging, Computer Physics Communications 2024, volume 295, 109011 DOI: 10.1016/j.cpc.2023.109011
 
+A vedio has been recorded to explain the design of SMIwiz, thanks to the seminar invitation from the editor of Computer Physics Communictions:
+https://cassyni.com/events/P4W1QfiGXffuSf6Rv5VzJZ
+
 Code structure:
 ===============
 
