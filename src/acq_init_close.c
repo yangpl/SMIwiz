@@ -22,7 +22,7 @@ void acq_init(sim_t *sim, acq_t *acq)
   float zs, xs, ys;
   float zz, xx, yy, dip, azimuth,  tmp,  frac;
   float zmin, zmax, xmin, xmax, ymin, ymax;
-  int isreceiver, isrc, irec, iseof, j;
+  int isreceiver, isrc, mysrc, irec, iseof, j;
   FILE *fp;
   
   acq->shot_idx = alloc1int(nproc);
@@ -32,7 +32,7 @@ void acq_init(sim_t *sim, acq_t *acq)
     getparint("shots", acq->shot_idx);/* a list of source index separated by comma */
   }
   if(nsrc==0){
-    for(j=0; j<nproc; j++) acq->shot_idx[j] = j+1;//jndex starts from 1
+    for(j=0; j<nproc; j++) acq->shot_idx[j] = j+1;//index starts from 1
   }
   
   if(!getparint("nrec_max", &nrec_max)) nrec_max = 100000;//maximum dimensions/receivers per shot
@@ -46,27 +46,30 @@ void acq_init(sim_t *sim, acq_t *acq)
   fp = fopen(acquifile,"r");
   if(fp==NULL) err("file %s does not exist!", acquifile); 
   iseof = fscanf(fp, "%*[^\n]\n");//skip a line at the beginning of the file
-  isrc=0;
+  isrc = 0;
   while(1){
     iseof = fscanf(fp,"%f %f %f %f %f %d",&zz,&xx,&yy,&dip,&azimuth,&isreceiver);
-    //printf("%f %f %f %f %f %d %d\n",zz,xx,yy,dip,azimuth,isreceiver, irec);
     if(iseof==EOF)
       break;
     else{
-      if(isreceiver==1){//a receiver line
-	rx1[acq->nrec] = zz;
-	rx2[acq->nrec] = xx;
-	rx3[acq->nrec] = yy;
-	acq->nrec++;
-      }else{// a source line, origin of axes stripped outsh
+      if(isreceiver==0){// a source line, origin of axes stripped outsh
 	isrc++;
-	acq->nrec = 0;//start to count number of receivers from 0
 	if(acq->shot_idx[iproc]==isrc){
 	  zs = zz;
 	  xs = xx;
 	  ys = yy;
+	  acq->nrec = 0;//start to count number of receivers from 0
 	}
+      }else{
+	if(acq->shot_idx[iproc]==isrc){//a receiver line associated with source-isrc
+	  rx1[acq->nrec] = zz;
+	  rx2[acq->nrec] = xx;
+	  rx3[acq->nrec] = yy;
+	  acq->nrec++;
+	}
+	
       }
+      //printf("%f %f %f %f %f %d %d shot=%d isrc=%d\n", zz, xx, yy, dip, azimuth, isreceiver, acq->nrec, acq->shot_idx[iproc], isrc);
     }
   }
   fclose(fp);
