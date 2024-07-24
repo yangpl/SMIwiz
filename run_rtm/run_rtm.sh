@@ -50,4 +50,5 @@ rhomax=3000 //upper bound
 
 " >inputpar.txt
 
+export OMP_NUM_THREADS=1
 mpirun -n 55 ../bin/SMIwiz $(cat inputpar.txt)
