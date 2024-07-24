@@ -70,5 +70,6 @@ repeat=2
 
 " >inputpar.txt
 
+export OMP_NUM_THREADS=1
 mpirun -n 1 ../bin/SMIwiz $(cat inputpar.txt)
 
