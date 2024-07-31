@@ -17,15 +17,13 @@ line search to estimate step length based on Wolfe condition
 
 Governing equation: 1st order acoustic wave equation
 
-Credit:
+## Credit
 
-* Pengliang Yang, SMIwiz: An integrated toolbox for multidimensional seismic modelling and imaging, Computer Physics Communications 2024, volume 295, 109011 DOI: 10.1016/j.cpc.2023.109011
+* Pengliang Yang, SMIwiz: An integrated toolbox for multidimensional seismic modelling and imaging, Computer Physics Communications 2024, volume 295, 109011 [doi:10.1016/j.cpc.2023.109011](https://doi.org/10.1016/j.cpc.2023.109011)
 
-A vedio has been recorded to explain the design of SMIwiz, thanks to the seminar invitation from the editor of Computer Physics Communictions:
-https://cassyni.com/events/P4W1QfiGXffuSf6Rv5VzJZ
+A vedio has been recorded to explain the design of SMIwiz, thanks to the seminar invitation from the editor of Computer Physics Communictions: https://cassyni.com/events/P4W1QfiGXffuSf6Rv5VzJZ
 
-Code structure:
-===============
+## Code structure
 
 * src: the source code in .c 
 
@@ -47,8 +45,7 @@ Code structure:
   gfortran generate_acqui.f90; ./a.out. 
   Please copy it to /run_fbrec3d before numerical test. (This is because acqui.txt for this test is too large (400 shots * 10000 receivers) to be uploaded)
 
-Instructions to run
-===================
+## Instructions to run
 
 1. go to /src and compile:
 
