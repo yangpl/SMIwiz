@@ -1,0 +1,215 @@
+from rsf.proj import *
+
+#dd if=param_final_rtm of=param_final_rtm_vp skip=0 ibs=16322004
+#dd if=param_final_rtm of=param_final_rtm_ip skip=1 ibs=16322004
+#dd if=param_final of=param_final_vp skip=0 ibs=16322004
+#dd if=param_final of=param_final_ip skip=1 ibs=16322004
+
+n1=101
+n2=201
+n3=201
+h1=0.02
+h2=0.025
+h3=0.025
+iz=n1/3
+ix=n2/2
+iy=n3/2
+
+Flow('vp',None,
+	'''
+	echo in=vp_true n1=%d n2=%d n3=%d data_format=binary_float |
+	sfdd form=native | 
+	sfput d1=%g d2=%g d3=%g o1=0 o2=0 o3=0
+	label1=Z label2=X label3=Y unit1=km unit2=km unit3=km
+	'''%(n1,n2,n3,h1,h2,h3))
+Flow('rho',None,
+	'''
+	echo in=rho_true n1=%d n2=%d n3=%d data_format=binary_float |
+	sfdd form=native | 
+	sfput d1=%g d2=%g d3=%g o1=0 o2=0 o3=0
+	label1=Z label2=X label3=Y unit1=km unit2=km unit3=km
+	'''%(n1,n2,n3,h1,h2,h3))
+Flow('vp_init',None,
+	'''
+	echo in=vp_init n1=%d n2=%d n3=%d data_format=binary_float |
+	sfdd form=native | 
+	sfput d1=%g d2=%g d3=%g o1=0 o2=0 o3=0
+	label1=Z label2=X label3=Y unit1=km unit2=km unit3=km
+	'''%(n1,n2,n3,h1,h2,h3))
+Flow('rho_init',None,
+	'''
+	echo in=rho_init n1=%d n2=%d n3=%d data_format=binary_float |
+	sfdd form=native | 
+	sfput d1=%g d2=%g d3=%g o1=0 o2=0 o3=0
+	label1=Z label2=X label3=Y unit1=km unit2=km unit3=km
+	'''%(n1,n2,n3,h1,h2,h3))
+Flow('ip', 'vp rho', '''sfmath tau=rho.rsf output='input*tau' ''')
+Flow('ip_init', 'vp_init rho_init', '''sfmath tau=rho_init.rsf output='input*tau' ''')
+
+
+
+Flow('rvp', 'vp vp_init', ''' sfmath x=vp.rsf y=vp_init.rsf output='(x-y)/y' ''')
+Flow('rrho', 'rho rho_init', ''' sfmath x=vp.rsf y=vp_init.rsf output='(x-y)/y' ''')
+Flow('rip', 'ip ip_init', ''' sfmath x=vp.rsf y=vp_init.rsf output='(x-y)/y' ''')
+
+
+Plot('vp',
+       '''
+       byte allpos=y gainpanel=all scalebar=y bar=bar.rsf|
+       grey3 flat=n frame1=%d frame2=%d frame3=%d mean=n title='(a) Vp' color=j scalebar=y bar=bar.rsf
+       '''%(iz,ix,iy))
+Plot('rho',
+       '''
+       byte allpos=y gainpanel=all scalebar=y bar=bar.rsf|
+       grey3 flat=n frame1=%d frame2=%d frame3=%d mean=n title='(b) rho' color=j scalebar=y bar=bar.rsf
+       '''%(iz,ix,iy))
+Plot('ip',
+       '''
+       byte allpos=y gainpanel=all scalebar=y bar=bar.rsf|
+       grey3 flat=n frame1=%d frame2=%d frame3=%d mean=n title='(c) Ip' color=j scalebar=y bar=bar.rsf
+       '''%(iz,ix,iy))
+       
+Plot('vp_init',
+       '''
+       byte allpos=y gainpanel=all scalebar=y bar=bar.rsf|
+       grey3 flat=n frame1=%d frame2=%d frame3=%d mean=n title='(d) vp_init' color=j scalebar=y bar=bar.rsf
+       '''%(iz,ix,iy))
+Plot('rho_init',
+       '''
+       byte allpos=y gainpanel=all scalebar=y bar=bar.rsf|
+       grey3 flat=n frame1=%d frame2=%d frame3=%d mean=n title='(e) rho_init' color=j scalebar=y bar=bar.rsf
+       '''%(iz,ix,iy))
+Plot('ip_init',
+       '''
+       byte allpos=y gainpanel=all scalebar=y bar=bar.rsf|
+       grey3 flat=n frame1=%d frame2=%d frame3=%d mean=n title='(f) Ip_init' color=j scalebar=y bar=bar.rsf
+       '''%(iz,ix,iy))
+
+
+
+Result("mod", "vp rho ip vp_init rho_init ip_init", "TwoRows")
+
+
+
+#==============================================
+Flow('rtm_vp',None,
+	'''
+	echo in=param_final_rtm_vp n1=%d n2=%d n3=%d data_format=binary_float |
+	sfdd form=native | 
+	sfput d1=%g d2=%g d3=%g o1=0 o2=0 o3=0
+	label1=X label2=Y label3=Z unit1=km unit2=km unit3=km
+	'''%(n1,n2,n3,h1,h2,h3))
+Flow('rtm_ip',None,
+	'''
+	echo in=param_final_rtm_ip n1=%d n2=%d n3=%d data_format=binary_float |
+	sfdd form=native | 
+	sfput d1=%g d2=%g d3=%g o1=0 o2=0 o3=0
+	label1=X label2=Y label3=Z unit1=km unit2=km unit3=km
+	'''%(n1,n2,n3,h1,h2,h3))
+Flow('dln_vp',None,
+	'''
+	echo in=param_final_vp n1=%d n2=%d n3=%d data_format=binary_float |
+	sfdd form=native | 
+	sfput d1=%g d2=%g d3=%g o1=0 o2=0 o3=0
+	label1=X label2=Y label3=Z unit1=km unit2=km unit3=km
+	'''%(n1,n2,n3,h1,h2,h3))
+Flow('dln_ip',None,
+	'''
+	echo in=param_final_ip n1=%d n2=%d n3=%d data_format=binary_float |
+	sfdd form=native | 
+	sfput d1=%g d2=%g d3=%g o1=0 o2=0 o3=0
+	label1=X label2=Y label3=Z unit1=km unit2=km unit3=km
+	'''%(n1,n2,n3,h1,h2,h3))
+	
+Plot('rvp',
+       '''
+       byte allpos=n gainpanel=all scalebar=y bar=bar.rsf|
+       grey3 flat=y frame1=%d frame2=%d frame3=%d mean=n title='(a) dln(Vp)' scalebar=y bar=bar.rsf minval=-0.25 maxval=0.25
+       '''%(iz,ix,iy))
+Plot('rip',
+       '''
+       byte allpos=n gainpanel=all scalebar=y bar=bar.rsf|
+       grey3 flat=y frame1=%d frame2=%d frame3=%d mean=n title='(b) dln(Ip)' scalebar=y bar=bar.rsf  minval=-0.25 maxval=0.25
+       '''%(iz,ix,iy))
+
+Plot('rtm_vp',
+       '''
+       byte allpos=n gainpanel=all scalebar=y bar=bar.rsf|
+       grey3 flat=y frame1=%d frame2=%d frame3=%d mean=n title='(c) rtm_vp' scalebar=y bar=bar.rsf
+       '''%(iz,ix,iy))
+Plot('rtm_ip',
+       '''
+       byte allpos=n gainpanel=all scalebar=y bar=bar.rsf|
+       grey3 flat=y frame1=%d frame2=%d frame3=%d mean=n title='(d) rtm_ip' scalebar=y bar=bar.rsf
+       '''%(iz,ix,iy))
+Plot('dln_vp',
+       '''
+       byte allpos=n gainpanel=all scalebar=y bar=bar.rsf|
+       grey3 flat=y frame1=%d frame2=%d frame3=%d mean=n title='(e) dln_vp' scalebar=y bar=bar.rsf  minval=-0.25 maxval=0.25
+       '''%(iz,ix,iy))
+Plot('dln_ip',
+       '''
+       byte allpos=n gainpanel=all scalebar=y bar=bar.rsf|
+       grey3 flat=y frame1=%d frame2=%d frame3=%d mean=n title='(f) dln_ip' scalebar=y bar=bar.rsf  minval=-0.25 maxval=0.25
+       '''%(iz,ix,iy))
+
+Result("rtm", "rvp rip rtm_vp rtm_ip dln_vp dln_ip", "TwoColumns")
+
+#===============================================================
+Flow('dat_0001',None,
+	'''
+	echo in=dat_0001 n1=1500 n2=200 n3=200 data_format=binary_float |
+	sfdd form=native | 
+	sfput d1=0.0018 d2=25 d3=25 o1=0 o2=0 o3=0
+	label1="Time" label2="X" label3="Y" unit1=s unit2=m unit3=m
+	''')
+
+Flow('data_weight',None,
+	'''
+	echo in=data_weight n1=1500 n2=200 n3=200 data_format=binary_float |
+	sfdd form=native | 
+	sfput d1=0.0018 d2=25 d3=25 o1=0 o2=0 o3=0
+	label1="Time" label2="X" label3="Y" unit1=s unit2=m unit3=m
+	''')
+Flow('d0_0001',None,
+	'''
+	echo in=d0_0001 n1=1500 n2=200 n3=200 data_format=binary_float |
+	sfdd form=native | 
+	sfput d1=0.0018 d2=25 d3=25 o1=0 o2=0 o3=0
+	label1="Time" label2="X" label3="Y" unit1=s unit2=m unit3=m
+	''')
+Flow('dres_0001',None,
+	'''
+	echo in=dres_0001 n1=1500 n2=200 n3=200 data_format=binary_float |
+	sfdd form=native | 
+	sfput d1=0.0018 d2=25 d3=25 o1=0 o2=0 o3=0
+	label1="Time" label2="X" label3="Y" unit1=s unit2=m unit3=m
+	''')
+
+Plot('dat_0001',
+	'''
+	byte allpos=n gainpanel=all scalebar=y bar=bar.rsf |
+	grey3 flat=y frame1=800 frame2=100 frame3=100 mean=n title='(a) dat_0001' scalebar=y bar=bar.rsf  minval=-1e-11 maxval=1e-11
+	''')
+Plot("data_weight",
+	'''
+	byte allpos=n gainpanel=all scalebar=y bar=bar.rsf |
+	grey3 flat=y frame1=800 frame2=100 frame3=100 mean=n title='(b) weight_0001' scalebar=y bar=bar.rsf  minval=0 maxval=1
+	''')
+Plot("d0_0001",
+	'''
+	byte allpos=n gainpanel=all scalebar=y bar=bar.rsf |
+	grey3 flat=y frame1=800 frame2=100 frame3=100 mean=n title='(c) d0_0001' scalebar=y bar=bar.rsf minval=-1e-11 maxval=1e-11
+	''')
+
+Plot("dres_0001",
+	'''
+	byte allpos=n gainpanel=all scalebar=y bar=bar.rsf |
+	grey3 flat=y frame1=800 frame2=100 frame3=100 mean=n title='(d) dres_0001' scalebar=y bar=bar.rsf minval=-1e-11 maxval=1e-11
+	''')
+
+Result('dat', 'dat_0001 data_weight d0_0001 dres_0001', 'TwoColumns')
+
+
+End()
+
