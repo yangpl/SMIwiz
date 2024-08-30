@@ -1,17 +1,20 @@
-#1. Before running this test, you first need to create the acquisition file
-#in the folder /survey, using Fortran code generate_acqui.f90:
-#gfortran generate_acqui.f90;
-#./a.out
+#!/bin/bash
+#SBATCH --job-name=SMIwiz
+#SBATCH --partition=cpu
+#SBATCH --nodes=5
+#SBATCH --ntasks-per-node=56
+#SBATCH --output=%j.out
+#SBATCH --error=%j.err
 
-#2. You also need to create the source wavelet file using SU command:
+module purge
+module load mpi/2021.6.0
+module load mkl/2022.1.0
+
+ulimit -s unlimited
+ulimit -l unlimited
+
 #suwaveform type=ricker1 dt=0.0018 ns=1500 fpeak=12 |sustrip > fricker
-
-#3. In addition, you can set up a bathymetry file in binary:
 #makevel nz=201 nx=201 v000=40 > fbathy
-
-#4. Then you run the following script in shell:
-#bash run.sh
-
 
 echo "#input parameters
 ===============================================================================
@@ -49,5 +52,5 @@ idxpar=1,2
 " >inputpar.txt
 
 export OMP_NUM_THREADS=1
-mpirun -n 1 ../bin/SMIwiz $(cat inputpar.txt)
+mpirun -n 256 ../bin/SMIwiz $(cat inputpar.txt)
 
