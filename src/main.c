@@ -18,11 +18,18 @@ int iproc, nproc, ierr;
 void acq_init(sim_t *sim, acq_t *acq);
 void acq_close(sim_t *sim, acq_t *acq);
 
+void do_updown(sim_t *sim, acq_t *acq);
 void do_modelling(sim_t *sim, acq_t *acq);
 void do_fwi(sim_t *sim, acq_t *acq);
 void do_rtm(sim_t *sim, acq_t *acq);
 void do_lsrtm(sim_t *sim, acq_t *acq);
 void do_invert_source(sim_t *sim, acq_t *acq);
+void do_psf_hessian(sim_t *sim, acq_t *acq);
+void do_mig_decon_pcgnr(sim_t *sim, acq_t *acq);
+void do_mig_decon_l1reg(sim_t *sim, acq_t *acq);
+void do_mig_decon_fft(sim_t *sim, acq_t *acq);
+void do_mig_decon(sim_t *sim, acq_t *acq);
+void do_adcig(sim_t *sim, acq_t *acq);
 
 
 int main(int argc, char* argv[])
@@ -54,21 +61,26 @@ int main(int argc, char* argv[])
     if(sim->mode==0) printf(" Forward modeling \n");
     else if(sim->mode==1) printf(" FWI in the time domain \n");
     else if(sim->mode==2) printf(" RTM for reflectivity \n");
-    else if(sim->mode==3) printf(" LSRTM (Linearized waveform inversion) \n");
+    else if(sim->mode==3) printf(" Data-domain LSRTM\n");
     else if(sim->mode==4) printf(" FWI gradient building \n");
     else if(sim->mode==5) printf(" Source inversion \n");
+    else if(sim->mode==6) printf(" Extracting angle-domain common-image-gather (ADCIG)\n");
+    else if(sim->mode==7) printf(" Compute PSF Hessian\n");
+    else if(sim->mode==8) printf(" Iterative migration deconvolution via PSF\n");
+    else if(sim->mode==9) printf(" Migration deconvolution via FFT-Wiener filter\n");
     printf("=====================================================\n");
   }
-  if(!getparfloat("fm",&sim->fm)) sim->fm = 50;//maximum frequency in modelling/inversion
   if(!getparint("order",&sim->order)) sim->order = 4;//only accepts 4 or 8-th order FD
   if(!getparint("freesurf", &sim->freesurf)) sim->freesurf = 1;// 1=free surface; 0=no freesurf
-  if(!getparint("nb", &sim->nb)) sim->nb=25;   //number of layers for absorbing boundary
+  if(!getparint("nb", &sim->nb)) sim->nb = 20;   //number of layers for PML absorbing boundary
+  if(!getparfloat("freq",&sim->freq)) sim->freq = 15;//reference frequency for PML
   if(!getparfloat("dt",&sim->dt)) err("must give dt= "); //temporal sampling
   if(!getparint("nt", &sim->nt)) err("must give nt= "); //total number of time steps
   if(!getparint("n1",&sim->n1)) err("must give n1= for FD grid");
   if(!getparint("n2",&sim->n2)) err("must give n2= for FD grid");
   if(!getparfloat("d1",&sim->d1)) err("must give d1= for FD grid"); 
   if(!getparfloat("d2",&sim->d2)) err("must give d2= for FD grid");
+  if(!getparint("nt_verb", &sim->nt_verb)) sim->nt_verb = 100;//verbose display every nt_verb timesteps
   sim->n1pad = sim->n1+2*sim->nb;
   sim->n2pad = sim->n2+2*sim->nb;
   if(!getparint("n3",&sim->n3)) { //default, 2D
@@ -85,6 +97,7 @@ int main(int argc, char* argv[])
   sim->n123pad = sim->n1pad*sim->n2pad*sim->n3pad;
   sim->ibox = 1;//by default, computing box should be applied
   sim->ri = sim->order/2;//interpolation radius of Bessel I0 function for sinc
+  if(!getparint("ps", &sim->ps)) sim->ps = 0; //1=PS decomposition; 0=no PS decomposition
   
   if(sim->mode!=0){
     if(!getparint("dr", &sim->dr)) sim->dr = 1;/* decimation ratio */
@@ -94,12 +107,12 @@ int main(int argc, char* argv[])
   }
 
 
-  if(!getparfloat("zmin", &acq->zmin)) acq->zmin=0;
-  if(!getparfloat("zmax", &acq->zmax)) acq->zmax=acq->zmin+(sim->n1-1)*sim->d1;
-  if(!getparfloat("xmin", &acq->xmin)) acq->xmin=0;
-  if(!getparfloat("xmax", &acq->xmax)) acq->xmax=acq->xmin+(sim->n2-1)*sim->d2;
-  if(!getparfloat("ymin", &acq->ymin)) acq->ymin=0;
-  if(!getparfloat("ymax", &acq->ymax)) acq->ymax=acq->ymin+(sim->n3-1)*sim->d3;
+  if(!getparfloat("zmin", &acq->zmin)) acq->zmin = 0;
+  if(!getparfloat("zmax", &acq->zmax)) acq->zmax = acq->zmin+(sim->n1-1)*sim->d1;
+  if(!getparfloat("xmin", &acq->xmin)) acq->xmin = 0;
+  if(!getparfloat("xmax", &acq->xmax)) acq->xmax = acq->xmin+(sim->n2-1)*sim->d2;
+  if(!getparfloat("ymin", &acq->ymin)) acq->ymin = 0;
+  if(!getparfloat("ymax", &acq->ymax)) acq->ymax = acq->ymin+(sim->n3-1)*sim->d3;
   if(iproc==0){
     printf("freesurf=%d (1=with free surface; 0=no free surface)\n", sim->freesurf);
     printf("ri=%d (interpolation radius)\n", sim->ri);
@@ -118,15 +131,17 @@ int main(int argc, char* argv[])
   if(!getparstring("vpfile",&vpfile)) err("must give vpfile= ");
   if(!getparstring("rhofile",&rhofile)) err("must give rhofile= ");
   
-  sim->stf=alloc1float(sim->nt); //source wavelet
-  sim->vp=alloc3float(sim->n1, sim->n2, sim->n3);
-  sim->rho=alloc3float(sim->n1, sim->n2, sim->n3);
+  sim->stf = alloc1float(sim->nt); //source wavelet
+  sim->vp = alloc3float(sim->n1, sim->n2, sim->n3);
+  sim->rho = alloc3float(sim->n1, sim->n2, sim->n3);
 
-  fp=fopen(stffile,"rb");
-  if(fp==NULL) err("cannot open stffile=%s", stffile);
-  if(fread(sim->stf,sizeof(float),sim->nt,fp)!=sim->nt) 
-    err("error reading stffile=%s, size unmatched",stffile);
-  fclose(fp);
+  if(sim->mode!=5){
+    fp=fopen(stffile,"rb");
+    if(fp==NULL) err("cannot open stffile=%s", stffile);
+    if(fread(sim->stf,sizeof(float),sim->nt,fp)!=sim->nt) 
+      err("error reading stffile=%s, size unmatched",stffile);
+    fclose(fp);
+  }
   
   fp=fopen(rhofile,"rb");
   if(fp==NULL) err("cannot open rhofile=%s", rhofile);
@@ -152,6 +167,11 @@ int main(int argc, char* argv[])
   else if(sim->mode==3) do_lsrtm(sim, acq);
   else if(sim->mode==4) do_fwi(sim, acq); 
   else if(sim->mode==5) do_invert_source(sim, acq);
+  //else if(sim->mode==6) do_adcig(sim, acq);
+  else if(sim->mode==7) do_psf_hessian(sim, acq);
+  else if(sim->mode==8) do_mig_decon_pcgnr(sim, acq);
+  else if(sim->mode==9) do_mig_decon_fft(sim, acq);
+  //else if(sim->mode==10) do_updown(sim, acq);
   //===========================================================
 
   ierr = MPI_Barrier(MPI_COMM_WORLD);

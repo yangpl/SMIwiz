@@ -14,7 +14,6 @@ void setup_data_weight(acq_t *acq, sim_t *sim)
 /*< set up data weighting used in RTM and FWI >*/
 {
   const float PI=3.141592653589793238462643;
-  int muteopt;
   int ntaper;//number of points for cosine taper
   int nxwdat;//number of points in x-axis for data weights
   float dxwdat;//spatial interval in x-axis for data weights
@@ -23,6 +22,7 @@ void setup_data_weight(acq_t *acq, sim_t *sim)
 
   int it,is,ir,id,k,itmute,itstart,itend,ntaper_true;
   float d1,d2,d3,dist,s,tmute;
+  FILE *fp;
 
   int nt = sim->nt;
   float dt = sim->dt;
@@ -49,23 +49,23 @@ void setup_data_weight(acq_t *acq, sim_t *sim)
     id = (int)s;
     s=s-id;//reduced coordinate between 0 and 1
     //linear interpolation +extrapolation of the last value if the table is not big enough
-    acq->xweight[ir]=xwdat[MIN(id,nxwdat-1)]*(1.-s) + xwdat[MIN(id+1,nxwdat-1)]*s;
-    for(it=0; it<nt; it++) acq->wdat[ir][it]=acq->xweight[ir];
+    acq->xweight[ir] = xwdat[MIN(id,nxwdat-1)]*(1.-s) + xwdat[MIN(id+1,nxwdat-1)]*s;
+    for(it=0; it<nt; it++) acq->wdat[ir][it] = acq->xweight[ir];
   }
 
   //data muting parameters
-  if(!getparint("ntaper",&ntaper)) ntaper=0;
-  if(!getparint("muteopt",&muteopt)) muteopt=0;
+  if(!getparint("muteopt", &sim->muteopt)) sim->muteopt = 0;
   //0, do not mute; 1,mute above; 2, mute below; 3, mute above and below
-  if(muteopt==1||muteopt==3){
+  if(!getparint("ntaper", &ntaper)) ntaper = 10;
+  if(sim->muteopt==1||sim->muteopt==3){
     if (!(nxmute1 = countparval("xmute1"))) err("must give xmute1= vector");
     if (!(ntmute1 = countparval("tmute1"))) err("must give tmute1= vector");
     if (nxmute1 != ntmute1) err("length of xmute1, tmute1 must be the same");
     nxtmute=nxmute1;
     xmute1=alloc1float(nxtmute);
     tmute1=alloc1float(nxtmute);
-    getparfloat("xmute1",xmute1);
-    getparfloat("tmute1",tmute1);
+    getparfloat("xmute1", xmute1);
+    getparfloat("tmute1", tmute1);
     for(ir=0; ir<acq->nrec; ir++){
       d1=acq->src_x1[is]-acq->rec_x1[ir];
       d2=acq->src_x2[is]-acq->rec_x2[ir];
@@ -102,15 +102,15 @@ void setup_data_weight(acq_t *acq, sim_t *sim)
     free1float(xmute1);
     free1float(tmute1);
   }
-  if(muteopt==2||muteopt==3){
+  if(sim->muteopt==2||sim->muteopt==3){
     if (!(nxmute2 = countparval("xmute2"))) err("must give xmute2= vector");
     if (!(ntmute2 = countparval("tmute2"))) err("must give tmute2= vector");
     if (nxmute2 != ntmute2) err("length of xmute2, tmute2 must be the same");
-    nxtmute=nxmute2;
-    xmute2=alloc1float(nxtmute);
-    tmute2=alloc1float(nxtmute);
-    getparfloat("xmute2",xmute2);
-    getparfloat("tmute2",tmute2);
+    nxtmute = nxmute2;
+    xmute2 = alloc1float(nxtmute);
+    tmute2 = alloc1float(nxtmute);
+    getparfloat("xmute2", xmute2);
+    getparfloat("tmute2", tmute2);
     for(ir=0; ir<acq->nrec; ir++){
       d1=acq->src_x1[is]-acq->rec_x1[ir];
       d2=acq->src_x2[is]-acq->rec_x2[ir];
@@ -145,5 +145,10 @@ void setup_data_weight(acq_t *acq, sim_t *sim)
     free1float(tmute2);
   }
 
+  if(iproc==0){
+    fp = fopen("data_weight", "wb");
+    fwrite(&acq->wdat[0][0], acq->nrec*sim->nt*sizeof(float), 1, fp);
+    fclose(fp);
+  }
 }
 

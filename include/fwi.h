@@ -16,7 +16,8 @@ typedef struct {
 
   int niter; //maximum number of iterations
   int iter; //iteration index
-  float fcost, fcost_dat, fcost_pen, fcost_mod;
+  int restart;//restart iterations
+  float fcost, fcost_dat, fcost_mod;
   float fcost_mod1, fcost_mod2;
   
   float alpha;//scaling factor for misfit function
@@ -27,10 +28,10 @@ typedef struct {
 
   int isrcpershot;// estimate source per shot or not
   float *hess;//pseudo-Hessian
-  
+
+  int rwi;//1=RWI; 0=FWI
   int preco;//0=no precondition; 1=depth precondition; 2=pseudo-Hessian precondition
-  int objopt;
-  int restart;
+  int mdopt;//options for migration deconvolution 
 } fwi_t;
 
 #endif

@@ -20,44 +20,37 @@
 double sinc(double x);
 double bessi0(double x);
 
-float **face1,**face2,**face3;//store boundary for reverse propagation
-
-//======================================================================
 void decimate_interp_init(sim_t *sim)
 {
   if(sim->order==8){
     //allocate memory to store decimated boundaries, 8 layers on each side
-    face1 = alloc2float(sim->mt, 16*sim->n2*sim->n3);
-    face2 = alloc2float(sim->mt, 16*sim->n1*sim->n3);
-    memset(face1[0], 0, sim->mt*16*sim->n2*sim->n3*sizeof(float));
-    memset(face2[0], 0, sim->mt*16*sim->n1*sim->n3*sizeof(float));
+    sim->face1 = alloc2float(sim->mt, 16*sim->n2*sim->n3);
+    sim->face2 = alloc2float(sim->mt, 16*sim->n1*sim->n3);
+    memset(sim->face1[0], 0, sim->mt*16*sim->n2*sim->n3*sizeof(float));
+    memset(sim->face2[0], 0, sim->mt*16*sim->n1*sim->n3*sizeof(float));
     if(sim->n3>1){
-      face3 = alloc2float(sim->mt, 16*sim->n1*sim->n2);
-      memset(face3[0], 0, sim->mt*16*sim->n1*sim->n2*sizeof(float));
+      sim->face3 = alloc2float(sim->mt, 16*sim->n1*sim->n2);
+      memset(sim->face3[0], 0, sim->mt*16*sim->n1*sim->n2*sizeof(float));
     }
   }else if(sim->order==4){
-    face1 = alloc2float(sim->mt, 8*sim->n2*sim->n3);
-    face2 = alloc2float(sim->mt, 8*sim->n1*sim->n3);
-    memset(face1[0], 0, sim->mt*8*sim->n2*sim->n3*sizeof(float));
-    memset(face2[0], 0, sim->mt*8*sim->n1*sim->n3*sizeof(float));
+    sim->face1 = alloc2float(sim->mt, 8*sim->n2*sim->n3);
+    sim->face2 = alloc2float(sim->mt, 8*sim->n1*sim->n3);
+    memset(sim->face1[0], 0, sim->mt*8*sim->n2*sim->n3*sizeof(float));
+    memset(sim->face2[0], 0, sim->mt*8*sim->n1*sim->n3*sizeof(float));
     if(sim->n3>1){
-      face3 = alloc2float(sim->mt, 8*sim->n1*sim->n2);
-      memset(face3[0], 0, sim->mt*8*sim->n1*sim->n2*sizeof(float));
+      sim->face3 = alloc2float(sim->mt, 8*sim->n1*sim->n2);
+      memset(sim->face3[0], 0, sim->mt*8*sim->n1*sim->n2*sizeof(float));
     }
-
   }
 }
 
-//======================================================================
 void decimate_interp_close(sim_t *sim)
 {
-  free2float(face1);
-  free2float(face2);
-  if(sim->n3>1) free2float(face3);
+  free2float(sim->face1);
+  free2float(sim->face2);
+  if(sim->n3>1) free2float(sim->face3);
 }
 
-
-//======================================================================
 double kwsinc(double x, int l, int r)
 {
   static float b = 6.31;
@@ -72,14 +65,23 @@ double kwsinc(double x, int l, int r)
   return s;
 }
 
-
-//======================================================================
-void decimate_interp_bndr(sim_t *sim, int interp, int it)
+void decimate_interp_bndr(sim_t *sim, int flag, int it, int interp, float **face1, float **face2, float **face3)
 {
   int id[8];//8-point Kaiser windowed sinc interpolation, half lenght l=4
   float kw[8];
   int i1,i2,i3,i,j,k,m,m_;
   int jb = sim->order/2;//minimum and maximum bounds for j is [-jb,jb-1]
+  float ***vz, ***vx, ***vy;
+
+  if(flag==0){
+    vz = sim->vz0;
+    vx = sim->vx0;
+    vy = sim->vy0;
+  }else if(flag==1){
+    vz = sim->vz1;
+    vx = sim->vx1;
+    vy = sim->vy1;
+  }
 
   m = (it+1)/sim->dr;//range from 0 to sim->mt
   m_ = MAX(1, m)-1;//index range from 0 to sim->mt-1
@@ -113,14 +115,14 @@ void decimate_interp_bndr(sim_t *sim, int interp, int it)
 	for(i2=sim->nb; i2<sim->nb+sim->n2; i2++){
 	  for(j=-jb; j<jb; j++){
 	    //top
-	    sim->vz1[i3][i2][sim->nb+j]
+	    vz[i3][i2][sim->nb+j]
 	      = kw[0]*face1[k][id[0]] + kw[1]*face1[k][id[1]]
 	      + kw[2]*face1[k][id[2]] + kw[3]*face1[k][id[3]]
 	      + kw[4]*face1[k][id[4]] + kw[5]*face1[k][id[5]]
 	      + kw[6]*face1[k][id[6]] + kw[7]*face1[k][id[7]];
 	    k++;
 	    //bottom
-	    sim->vz1[i3][i2][sim->nb+sim->n1+j]
+	    vz[i3][i2][sim->nb+sim->n1+j]
 	      = kw[0]*face1[k][id[0]] + kw[1]*face1[k][id[1]]
 	      + kw[2]*face1[k][id[2]] + kw[3]*face1[k][id[3]]
 	      + kw[4]*face1[k][id[4]] + kw[5]*face1[k][id[5]]
@@ -135,14 +137,14 @@ void decimate_interp_bndr(sim_t *sim, int interp, int it)
 	for(i1=sim->nb; i1<sim->nb+sim->n1; i1++){
 	  for(j=-jb; j<jb; j++){
 	    //left
-	    sim->vx1[i3][sim->nb+j][i1]
+	    vx[i3][sim->nb+j][i1]
 	      = kw[0]*face2[k][id[0]] + kw[1]*face2[k][id[1]]
 	      + kw[2]*face2[k][id[2]] + kw[3]*face2[k][id[3]]
 	      + kw[4]*face2[k][id[4]] + kw[5]*face2[k][id[5]]
 	      + kw[6]*face2[k][id[6]] + kw[7]*face2[k][id[7]];
 	    k++;
 	    //right
-	    sim->vx1[i3][sim->nb+sim->n2+j][i1]
+	    vx[i3][sim->nb+sim->n2+j][i1]
 	      = kw[0]*face2[k][id[0]] + kw[1]*face2[k][id[1]]
 	      + kw[2]*face2[k][id[2]] + kw[3]*face2[k][id[3]]
 	      + kw[4]*face2[k][id[4]] + kw[5]*face2[k][id[5]]
@@ -157,14 +159,14 @@ void decimate_interp_bndr(sim_t *sim, int interp, int it)
 	for(i1=sim->nb; i1<sim->nb+sim->n1; i1++){
 	  for(j=-jb; j<jb; j++){
 	    //left
-	    sim->vy1[sim->nb+j][i2][i1]
+	    vy[sim->nb+j][i2][i1]
 	      = kw[0]*face3[k][id[0]] + kw[1]*face3[k][id[1]]
 	      + kw[2]*face3[k][id[2]] + kw[3]*face3[k][id[3]]
 	      + kw[4]*face3[k][id[4]] + kw[5]*face3[k][id[5]]
 	      + kw[6]*face3[k][id[6]] + kw[7]*face3[k][id[7]];
 	    k++;
 	    //right
-	    sim->vy1[sim->nb+sim->n3+j][i2][i1]
+	    vy[sim->nb+sim->n3+j][i2][i1]
 	      = kw[0]*face3[k][id[0]] + kw[1]*face3[k][id[1]]
 	      + kw[2]*face3[k][id[2]] + kw[3]*face3[k][id[3]]
 	      + kw[4]*face3[k][id[4]] + kw[5]*face3[k][id[5]]
@@ -182,14 +184,14 @@ void decimate_interp_bndr(sim_t *sim, int interp, int it)
       for(i2=sim->nb; i2<sim->nb+sim->n2; i2++){
 	for(j=-jb; j<jb; j++){
 	  //top
-	  sim->vz1[i3][i2][sim->nb+j]
+	  vz[i3][i2][sim->nb+j]
 	    = kw[0]*face1[k][id[0]] + kw[1]*face1[k][id[1]]
 	    + kw[2]*face1[k][id[2]] + kw[3]*face1[k][id[3]]
 	    + kw[4]*face1[k][id[4]] + kw[5]*face1[k][id[5]]
 	    + kw[6]*face1[k][id[6]] + kw[7]*face1[k][id[7]];
 	  k++;
 	  //bottom
-	  sim->vz1[i3][i2][sim->nb+sim->n1+j]
+	  vz[i3][i2][sim->nb+sim->n1+j]
 	    = kw[0]*face1[k][id[0]] + kw[1]*face1[k][id[1]]
 	    + kw[2]*face1[k][id[2]] + kw[3]*face1[k][id[3]]
 	    + kw[4]*face1[k][id[4]] + kw[5]*face1[k][id[5]]
@@ -202,14 +204,14 @@ void decimate_interp_bndr(sim_t *sim, int interp, int it)
       for(i1=sim->nb; i1<sim->nb+sim->n1; i1++){
 	for(j=-jb; j<jb; j++){
 	  //left
-	  sim->vx1[i3][sim->nb+j][i1]
+	  vx[i3][sim->nb+j][i1]
 	    = kw[0]*face2[k][id[0]] + kw[1]*face2[k][id[1]]
 	    + kw[2]*face2[k][id[2]] + kw[3]*face2[k][id[3]]
 	    + kw[4]*face2[k][id[4]] + kw[5]*face2[k][id[5]]
 	    + kw[6]*face2[k][id[6]] + kw[7]*face2[k][id[7]];
 	  k++;
 	  //right
-	  sim->vx1[i3][sim->nb+sim->n2+j][i1]
+	  vx[i3][sim->nb+sim->n2+j][i1]
 	    = kw[0]*face2[k][id[0]] + kw[1]*face2[k][id[1]]
 	    + kw[2]*face2[k][id[2]] + kw[3]*face2[k][id[3]]
 	    + kw[4]*face2[k][id[4]] + kw[5]*face2[k][id[5]]
@@ -228,10 +230,10 @@ void decimate_interp_bndr(sim_t *sim, int interp, int it)
 	for(i2=sim->nb; i2<sim->nb+sim->n2; i2++){
 	  for(j=-jb; j<jb; j++){
 	    //top
-	    face1[k][m_] = sim->vz1[i3][i2][sim->nb+j];
+	    face1[k][m_] = vz[i3][i2][sim->nb+j];
 	    k++;
 	    //bottom
-	    face1[k][m_] = sim->vz1[i3][i2][sim->nb+sim->n1+j];
+	    face1[k][m_] = vz[i3][i2][sim->nb+sim->n1+j];
 	    k++;
 	  }
 	}
@@ -242,10 +244,10 @@ void decimate_interp_bndr(sim_t *sim, int interp, int it)
 	for(i1=sim->nb; i1<sim->nb+sim->n1; i1++){
 	  for(j=-jb; j<jb; j++){
 	    //left
-	    face2[k][m_] = sim->vx1[i3][sim->nb+j][i1];
+	    face2[k][m_] = vx[i3][sim->nb+j][i1];
 	    k++;
 	    //right
-	    face2[k][m_] = sim->vx1[i3][sim->nb+sim->n2+j][i1];
+	    face2[k][m_] = vx[i3][sim->nb+sim->n2+j][i1];
 	    k++;
 	  }
 	}
@@ -256,10 +258,10 @@ void decimate_interp_bndr(sim_t *sim, int interp, int it)
 	for(i1=sim->nb; i1<sim->nb+sim->n1; i1++){
 	  for(j=-jb; j<jb; j++){
 	    //left
-	    face3[k][m_] = sim->vy1[sim->nb+j][i2][i1];
+	    face3[k][m_] = vy[sim->nb+j][i2][i1];
 	    k++;
 	    //right
-	    face3[k][m_] = sim->vy1[sim->nb+sim->n3+j][i2][i1];
+	    face3[k][m_] = vy[sim->nb+sim->n3+j][i2][i1];
 	    k++;
 	  }
 	}
@@ -272,10 +274,10 @@ void decimate_interp_bndr(sim_t *sim, int interp, int it)
       for(i2=sim->nb; i2<sim->nb+sim->n2; i2++){
 	for(j=-jb; j<jb; j++){
 	  //top
-	  face1[k][m_] = sim->vz1[i3][i2][sim->nb+j];
+	  face1[k][m_] = vz[i3][i2][sim->nb+j];
 	  k++;
 	  //bottom
-	  face1[k][m_] = sim->vz1[i3][i2][sim->nb+sim->n1+j];
+	  face1[k][m_] = vz[i3][i2][sim->nb+sim->n1+j];
 	  k++;
 	}
       }
@@ -284,10 +286,10 @@ void decimate_interp_bndr(sim_t *sim, int interp, int it)
       for(i1=sim->nb; i1<sim->nb+sim->n1; i1++){
 	for(j=-jb; j<jb; j++){
 	  //left
-	  face2[k][m_] = sim->vx1[i3][sim->nb+j][i1];
+	  face2[k][m_] = vx[i3][sim->nb+j][i1];
 	  k++;
 	  //right
-	  face2[k][m_] = sim->vx1[i3][sim->nb+sim->n2+j][i1];
+	  face2[k][m_] = vx[i3][sim->nb+sim->n2+j][i1];
 	  k++;
 	}
       }
@@ -296,4 +298,3 @@ void decimate_interp_bndr(sim_t *sim, int interp, int it)
   }//end if
   
 }
-

@@ -22,7 +22,7 @@ void acq_init(sim_t *sim, acq_t *acq)
   float zs, xs, ys;
   float zz, xx, yy, dip, azimuth,  tmp,  frac;
   float zmin, zmax, xmin, xmax, ymin, ymax;
-  int isreceiver, isrc, mysrc, irec, iseof, j;
+  int isreceiver, isrc, irec, iseof, j;
   FILE *fp;
   
   acq->shot_idx = alloc1int(nproc);
@@ -67,9 +67,7 @@ void acq_init(sim_t *sim, acq_t *acq)
 	  rx3[acq->nrec] = yy;
 	  acq->nrec++;
 	}
-	
       }
-      //printf("%f %f %f %f %f %d %d shot=%d isrc=%d\n", zz, xx, yy, dip, azimuth, isreceiver, acq->nrec, acq->shot_idx[iproc], isrc);
     }
   }
   fclose(fp);

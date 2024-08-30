@@ -33,7 +33,7 @@ typedef struct {
   
   int verb; //verbose information to print or not
   int preco;//precondition or not
-  bool loop1;//flag to check 1st loop in two-loop recursion is done or not
+  int loop1;//flag to check 1st loop in two-loop recursion is done or not
   int ls_fail; //0=misfit decreases, accept it; 1=line search fails
     
   int ncg; //number of CG to solve normal equation for Newton method
@@ -61,7 +61,7 @@ void lbfgs_update(int n, float *x, float *grad, float **sk, float **yk, opt_t *o
 void lbfgs_descent(int n, float *grad, float *r, float **sk, float **yk, opt_t *opt);
 /*< calculate search direction (two-loop recursion) >*/
 
-bool lbfgs_descent1(int n, float *g, float *q, float *rho, float *alp, 
+int lbfgs_descent1(int n, float *g, float *q, float *rho, float *alp, 
 		    float **sk, float **yk, opt_t *opt);
 /*< calculate search direction (1st loop of the two-loop recursion) >*/
 
@@ -77,7 +77,7 @@ void line_search(int n, //dimension of x
 		float *x, //input vector x
 		float *g, //gradient of misfit function
 		float *d, //descent direction
-		opt_fg fg, //subroutine to evaluation function and gradient
+		opt_fg fg, //subroutine to evaluate function and gradient
 		opt_t *opt); //pointer of l-BFGS optimization parameters
 /*< line search (Wolfe condition) >*/
 
@@ -85,7 +85,7 @@ void cg_solve(int n, //dimension of x
 	      float *x, //input vector x
 	      float *g, //gradient of misfit function
 	      float *d, //descent direction
-	      opt_Hv Hv, //subroutine to evaluation function and gradient
+	      opt_Hv Hv, //subroutine to evaluate Hessian vector product
 	      opt_t *opt); //pointer of l-BFGS optimization parameters
 /*< Conjugate gradient solve >*/
 

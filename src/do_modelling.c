@@ -18,11 +18,11 @@ void check_cfl(sim_t *sim);
 void fdtd_init(sim_t *sim, int flag);
 void fdtd_null(sim_t *sim, int flag);
 void fdtd_close(sim_t *sim, int flag);
-void fdtd_update_v(sim_t *sim, int flag, int it, int adj);
-void fdtd_update_p(sim_t *sim, int flag, int it, int adj);
+void fdtd_update_v(sim_t *sim, int flag, int it, int adj, float ***kappa, float ***buz, float ***bux, float ***buy);
+void fdtd_update_p(sim_t *sim, int flag, int it, int adj, float ***kappa, float ***buz, float ***bux, float ***buy);
 
 void extend_model_init(sim_t *sim);
-void extend_model(sim_t *sim);
+void extend_model(sim_t *sim, float ***vp, float ***rho, float ***kappa, float ***buz, float ***bux, float ***buy);
 void extend_model_close(sim_t *sim);
 
 void computing_box_init(acq_t *acq, sim_t *sim, int adj);
@@ -51,7 +51,7 @@ void do_modelling(sim_t *sim, acq_t *acq)
   check_cfl(sim);
   cpml_init(sim);
   extend_model_init(sim);
-  extend_model(sim);
+  extend_model(sim, sim->vp, sim->rho, sim->kappa, sim->buz, sim->bux, sim->buy);
   computing_box_init(acq, sim, 0);
   fdtd_init(sim, 1);//flag=1, incident field
   fdtd_null(sim, 1);//flag=1, incident field
@@ -61,14 +61,14 @@ void do_modelling(sim_t *sim, acq_t *acq)
   t_inject_src = 0.;
   t_extract_field = 0.;
   for(it=0; it<sim->nt; it++){
-    if(iproc==0 && it%100==0) printf("it-----%d\n", it);
+    if(iproc==0 && it%sim->nt_verb==0) printf("it-----%d\n", it);
 
     if(iproc==0) t0 = MPI_Wtime();
-    fdtd_update_v(sim, 1, it, 0);//flag=1
+    fdtd_update_v(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);//flag=1
     if(iproc==0) t_update_v += MPI_Wtime()-t0;
     
     if(iproc==0) t0 = MPI_Wtime();
-    fdtd_update_p(sim, 1, it, 0);//flag=1
+    fdtd_update_p(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);//flag=1
     if(iproc==0) t_update_p += MPI_Wtime()-t0;
 
     if(iproc==0) t0 = MPI_Wtime();

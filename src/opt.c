@@ -62,7 +62,7 @@ void lbfgs_save(int n, float *x, float *g, float **sk, float **yk, opt_t *opt)
     memcpy(yk[opt->kpair], g, n*sizeof(float));//yk[opt->kpair]<--g
     opt->kpair += 1; // always we have: kpair<=npair
   }else{
-    // otherwise erase oldest pair and save the new one by shift
+    // otherwise erase the oldest pair and save the new one by shift
     for(i=0; i < opt->npair-1; i++){
       memcpy(sk[i], sk[i+1], n*sizeof(float)); //sk[i+1]<--sk[i]
       memcpy(yk[i], yk[i+1], n*sizeof(float)); //yk[i+1]<--yk[i]
@@ -137,11 +137,11 @@ void lbfgs_descent(int n, float *g, float *d, float **sk, float **yk, opt_t *opt
   free1float(rho);
 }
 
-bool lbfgs_descent1(int n, float *g, float *q, float *rho, float *alpha,
+int lbfgs_descent1(int n, float *g, float *q, float *rho, float *alpha,
 		    float **sk, float **yk, opt_t *opt)
 /*< calculate search direction (1st loop of the two-loop recursion) >*/
 {
-  bool loop1=false;
+  int loop1 = 0;
   int i, j;
   float tmp0, tmp1;
 
@@ -162,7 +162,7 @@ bool lbfgs_descent1(int n, float *g, float *q, float *rho, float *alpha,
     alpha[i]=rho[i]*tmp1;
     for(j=0; j<n; j++) q[j] -= alpha[i]*yk[i][j];
   }
-  loop1=true; //done the 1st loop
+  loop1 = 1; //done the 1st loop
   return loop1;
 }
 

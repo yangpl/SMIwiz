@@ -1,9 +1,9 @@
 /*----------------------------------------------------------------------
- Copyright (c) Pengliang Yang, 2020, Harbin Institute of Technology
- Copyright (c) Pengliang Yang, 2018, University Grenoble Alpes
- Homepage: https://yangpl.wordpress.com
- E-mail: ypl.2100@gmail.com
- -------------------------------------------------------------------*/
+  Copyright (c) Pengliang Yang, 2020, Harbin Institute of Technology
+  Copyright (c) Pengliang Yang, 2018, University Grenoble Alpes
+  Homepage: https://yangpl.wordpress.com
+  E-mail: ypl.2100@gmail.com
+  -------------------------------------------------------------------*/
 #include <mpi.h>
 #include "cstd.h"
 #include "sim.h"
@@ -14,24 +14,24 @@
 sim_t *sim;
 acq_t *acq;
 fwi_t *fwi;
-
+float ***h1, ***h2;
 
 void check_cfl(sim_t *sim);
 
 void fdtd_init(sim_t *sim, int flag);
 void fdtd_null(sim_t *sim, int flag);
 void fdtd_close(sim_t *sim, int flag);
-void fdtd_update_v(sim_t *sim, int flag, int it, int adj);
-void fdtd_update_p(sim_t *sim, int flag, int it, int adj);
+void fdtd_update_v(sim_t *sim, int flag, int it, int adj, float ***kappa, float ***buz, float ***bux, float ***buy);
+void fdtd_update_p(sim_t *sim, int flag, int it, int adj, float ***kappa, float ***buz, float ***bux, float ***buy);
 
 void decimate_interp_init(sim_t *sim);
 void decimate_interp_close(sim_t *sim);
-void decimate_interp_bndr(sim_t *sim, int interp, int it);
+void decimate_interp_bndr(sim_t *sim, int flag, int it, int interp, float **face1, float **face2, float **face3);
 
 void check_cfl(sim_t *sim);
 
 void extend_model_init(sim_t *sim);
-void extend_model(sim_t *sim);
+void extend_model(sim_t *sim, float ***vp, float ***rho, float ***kappa, float ***buz, float ***bux, float ***buy);
 void extend_model_close(sim_t *sim);
 
 void computing_box_init(acq_t *acq, sim_t *sim, int adj);
@@ -52,13 +52,11 @@ float regularization_tikhonov(float *x, float *g, int n1, int n2, int n3, float 
 float regularization_tv(float *x, float *g, int n1, int n2, int n3, float d1, float d2, float d3);
 void triangle_smoothing(float ***mod, int n1, int n2, int n3, int r1, int r2, int r3, int repeat);
 
-
-
-float ***h1, ***h2;
-
 /*--------------------------------------------------------------*/
 void fg_fwi_init(sim_t *sim_, acq_t *acq_, fwi_t *fwi_)
 {
+  int i1, i2, i3;
+  
   sim = sim_;
   acq = acq_;
   fwi = fwi_;
@@ -86,7 +84,6 @@ void fg_fwi_init(sim_t *sim_, acq_t *acq_, fwi_t *fwi_)
     h2 = alloc3float(sim->n1, sim->n2, sim->n3);
   }
   
-  if(!getparint("objopt", &fwi->objopt)) fwi->objopt = 0;//0=L2; 1=AWI;
   if(!getparfloat("gamma1", &fwi->gamma1)) fwi->gamma1 = 0;//Tikhonov reg
   if(!getparfloat("gamma2", &fwi->gamma2)) fwi->gamma2 = 0;//TV reg
   
@@ -94,6 +91,19 @@ void fg_fwi_init(sim_t *sim_, acq_t *acq_, fwi_t *fwi_)
   if(!getparint("r2", &fwi->r2)) fwi->r2 = 1;
   if(!getparint("r3", &fwi->r3)) fwi->r3 = 1;
   if(!getparint("repeat", &fwi->repeat)) fwi->repeat = 3;
+
+  if(!getparint("rwi", &fwi->rwi)) fwi->rwi = 0;
+  if(fwi->rwi==1){
+    fwi->family = 2;//vp-Ip parameterization for RWI
+    sim->ip_smooth = alloc3float(sim->n1, sim->n2, sim->n3);
+    for(i3=0; i3<sim->n3; i3++){
+      for(i2=0; i2<sim->n2; i2++){
+	for(i1=0; i1<sim->n1; i1++){
+	  sim->ip_smooth[i3][i2][i1] = sim->vp[i3][i2][i1]*sim->rho[i3][i2][i1];
+	}
+      }
+    }
+  }
 
   if(iproc==0) printf("-----------------fwi init done----------------------\n"); 
 }
@@ -105,11 +115,13 @@ void fg_fwi_close(sim_t *sim)
   free2float(sim->dobs);
   free2float(sim->dcal);
   free2float(sim->dres);
-  if(fwi->preco==2) free1float(fwi->hess);
   if(fwi->preco==2){
+    free1float(fwi->hess);
     free3float(h1);
     free3float(h2);
   }
+  if(fwi->rwi) free3float(sim->ip_smooth);
+
 }
 
 /*--------------------------------------------------------------*/
@@ -177,6 +189,8 @@ void fg_mod_reg(sim_t *sim, fwi_t *fwi, float *x, float *g)
   free3float(grad);
 }
 
+float fg_rwi(float *x, float *g);
+
 /*--------------------------------------------------------------*/
 float fg_fwi(float *x, float *g)
 /*< misfit function and gradient evaluation of FWI >*/
@@ -188,15 +202,293 @@ float fg_fwi(float *x, float *g)
   char fname[sizeof("dsyn_0000")];
   FILE *fp;
 
-  g1 = alloc3float(sim->n1, sim->n2, sim->n3);
-  g2 = alloc3float(sim->n1, sim->n2, sim->n3);
-  memset(&g1[0][0][0], 0, sim->n123*sizeof(float));
-  memset(&g2[0][0][0], 0, sim->n123*sizeof(float));
-  if(fwi->preco==2){//allocate memory for pseudo-Hessian
-    memset(&h1[0][0][0], 0, sim->n123*sizeof(float));
-    memset(&h2[0][0][0], 0, sim->n123*sizeof(float));
-  }
+  if(fwi->rwi) fwi->fcost = fg_rwi(x, g);
+  else{
+    g1 = alloc3float(sim->n1, sim->n2, sim->n3);
+    g2 = alloc3float(sim->n1, sim->n2, sim->n3);
+    memset(&g1[0][0][0], 0, sim->n123*sizeof(float));
+    memset(&g2[0][0][0], 0, sim->n123*sizeof(float));
+    if(fwi->preco==2){//allocate memory for pseudo-Hessian
+      memset(&h1[0][0][0], 0, sim->n123*sizeof(float));
+      memset(&h2[0][0][0], 0, sim->n123*sizeof(float));
+    }
   
+    for(ipar=0; ipar<fwi->npar; ipar++){
+      for(i3=0; i3<sim->n3; i3++){
+	for(i2=0; i2<sim->n2; i2++){
+	  for(i1=0; i1<sim->n1; i1++){
+	    j = i1 + sim->n1*(i2 + sim->n2*(i3 + sim->n3*ipar));
+
+	    tmp = exp(x[j]);
+	    if(fwi->family==1){//vp-rho
+	      if(fwi->idxpar[ipar]==1) sim->vp[i3][i2][i1] = tmp;
+	      if(fwi->idxpar[ipar]==2) sim->rho[i3][i2][i1] = tmp;
+	    }
+	    if(fwi->family==2){//vp-ip
+	      if(fwi->idxpar[ipar]==1) sim->vp[i3][i2][i1] = tmp;
+	      if(fwi->idxpar[ipar]==2) sim->rho[i3][i2][i1] = tmp/sim->vp[i3][i2][i1];
+	    }
+	  }
+	}
+      }
+    }
+
+    check_cfl(sim);
+    cpml_init(sim);  
+    extend_model_init(sim);
+    fdtd_init(sim, 1);//flag=1, incident field
+    fdtd_init(sim, 2);//flag=2, adjoint field
+    fdtd_null(sim, 1);//flag=1, incident field
+    fdtd_null(sim, 2);//flag=2, adjoint field
+    decimate_interp_init(sim);
+    extend_model(sim, sim->vp, sim->rho, sim->kappa, sim->buz, sim->bux, sim->buy);
+    computing_box_init(acq, sim, 0);
+    computing_box_init(acq, sim, 1);
+  
+    /*--------------------------------------------------------------*/
+    if(iproc==0) printf("----stage 1: forward modelling!--------\n");
+    sim->sign_dt = 1;
+    for(it=0; it<sim->nt; it++){
+      if(iproc==0 && it%sim->nt_verb==0) printf("it-----%d\n", it);
+
+      decimate_interp_bndr(sim, 1, it, 0, sim->face1, sim->face2, sim->face3);/* interp=0 */
+      fdtd_update_v(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);
+      fdtd_update_p(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);
+      inject_source(sim, acq, sim->p1, sim->stf[it]);
+      extract_wavefield(sim, acq, sim->p1, sim->dcal, it);
+    
+      if(iproc==0 && sim->check==1 && it==sim->itcheck){
+	fp = fopen("wave1.bin", "wb");
+	for(i3=0; i3<sim->n3; i3++){
+	  i3_ = (sim->n3>1)?i3 + sim->nb:0;
+	  for(i2=0; i2<sim->n2; i2++){
+	    i2_ = i2 + sim->nb;
+	    for(i1=0; i1<sim->n1; i1++){
+	      i1_ = i1 + sim->nb;
+	    
+	      fwrite(&sim->p1[i3_][i2_][i1_], sizeof(float), 1, fp);
+	    }
+	  }
+	}
+	fclose(fp);
+      }
+    }
+  
+    /*--------------------------------------------------------------*/
+    fwi->fcost = 0;
+    for(irec=0; irec<acq->nrec; irec++){
+      for(it=0; it<sim->nt; it++){
+	sim->dres[irec][it] = (sim->dobs[irec][it]-sim->dcal[irec][it])*acq->wdat[irec][it];
+	fwi->fcost += sim->dres[irec][it]*sim->dres[irec][it];
+	sim->dres[irec][it] *= acq->wdat[irec][it];      
+      }
+    }
+    MPI_Allreduce(&fwi->fcost, &tmp, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+    fwi->fcost = 0.5*tmp*sim->dt;
+    if(iproc==0) printf("fcost=%g\n", fwi->fcost);
+  
+    sprintf(fname, "dsyn_%04d", acq->shot_idx[iproc]);
+    fp=fopen(fname,"wb");
+    if(fp==NULL) { fprintf(stderr,"error opening file\n"); exit(1);}
+    fwrite(&sim->dcal[0][0], sim->nt*acq->nrec*sizeof(float), 1, fp);
+    fclose(fp);
+    fflush(stdout);
+    sprintf(fname, "dres_%04d", acq->shot_idx[iproc]);
+    fp=fopen(fname,"wb");
+    if(fp==NULL) { fprintf(stderr,"error opening file\n"); exit(1);}
+    fwrite(&sim->dres[0][0], sim->nt*acq->nrec*sizeof(float), 1, fp);
+    fclose(fp);
+    fflush(stdout);
+  
+    /*--------------------------------------------------------------*/
+    if(iproc==0) printf("----stage 2: adjoint modelling!-----------\n");
+    sim->sign_dt = -1;
+    for(it=sim->nt-1; it>=0; it--){
+      if(iproc==0 && it%sim->nt_verb==0) printf("it-----%d\n", it);
+  
+      inject_adjoint_source(sim, acq, sim->p2, sim->dres, it);
+      fdtd_update_v(sim, 2, it, 1, sim->kappa, sim->buz, sim->bux, sim->buy);
+      fdtd_update_p(sim, 2, it, 1, sim->kappa, sim->buz, sim->bux, sim->buy);
+
+      inject_source(sim, acq, sim->p1, sim->stf[it]);
+      fdtd_update_p(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);
+      fdtd_update_v(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);
+      decimate_interp_bndr(sim, 1, it, 1, sim->face1, sim->face2, sim->face3);/* interp=1 */
+
+      if(iproc==0 && sim->check==1 && it==sim->itcheck){
+	fp = fopen("wave2.bin", "wb");
+	for(i3=0; i3<sim->n3; i3++){
+	  i3_ = (sim->n3>1)?i3 + sim->nb:0;
+	  for(i2=0; i2<sim->n2; i2++){
+	    i2_ = i2 + sim->nb;
+	    for(i1=0; i1<sim->n1; i1++){
+	      i1_ = i1 + sim->nb;
+	    
+	      fwrite(&sim->p1[i3_][i2_][i1_], sizeof(float), 1, fp);
+	    }
+	  }
+	}
+	fclose(fp);
+      }
+    
+      for(i3=0; i3<sim->n3; i3++){
+	i3_ = (sim->n3>1)?i3+sim->nb:0;
+	for(i2=0; i2<sim->n2; i2++){
+	  i2_ = i2+sim->nb;
+	  for(i1=0; i1<sim->n1; i1++){
+	    i1_ = i1+sim->nb;
+	    g1[i3][i2][i1] += sim->p2[i3_][i2_][i1_]*sim->divv[i3_][i2_][i1_];
+	    g2[i3][i2][i1] += (sim->vz2[i3_][i2_][i1_] + sim->vz2[i3_][i2_][i1_-1])*(sim->dvzdt[i3_][i2_][i1_] + sim->dvzdt[i3_][i2_][i1_-1]);
+	    g2[i3][i2][i1] += (sim->vx2[i3_][i2_][i1_] + sim->vx2[i3_][i2_-1][i1_])*(sim->dvxdt[i3_][i2_][i1_] + sim->dvxdt[i3_][i2_-1][i1_]);
+	    if(sim->n3>1) g2[i3][i2][i1] += (sim->vz2[i3_][i2_][i1_] + sim->vz2[i3_-1][i2_][i1_])*(sim->dvzdt[i3_][i2_][i1_] + sim->dvzdt[i3_-1][i2_][i1_]);
+	  }
+	}
+      }
+      if(fwi->preco==2){
+	for(i3=0; i3<sim->n3; i3++){
+	  i3_ = (sim->n3>1)?i3+sim->nb:0;
+	  for(i2=0; i2<sim->n2; i2++){
+	    i2_ = i2+sim->nb;
+	    for(i1=0; i1<sim->n1; i1++){
+	      i1_ = i1+sim->nb;
+	      h1[i3][i2][i1] += sim->divv[i3_][i2_][i1_]*sim->divv[i3_][i2_][i1_];
+	      h2[i3][i2][i1] += (sim->dvzdt[i3_][i2_][i1_] + sim->dvzdt[i3_][i2_][i1_-1])*(sim->dvzdt[i3_][i2_][i1_] + sim->dvzdt[i3_][i2_][i1_-1]);
+	      h2[i3][i2][i1] += (sim->dvxdt[i3_][i2_][i1_] + sim->dvxdt[i3_][i2_-1][i1_])*(sim->dvxdt[i3_][i2_][i1_] + sim->dvxdt[i3_][i2_-1][i1_]);
+	      if(sim->n3>1) h2[i3][i2][i1] += (sim->dvzdt[i3_][i2_][i1_] + sim->dvzdt[i3_-1][i2_][i1_])*(sim->dvzdt[i3_][i2_][i1_] + sim->dvzdt[i3_-1][i2_][i1_]);
+	    }
+	  }
+	}
+      }//end if    
+
+    }  
+    cpml_close(sim);
+    extend_model_close(sim);
+    fdtd_close(sim, 1);
+    fdtd_close(sim, 2);
+    decimate_interp_close(sim);
+    computing_box_close(sim, 0);
+    computing_box_close(sim, 1);
+
+    for(i3=0; i3<sim->n3; i3++){
+      for(i2=0; i2<sim->n2; i2++){
+	for(i1=0; i1<sim->n1; i1++){
+	  tmp = sim->volume*sim->dt;
+	  g1[i3][i2][i1] *= tmp;//dJ/dln(kappa)
+	  g2[i3][i2][i1] *= sim->rho[i3][i2][i1]*0.25*tmp;//dJ/dln(rho)
+	  if(i1<= fwi->ibathy[i3][i2]){//reset again to avoid leakage
+	    g1[i3][i2][i1] = 0.;
+	    g2[i3][i2][i1] = 0.;
+	  }
+	}
+      }
+    }
+    for(ipar=0; ipar<fwi->npar; ipar++){
+      for(i3=0; i3<sim->n3; i3++){
+	for(i2=0; i2<sim->n2; i2++){
+	  for(i1=0; i1<sim->n1; i1++){
+	    j = i1 + sim->n1*(i2 + sim->n2*(i3 + sim->n3*ipar));
+	    if(fwi->family==1){//vp-rho
+	      if(fwi->idxpar[ipar]==1) g[j] = 2.0*g1[i3][i2][i1];//dJ/dln(vp)
+	      if(fwi->idxpar[ipar]==2) g[j] = g1[i3][i2][i1] + g2[i3][i2][i1];//dJ/dln(rho)
+	    }
+	    if(fwi->family==2){//vp-ip
+	      if(fwi->idxpar[ipar]==1) g[j] = g1[i3][i2][i1] - g2[i3][i2][i1];//dJ/dln(vp)
+	      if(fwi->idxpar[ipar]==2) g[j] = g1[i3][i2][i1] + g2[i3][i2][i1];//dJ/dln(ip)
+	    }
+	  }
+	}
+      }
+    }
+    if(fwi->preco==2){
+      MPI_Allreduce(&h1[0][0][0], fwi->hess, sim->n123, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+      memcpy(&h1[0][0][0], fwi->hess, sim->n123*sizeof(float));
+      MPI_Allreduce(&h2[0][0][0], fwi->hess, sim->n123, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+      memcpy(&h2[0][0][0], fwi->hess, sim->n123*sizeof(float));
+      for(i3=0; i3<sim->n3; i3++){
+	for(i2=0; i2<sim->n2; i2++){
+	  for(i1=0; i1<sim->n1; i1++){
+	    tmp = sim->volume*sim->dt;
+	    s1 = sim->rho[i3][i2][i1]*sim->vp[i3][i2][i1]*sim->vp[i3][i2][i1];
+	    s2 = sim->rho[i3][i2][i1];
+	    h1[i3][i2][i1] *= s1*s1*tmp;//H_{ln(kappa),ln(kappa)}
+	    h2[i3][i2][i1] *= s2*s2*0.25*tmp;//H_{ln(rho),ln(rho)}
+	  }
+	}
+      }
+      for(ipar=0; ipar<fwi->npar; ipar++){
+	for(i3=0; i3<sim->n3; i3++){
+	  for(i2=0; i2<sim->n2; i2++){
+	    for(i1=0; i1<sim->n1; i1++){
+	      j = i1 + sim->n1*(i2 + sim->n2*(i3 + sim->n3*ipar));
+	      if(fwi->family==1){//vp-rho
+		if(fwi->idxpar[ipar]==1) fwi->hess[j] = 4.0*h1[i3][i2][i1];//H_{ln(vp),ln(vp)}
+		if(fwi->idxpar[ipar]==2) fwi->hess[j] = h1[i3][i2][i1] + h2[i3][i2][i1];//H_{ln(rho),ln(rho)}
+	      }
+	      if(fwi->family==2){//vp-ip
+		if(fwi->idxpar[ipar]==1) fwi->hess[j] = h1[i3][i2][i1] + h2[i3][i2][i1];//H_{ln(vp),ln(vp)}
+		if(fwi->idxpar[ipar]==2) fwi->hess[j] = h1[i3][i2][i1] + h2[i3][i2][i1];//H_{ln(ip),ln(ip)}
+	      }
+	    }
+	  }
+	}
+      }
+
+    }//end if
+
+    for(ipar=0; ipar<fwi->npar; ipar++){
+      MPI_Allreduce(&g[ipar*sim->n123], &g1[0][0][0], sim->n123, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+      memcpy(&g[ipar*sim->n123], &g1[0][0][0], sim->n123*sizeof(float));
+    }
+    free3float(g1);
+    free3float(g2);
+    fg_mod_reg(sim, fwi, x, g);
+    if(iproc==0 && fwi->firstgrad){
+      fp=fopen("gradient_fwi","wb");
+      fwrite(g, fwi->n*sizeof(float), 1, fp);
+      fclose(fp);
+    }
+  
+    if(sim->mode==1 && fwi->firstgrad){
+      s1 = fabs(x[0]);
+      s2 = fabs(g[0]);
+      for(j=0; j<fwi->n; j++){
+	s1 = MAX(s1, fabs(x[j]));
+	s2 = MAX(s2, fabs(g[j]));
+      }
+      fwi->alpha = 0.01*s1/s2;
+      /*
+	s1 = 0;
+	s2 = 0;
+	for(j=0; j<fwi->n; j++){
+	s1 += fabs(x[j]);
+	s2 += fabs(g[j]);
+	}
+	fwi->alpha = 5e-4*s1/s2;
+      */
+      fwi->firstgrad = 0;
+      if(iproc==0) printf("scaling=%e\n", fwi->alpha);
+    }
+    if(!fwi->firstgrad){
+      for(j=0; j<fwi->n; j++) g[j] *= fwi->alpha;
+    }
+    fwi->fcost *= fwi->alpha;
+    if(iproc==0) printf("scaled fcost=%g\n", fwi->fcost);
+  }
+
+  return fwi->fcost;
+}
+
+//===================================================================
+float fg_rwi(float *x, float *g)
+/*< misfit function and gradient evaluation of reflection waveform inversion (RWI) >*/
+{
+  int j;
+  int it, irec, i1, i2, i3, i1_, i2_, i3_, ipar;
+  float s1, s2, tmp;
+  float ***g1, ***g2, ***rho_smooth;
+  char fname[sizeof("dsyn_0000")];
+  FILE *fp;
+
   for(ipar=0; ipar<fwi->npar; ipar++){
     for(i3=0; i3<sim->n3; i3++){
       for(i2=0; i2<sim->n2; i2++){
@@ -204,19 +496,30 @@ float fg_fwi(float *x, float *g)
 	  j = i1 + sim->n1*(i2 + sim->n2*(i3 + sim->n3*ipar));
 
 	  tmp = exp(x[j]);
-	  if(fwi->family==1){//vp-rho
-	    if(fwi->idxpar[ipar]==1) sim->vp[i3][i2][i1] = tmp;
-	    if(fwi->idxpar[ipar]==2) sim->rho[i3][i2][i1] = tmp;
-	  }
-	  if(fwi->family==2){//vp-ip
-	    if(fwi->idxpar[ipar]==1) sim->vp[i3][i2][i1] = tmp;
-	    if(fwi->idxpar[ipar]==2) sim->rho[i3][i2][i1] = tmp/sim->vp[i3][i2][i1];
-	  }
+	  if(fwi->idxpar[ipar]==1) sim->vp[i3][i2][i1] = tmp;
+	  if(fwi->idxpar[ipar]==2) sim->rho[i3][i2][i1] = tmp/sim->vp[i3][i2][i1];
 	}
       }
     }
   }
-
+  memset(g, 0, fwi->n*sizeof(float));
+  
+  g1 = alloc3float(sim->n1, sim->n2, sim->n3);
+  g2 = alloc3float(sim->n1, sim->n2, sim->n3);
+  rho_smooth = alloc3float(sim->n1, sim->n2, sim->n3);
+  
+  //===========================================================
+  //part 1: compute G1=<lambda1,dA(m)/dm u>
+  //===========================================================
+  for(i3=0; i3<sim->n3; i3++){
+    for(i2=0; i2<sim->n2; i2++){
+      for(i1=0; i1<sim->n1; i1++){
+	rho_smooth[i3][i2][i1] = sim->ip_smooth[i3][i2][i1]/sim->vp[i3][i2][i1];
+      }
+    }
+  }
+  memset(&g1[0][0][0], 0, sim->n123*sizeof(float));
+  memset(&g2[0][0][0], 0, sim->n123*sizeof(float));
   check_cfl(sim);
   cpml_init(sim);  
   extend_model_init(sim);
@@ -225,37 +528,21 @@ float fg_fwi(float *x, float *g)
   fdtd_null(sim, 1);//flag=1, incident field
   fdtd_null(sim, 2);//flag=2, adjoint field
   decimate_interp_init(sim);
-  extend_model(sim);
+  extend_model(sim, sim->vp, rho_smooth, sim->kappa, sim->buz, sim->bux, sim->buy);
   computing_box_init(acq, sim, 0);
   computing_box_init(acq, sim, 1);
-  
+
   /*--------------------------------------------------------------*/
-  if(iproc==0) printf("----stage 1: forward modelling!--------\n");
+  if(iproc==0) printf("----stage 1: forward modelling (G1)--------\n");
   sim->sign_dt = 1;
   for(it=0; it<sim->nt; it++){
-    if(iproc==0 && it%100==0) printf("it-----%d\n", it);
+    if(iproc==0 && it%sim->nt_verb==0) printf("it-----%d\n", it);
 
-    decimate_interp_bndr(sim, 0, it);/* interp=0 */
-    fdtd_update_v(sim, 1, it, 0);
-    fdtd_update_p(sim, 1, it, 0);
+    decimate_interp_bndr(sim, 1, it, 0, sim->face1, sim->face2, sim->face3);/* interp=0 */
+    fdtd_update_v(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);
+    fdtd_update_p(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);
     inject_source(sim, acq, sim->p1, sim->stf[it]);
     extract_wavefield(sim, acq, sim->p1, sim->dcal, it);
-    
-    if(iproc==0 && sim->check==1 && it==sim->itcheck){
-      fp = fopen("wave1.bin", "wb");
-      for(i3=0; i3<sim->n3; i3++){
-	i3_ = (sim->n3>1)?i3 + sim->nb:0;
-	for(i2=0; i2<sim->n2; i2++){
-	  i2_ = i2 + sim->nb;
-	  for(i1=0; i1<sim->n1; i1++){
-	    i1_ = i1 + sim->nb;
-	    
-	    fwrite(&sim->p1[i3_][i2_][i1_], sizeof(float), 1, fp);
-	  }
-	}
-      }
-      fclose(fp);
-    }
   }
   
   /*--------------------------------------------------------------*/
@@ -264,13 +551,14 @@ float fg_fwi(float *x, float *g)
     for(it=0; it<sim->nt; it++){
       sim->dres[irec][it] = (sim->dobs[irec][it]-sim->dcal[irec][it])*acq->wdat[irec][it];
       fwi->fcost += sim->dres[irec][it]*sim->dres[irec][it];
-      sim->dres[irec][it] *= acq->wdat[irec][it];      
+      sim->dres[irec][it] *= acq->wdat[irec][it];//the weighting will mask diving waves
+      sim->dres[irec][it] *= -1;//-R^H(\delta d - R\delta u)
     }
   }
   MPI_Allreduce(&fwi->fcost, &tmp, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
   fwi->fcost = 0.5*tmp*sim->dt;
   if(iproc==0) printf("fcost=%g\n", fwi->fcost);
-  
+ 
   sprintf(fname, "dsyn_%04d", acq->shot_idx[iproc]);
   fp=fopen(fname,"wb");
   if(fp==NULL) { fprintf(stderr,"error opening file\n"); exit(1);}
@@ -285,35 +573,19 @@ float fg_fwi(float *x, float *g)
   fflush(stdout);
   
   /*--------------------------------------------------------------*/
-  if(iproc==0) printf("----stage 2: adjoint modelling!-----------\n");
+  if(iproc==0) printf("----stage 2: adjoint modelling (G1)-----------\n");
   sim->sign_dt = -1;
   for(it=sim->nt-1; it>=0; it--){
-    if(iproc==0 && it%100==0) printf("it-----%d\n", it);
+    if(iproc==0 && it%sim->nt_verb==0) printf("it-----%d\n", it);
   
     inject_adjoint_source(sim, acq, sim->p2, sim->dres, it);
-    fdtd_update_v(sim, 2, it, 1);
-    fdtd_update_p(sim, 2, it, 1);
+    fdtd_update_v(sim, 2, it, 1, sim->kappa, sim->buz, sim->bux, sim->buy);
+    fdtd_update_p(sim, 2, it, 1, sim->kappa, sim->buz, sim->bux, sim->buy);
 
     inject_source(sim, acq, sim->p1, sim->stf[it]);
-    fdtd_update_p(sim, 1, it, 0);
-    fdtd_update_v(sim, 1, it, 0);
-    decimate_interp_bndr(sim, 1, it);/* interp=1 */
-
-    if(iproc==0 && sim->check==1 && it==sim->itcheck){
-      fp = fopen("wave2.bin", "wb");
-      for(i3=0; i3<sim->n3; i3++){
-	i3_ = (sim->n3>1)?i3 + sim->nb:0;
-	for(i2=0; i2<sim->n2; i2++){
-	  i2_ = i2 + sim->nb;
-	  for(i1=0; i1<sim->n1; i1++){
-	    i1_ = i1 + sim->nb;
-	    
-	    fwrite(&sim->p1[i3_][i2_][i1_], sizeof(float), 1, fp);
-	  }
-	}
-      }
-      fclose(fp);
-    }
+    fdtd_update_p(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);
+    fdtd_update_v(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);
+    decimate_interp_bndr(sim, 1, it, 1, sim->face1, sim->face2, sim->face3);/* interp=1 */
     
     for(i3=0; i3<sim->n3; i3++){
       i3_ = (sim->n3>1)?i3+sim->nb:0;
@@ -328,23 +600,122 @@ float fg_fwi(float *x, float *g)
 	}
       }
     }
-    if(fwi->preco==2){
-      for(i3=0; i3<sim->n3; i3++){
-	i3_ = (sim->n3>1)?i3+sim->nb:0;
-	for(i2=0; i2<sim->n2; i2++){
-	  i2_ = i2+sim->nb;
-	  for(i1=0; i1<sim->n1; i1++){
-	    i1_ = i1+sim->nb;
-	    h1[i3][i2][i1] += sim->divv[i3_][i2_][i1_]*sim->divv[i3_][i2_][i1_];
-	    h2[i3][i2][i1] += (sim->dvzdt[i3_][i2_][i1_] + sim->dvzdt[i3_][i2_][i1_-1])*(sim->dvzdt[i3_][i2_][i1_] + sim->dvzdt[i3_][i2_][i1_-1]);
-	    h2[i3][i2][i1] += (sim->dvxdt[i3_][i2_][i1_] + sim->dvxdt[i3_][i2_-1][i1_])*(sim->dvxdt[i3_][i2_][i1_] + sim->dvxdt[i3_][i2_-1][i1_]);
-	    if(sim->n3>1) h2[i3][i2][i1] += (sim->dvzdt[i3_][i2_][i1_] + sim->dvzdt[i3_-1][i2_][i1_])*(sim->dvzdt[i3_][i2_][i1_] + sim->dvzdt[i3_-1][i2_][i1_]);
+  }  
+  cpml_close(sim);
+  extend_model_close(sim);
+  fdtd_close(sim, 1);
+  fdtd_close(sim, 2);
+  decimate_interp_close(sim);
+  computing_box_close(sim, 0);
+  computing_box_close(sim, 1);
+
+  for(i3=0; i3<sim->n3; i3++){
+    for(i2=0; i2<sim->n2; i2++){
+      for(i1=0; i1<sim->n1; i1++){
+	tmp = sim->volume*sim->dt;
+	g1[i3][i2][i1] *= tmp;//dJ/dln(kappa)
+	g2[i3][i2][i1] *= rho_smooth[i3][i2][i1]*0.25*tmp;//dJ/dln(rho)
+	if(i1<= fwi->ibathy[i3][i2]){//reset again to avoid leakage
+	  g1[i3][i2][i1] = 0.;
+	  g2[i3][i2][i1] = 0.;
+	}
+      }
+    }
+  }
+  for(ipar=0; ipar<fwi->npar; ipar++){
+    for(i3=0; i3<sim->n3; i3++){
+      for(i2=0; i2<sim->n2; i2++){
+	for(i1=0; i1<sim->n1; i1++){
+	  j = i1 + sim->n1*(i2 + sim->n2*(i3 + sim->n3*ipar));
+	  /* if(fwi->family==1){//vp-rho */
+	  /*   if(fwi->idxpar[ipar]==1) g[j] = 2.0*g1[i3][i2][i1];//dJ/dln(vp) */
+	  /*   if(fwi->idxpar[ipar]==2) g[j] = g1[i3][i2][i1] + g2[i3][i2][i1];//dJ/dln(rho) */
+	  /* } */
+	  if(fwi->family==2){//vp-ip
+	    if(fwi->idxpar[ipar]==1) g[j] = g1[i3][i2][i1] - g2[i3][i2][i1];//dJ/dln(vp)
+	    //if(fwi->idxpar[ipar]==2) g[j] = g1[i3][i2][i1] + g2[i3][i2][i1];//dJ/dln(ip)
 	  }
 	}
       }
-    }//end if    
+    }
+  }
+  for(ipar=0; ipar<fwi->npar; ipar++){
+    MPI_Allreduce(&g[ipar*sim->n123], &g1[0][0][0], sim->n123, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+    memcpy(&g[ipar*sim->n123], &g1[0][0][0], sim->n123*sizeof(float));
+  }
+  if(iproc==0){
+    fp = fopen("gradient_m0_part1", "wb");
+    fwrite(g, sim->n123*sizeof(float), 1, fp);
+    fclose(fp);
+  }
+  free3float(rho_smooth);
+  
+  //===========================================================
+  //Part 2: compute G2=<lambda2,dA(m+\delta m)/dm (u+\delta u)>
+  //===========================================================
+  memset(&g1[0][0][0], 0, sim->n123*sizeof(float));
+  memset(&g2[0][0][0], 0, sim->n123*sizeof(float));
+  check_cfl(sim);
+  cpml_init(sim);  
+  extend_model_init(sim);
+  fdtd_init(sim, 1);//flag=1, incident field
+  fdtd_init(sim, 2);//flag=2, adjoint field
+  fdtd_null(sim, 1);//flag=1, incident field
+  fdtd_null(sim, 2);//flag=2, adjoint field
+  decimate_interp_init(sim);
+  extend_model(sim, sim->vp, sim->rho, sim->kappa, sim->buz, sim->bux, sim->buy);
+  computing_box_init(acq, sim, 0);
+  computing_box_init(acq, sim, 1);
 
-  }  
+  /*--------------------------------------------------------------*/
+  if(iproc==0) printf("----stage 1: forward modelling (G2)--------\n");
+  sim->sign_dt = 1;
+  for(it=0; it<sim->nt; it++){
+    if(iproc==0 && it%sim->nt_verb==0) printf("it-----%d\n", it);
+
+    decimate_interp_bndr(sim, 1, it, 0, sim->face1, sim->face2, sim->face3);/* interp=0 */
+    fdtd_update_v(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);
+    fdtd_update_p(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);
+    inject_source(sim, acq, sim->p1, sim->stf[it]);
+    extract_wavefield(sim, acq, sim->p1, sim->dcal, it);
+  }
+  
+  /*--------------------------------------------------------------*/
+  for(irec=0; irec<acq->nrec; irec++){
+    for(it=0; it<sim->nt; it++){
+      sim->dres[irec][it] *= -1;//R^H(\delta d - R\delta u)
+    }
+  }
+
+  /*--------------------------------------------------------------*/
+  if(iproc==0) printf("----stage 2: adjoint modelling (G2)-----------\n");
+  sim->sign_dt = -1;
+  for(it=sim->nt-1; it>=0; it--){
+    if(iproc==0 && it%sim->nt_verb==0) printf("it-----%d\n", it);
+  
+    inject_adjoint_source(sim, acq, sim->p2, sim->dres, it);
+    fdtd_update_v(sim, 2, it, 1, sim->kappa, sim->buz, sim->bux, sim->buy);
+    fdtd_update_p(sim, 2, it, 1, sim->kappa, sim->buz, sim->bux, sim->buy);
+
+    inject_source(sim, acq, sim->p1, sim->stf[it]);
+    fdtd_update_p(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);
+    fdtd_update_v(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);
+    decimate_interp_bndr(sim, 1, it, 1, sim->face1, sim->face2, sim->face3);/* interp=1 */
+
+    for(i3=0; i3<sim->n3; i3++){
+      i3_ = (sim->n3>1)?i3+sim->nb:0;
+      for(i2=0; i2<sim->n2; i2++){
+	i2_ = i2+sim->nb;
+	for(i1=0; i1<sim->n1; i1++){
+	  i1_ = i1+sim->nb;
+	  g1[i3][i2][i1] += sim->p2[i3_][i2_][i1_]*sim->divv[i3_][i2_][i1_];
+	  g2[i3][i2][i1] += (sim->vz2[i3_][i2_][i1_] + sim->vz2[i3_][i2_][i1_-1])*(sim->dvzdt[i3_][i2_][i1_] + sim->dvzdt[i3_][i2_][i1_-1]);
+	  g2[i3][i2][i1] += (sim->vx2[i3_][i2_][i1_] + sim->vx2[i3_][i2_-1][i1_])*(sim->dvxdt[i3_][i2_][i1_] + sim->dvxdt[i3_][i2_-1][i1_]);
+	  if(sim->n3>1) g2[i3][i2][i1] += (sim->vz2[i3_][i2_][i1_] + sim->vz2[i3_-1][i2_][i1_])*(sim->dvzdt[i3_][i2_][i1_] + sim->dvzdt[i3_-1][i2_][i1_]);
+	}
+      }
+    }
+  }
   cpml_close(sim);
   extend_model_close(sim);
   fdtd_close(sim, 1);
@@ -371,54 +742,18 @@ float fg_fwi(float *x, float *g)
       for(i2=0; i2<sim->n2; i2++){
 	for(i1=0; i1<sim->n1; i1++){
 	  j = i1 + sim->n1*(i2 + sim->n2*(i3 + sim->n3*ipar));
-	  if(fwi->family==1){//vp-rho
-	    if(fwi->idxpar[ipar]==1) g[j] = 2.0*g1[i3][i2][i1];//dJ/dln(vp)
-	    if(fwi->idxpar[ipar]==2) g[j] = g1[i3][i2][i1] + g2[i3][i2][i1];//dJ/dln(rho)
-	  }
+	  /* if(fwi->family==1){//vp-rho */
+	  /*   if(fwi->idxpar[ipar]==1) g[j] = 2.0*g1[i3][i2][i1];//dJ/dln(vp) */
+	  /*   if(fwi->idxpar[ipar]==2) g[j] = g1[i3][i2][i1] + g2[i3][i2][i1];//dJ/dln(rho) */
+	  /* } */
 	  if(fwi->family==2){//vp-ip
-	    if(fwi->idxpar[ipar]==1) g[j] = g1[i3][i2][i1] - g2[i3][i2][i1];//dJ/dln(vp)
+	    if(fwi->idxpar[ipar]==1) g[j] += g1[i3][i2][i1] - g2[i3][i2][i1];//dJ/dln(vp)
 	    if(fwi->idxpar[ipar]==2) g[j] = g1[i3][i2][i1] + g2[i3][i2][i1];//dJ/dln(ip)
 	  }
 	}
       }
     }
   }
-  if(fwi->preco==2){
-    MPI_Allreduce(&h1[0][0][0], fwi->hess, sim->n123, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
-    memcpy(&h1[0][0][0], fwi->hess, sim->n123*sizeof(float));
-    MPI_Allreduce(&h2[0][0][0], fwi->hess, sim->n123, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
-    memcpy(&h2[0][0][0], fwi->hess, sim->n123*sizeof(float));
-    for(i3=0; i3<sim->n3; i3++){
-      for(i2=0; i2<sim->n2; i2++){
-	for(i1=0; i1<sim->n1; i1++){
-	  tmp = sim->volume*sim->dt;
-	  s1 = sim->rho[i3][i2][i1]*sim->vp[i3][i2][i1]*sim->vp[i3][i2][i1];
-	  s2 = sim->rho[i3][i2][i1];
-	  h1[i3][i2][i1] *= s1*s1*tmp;//H_{ln(kappa),ln(kappa)}
-	  h2[i3][i2][i1] *= s2*s2*0.25*tmp;//H_{ln(rho),ln(rho)}
-	}
-      }
-    }
-    for(ipar=0; ipar<fwi->npar; ipar++){
-      for(i3=0; i3<sim->n3; i3++){
-	for(i2=0; i2<sim->n2; i2++){
-	  for(i1=0; i1<sim->n1; i1++){
-	    j = i1 + sim->n1*(i2 + sim->n2*(i3 + sim->n3*ipar));
-	    if(fwi->family==1){//vp-rho
-	      if(fwi->idxpar[ipar]==1) fwi->hess[j] = 4.0*h1[i3][i2][i1];//H_{ln(vp),ln(vp)}
-	      if(fwi->idxpar[ipar]==2) fwi->hess[j] = h1[i3][i2][i1] + h2[i3][i2][i1];//H_{ln(rho),ln(rho)}
-	    }
-	    if(fwi->family==2){//vp-ip
-	      if(fwi->idxpar[ipar]==1) fwi->hess[j] = h1[i3][i2][i1] + h2[i3][i2][i1];//H_{ln(vp),ln(vp)}
-	      if(fwi->idxpar[ipar]==2) fwi->hess[j] = h1[i3][i2][i1] + h2[i3][i2][i1];//H_{ln(ip),ln(ip)}
-	    }
-	  }
-	}
-      }
-    }
-
-  }//end if
-  
 
   for(ipar=0; ipar<fwi->npar; ipar++){
     MPI_Allreduce(&g[ipar*sim->n123], &g1[0][0][0], sim->n123, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
@@ -427,21 +762,25 @@ float fg_fwi(float *x, float *g)
   free3float(g1);
   free3float(g2);
   fg_mod_reg(sim, fwi, x, g);
-  if(iproc==0 && fwi->firstgrad){
-    fp=fopen("gradient_fwi","wb");
-    fwrite(g, fwi->n*sizeof(float), 1, fp);
+  if(iproc==0){
+    fp = fopen("gradient_m0_part12", "wb");
+    fwrite(g, sim->n123*sizeof(float), 1, fp);
+    fclose(fp);
+    fp = fopen("gradient_dm", "wb");
+    fwrite(&g[sim->n123], sim->n123*sizeof(float), 1, fp);
     fclose(fp);
   }
   
   if(sim->mode==1 && fwi->firstgrad){
+    /*
     s1 = fabs(x[0]);
     s2 = fabs(g[0]);
     for(j=0; j<fwi->n; j++){
       s1 = MAX(s1, fabs(x[j]));
       s2 = MAX(s2, fabs(g[j]));
     }
-    fwi->alpha = 0.02*s1/s2;
-    /*
+    fwi->alpha = 0.01*s1/s2;
+    */
     s1 = 0;
     s2 = 0;
     for(j=0; j<fwi->n; j++){
@@ -449,7 +788,7 @@ float fg_fwi(float *x, float *g)
       s2 += fabs(g[j]);
     }
     fwi->alpha = 5e-4*s1/s2;
-    */
+
     fwi->firstgrad = 0;
     if(iproc==0) printf("scaling=%e\n", fwi->alpha);
   }
@@ -460,6 +799,5 @@ float fg_fwi(float *x, float *g)
   if(iproc==0) printf("scaled fcost=%g\n", fwi->fcost);
   
   return fwi->fcost;
-
 }
 

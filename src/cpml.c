@@ -1,4 +1,4 @@
-/* Set up convolutional PML coefficients
+/* 2D/3D seismic modelling, RTM and FWI code
  *-----------------------------------------------------------------------
  *
  * Copyright (c) 2021 Harbin Institute of Technology. All rights reserved.
@@ -16,9 +16,8 @@ void cpml_init(sim_t *sim)
   int ib;
   float x, lx, damp, damp0;
 
-  float freq = 10.;
   float Rc = 1e-4;
-  float alpha = 3.1415926*freq;
+  float alpha = 3.1415926*sim->freq;
 
   sim->pmla = alloc1float(sim->nb);
   sim->pmlb = alloc1float(sim->nb);
