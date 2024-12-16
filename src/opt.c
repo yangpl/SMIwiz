@@ -211,12 +211,11 @@ void line_search(int n, //dimension of x
   int j;
   float gxd, c1_gxd, c2_gxd, fcost, fxx, alpha1, alpha2;
   float *xk;
-  static float infinity = 1e10;
 
   //use estimated stepsize from previous iteration when iter>1
   opt->alpha = 1.;
   alpha1 = 0;
-  alpha2 = infinity;
+  alpha2 = 0x3f3f3f3f;//this is actual infinity in computer
   
   xk=alloc1float(n);  // allocate memory for store current x
   memcpy(xk, x, n*sizeof(float)); // store x at k-th iteration
