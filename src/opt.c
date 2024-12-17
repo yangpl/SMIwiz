@@ -211,11 +211,12 @@ void line_search(int n, //dimension of x
   int j;
   float gxd, c1_gxd, c2_gxd, fcost, fxx, alpha1, alpha2;
   float *xk;
-
+  float inf = 0x3f3f3f3f;//this is actual infinity in computer
+  
   //use estimated stepsize from previous iteration when iter>1
   opt->alpha = 1.;
   alpha1 = 0;
-  alpha2 = 0x3f3f3f3f;//this is actual infinity in computer
+  alpha2 = inf;
   
   xk=alloc1float(n);  // allocate memory for store current x
   memcpy(xk, x, n*sizeof(float)); // store x at k-th iteration
@@ -245,7 +246,7 @@ void line_search(int n, //dimension of x
     }else if(gxd < c2_gxd){
       if(opt->verb) printf("Wolfe condition 2 fails: stepsize is too small!\n");
       alpha1 = opt->alpha;
-      if(alpha2<infinity) opt->alpha = 0.5*(alpha1 + alpha2);//shrink the search interval
+      if(alpha2<inf) opt->alpha = 0.5*(alpha1 + alpha2);//shrink the search interval
       else                opt->alpha *= 5.; //extend the search interval if alpha2==0
     }else{//conditions satisfied, terminate line search
       break;

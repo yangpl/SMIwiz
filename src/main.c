@@ -171,7 +171,7 @@ int main(int argc, char* argv[])
   else if(sim->mode==7) do_psf_hessian(sim, acq);
   else if(sim->mode==8) do_mig_decon_pcgnr(sim, acq);
   else if(sim->mode==9) do_mig_decon_fft(sim, acq);
-  //else if(sim->mode==10) do_updown(sim, acq);
+  else if(sim->mode==10) do_updown(sim, acq);
   //===========================================================
 
   ierr = MPI_Barrier(MPI_COMM_WORLD);
