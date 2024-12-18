@@ -26,7 +26,6 @@ void do_lsrtm(sim_t *sim, acq_t *acq);
 void do_invert_source(sim_t *sim, acq_t *acq);
 void do_psf_hessian(sim_t *sim, acq_t *acq);
 void do_mig_decon_pcgnr(sim_t *sim, acq_t *acq);
-void do_mig_decon_l1reg(sim_t *sim, acq_t *acq);
 void do_mig_decon_fft(sim_t *sim, acq_t *acq);
 void do_mig_decon(sim_t *sim, acq_t *acq);
 void do_adcig(sim_t *sim, acq_t *acq);
@@ -68,6 +67,7 @@ int main(int argc, char* argv[])
     else if(sim->mode==7) printf(" Compute PSF Hessian\n");
     else if(sim->mode==8) printf(" Iterative migration deconvolution via PSF\n");
     else if(sim->mode==9) printf(" Migration deconvolution via FFT-Wiener filter\n");
+    else if(sim->mode==10)printf(" Up-down separation\n");
     printf("=====================================================\n");
   }
   if(!getparint("order",&sim->order)) sim->order = 4;//only accepts 4 or 8-th order FD

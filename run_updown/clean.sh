@@ -1,0 +1,1 @@
+rm dat_* *~ OAR.* fricker out inputpar.txt

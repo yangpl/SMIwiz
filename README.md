@@ -45,9 +45,14 @@ A vedio has been recorded to explain the design of SMIwiz, thanks to the seminar
   gfortran generate_acqui.f90; ./a.out. 
   Please copy it to /run_fbrec3d before numerical test. (This is because acqui.txt for this test is too large (400 shots * 10000 receivers) to be uploaded)
 
-* run_lsrtm2d: Example to do two-parameter LSRTM
+* run_lsrtm2d: Example to do two-parameter LSRTM in data-domain
 
-* run_lsrtm3d: Example of a 3D two-parameter LSRTM on Overthrust model
+* run_lsrtm3d: Example of a 3D two-parameter LSRTM in data-domain on Overthrust model
+
+* run_decon_1par: Example for migration deconvolution using PSF and FFT-based Wiener filtering
+  Note that you have to first run in mode=7, then run in mode=8 (with mdopt=1 for PSF) or run mode=9 (with mdopt=2 for FFT-Wiener).
+  
+* run_updown: Example for up-going and down-going wavefield decomposition
 
 ## Instructions to run
 
