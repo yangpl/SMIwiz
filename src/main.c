@@ -70,6 +70,7 @@ int main(int argc, char* argv[])
     else if(sim->mode==7) printf(" Compute PSF Hessian\n");
     else if(sim->mode==8) printf(" Iterative migration deconvolution via PSF\n");
     else if(sim->mode==9) printf(" Migration deconvolution via FFT-Wiener filter\n");
+    else if(sim->mode==10) printf(" Up-down wavefield separation\n");
     printf("=====================================================\n");
   }
   if(!getparint("order",&sim->order)) sim->order = 4;//only accepts 4 or 8-th order FD

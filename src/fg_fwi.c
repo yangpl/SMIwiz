@@ -207,7 +207,7 @@ float fg_fwi(float *x, float *g)
 {
   int j;
   int it, irec, i1, i2, i3, i1_, i2_, i3_, ipar;
-  int in1, in2, in3;
+  //int in1, in2, in3;
   float s1, s2, tmp;
   float ***g1, ***g2;
   char fname[sizeof("dsyn_0000")];
@@ -357,16 +357,16 @@ float fg_fwi(float *x, float *g)
     
       for(i3=0; i3<sim->n3; i3++){
 	i3_ = (sim->n3>1)?i3+sim->nb:0;
-	in3 = (sim->n3>1)?(i3>=sim->order/2 && i3<sim->n3-sim->order):1;
+	//in3 = (sim->n3>1)?(i3>=sim->order/2 && i3<sim->n3-sim->order):1;
 	for(i2=0; i2<sim->n2; i2++){
 	  i2_ = i2+sim->nb;
-	  in2 =  (i2>=sim->order/2 && i2<sim->n2-sim->order);
+	  //in2 =  (i2>=sim->order/2 && i2<sim->n2-sim->order);
 	  for(i1=0; i1<sim->n1; i1++){
 	    i1_ = i1+sim->nb;
-	    in1 = (i1>=sim->order/2 && i1<sim->n1-sim->order);
-	    in1 = in1 && (i1>fwi->ibathy[i3][i2]);
+	    //in1 = (i1>=sim->order/2 && i1<sim->n1-sim->order);
+	    //in1 = in1 && (i1>fwi->ibathy[i3][i2]);
 
-	    if(in1 && in2 && in3){//reset again to avoid leakage
+	    if(i1>fwi->ibathy[i3][i2]){//reset again to avoid leakage
 	      g1[i3][i2][i1] += sim->p2[i3_][i2_][i1_]*sim->divv[i3_][i2_][i1_];
 	      g2[i3][i2][i1] += (sim->vz2[i3_][i2_][i1_] + sim->vz2[i3_][i2_][i1_-1])*(sim->dvzdt[i3_][i2_][i1_] + sim->dvzdt[i3_][i2_][i1_-1]);
 	      g2[i3][i2][i1] += (sim->vx2[i3_][i2_][i1_] + sim->vx2[i3_][i2_-1][i1_])*(sim->dvxdt[i3_][i2_][i1_] + sim->dvxdt[i3_][i2_-1][i1_]);
@@ -643,7 +643,6 @@ float fg_rwi(float *x, float *g)
     decimate_interp_bndr(sim, 1, it, 1, sim->face1, sim->face2, sim->face3);/* interp=1 */
 
     for(ipar=0; ipar<fwi->npar; ipar++){
-
       for(i3=0; i3<sim->n3; i3++){
 	i3_ = (sim->n3>1)?i3+sim->nb:0;
 	in3 = (sim->n3>1)?(i3>=sim->order/2 && i3<sim->n3-sim->order):1;
