@@ -3,7 +3,7 @@
 
 typedef struct {
   int nsrc, nrec;//number of sources and receivers on each processor
-  float zmin, zmax, xmin, xmax, ymin, ymax;
+  float zmin, zmax, xmin, xmax, ymin, ymax;//domain [zmin,zmax]*[xmin,xmax]*[ymin,ymax]
 
   int *shot_idx;//shot index for each processor
   

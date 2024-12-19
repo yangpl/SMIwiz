@@ -1,12 +1,10 @@
-/* 2D/3D seismic modelling, RTM and FWI code
- *-----------------------------------------------------------------------
- *
+/* Finite-difference time-domain (FDTD) modelling kernel
+ *----------------------------------------------------------------------
  * Copyright (c) 2021 Harbin Institute of Technology. All rights reserved.
  * Author: Pengliang Yang 
  * Email: ypl.2100@gmail.com
  * Homepage: https://yangpl.wordpress.com/
- *-----------------------------------------------------------------------
- */
+ *---------------------------------------------------------------------*/
 #include "cstd.h"
 #include "sim.h"
 
@@ -29,6 +27,11 @@ void fdtd_init(sim_t *sim, int flag)
       sim->memD3p0 = alloc3float(sim->n1pad, sim->n2pad, 2*sim->nb);
       sim->memD3vy0 = alloc3float(sim->n1pad, sim->n2pad, 2*sim->nb);
     }
+    //backup divergence and time derivative of particle velocity
+    sim->divv0 = alloc3float(sim->n1pad, sim->n2pad, sim->n3pad);
+    sim->dvzdt0 = alloc3float(sim->n1pad, sim->n2pad, sim->n3pad);
+    sim->dvxdt0 = alloc3float(sim->n1pad, sim->n2pad, sim->n3pad);
+    if(sim->n3>1) sim->dvydt0 = alloc3float(sim->n1pad, sim->n2pad, sim->n3pad);
 
   }else if(flag==1){//forward field
     sim->p1  = alloc3float(sim->n1pad, sim->n2pad, sim->n3pad);
@@ -45,9 +48,9 @@ void fdtd_init(sim_t *sim, int flag)
     }
     //backup divergence and time derivative of particle velocity
     sim->divv = alloc3float(sim->n1pad, sim->n2pad, sim->n3pad);
-    sim->dvxdt = alloc3float(sim->n1pad, sim->n2pad, sim->n3pad);
-    sim->dvydt = alloc3float(sim->n1pad, sim->n2pad, sim->n3pad);
     sim->dvzdt = alloc3float(sim->n1pad, sim->n2pad, sim->n3pad);
+    sim->dvxdt = alloc3float(sim->n1pad, sim->n2pad, sim->n3pad);
+    if(sim->n3>1) sim->dvydt = alloc3float(sim->n1pad, sim->n2pad, sim->n3pad);
     
   }else if(flag==2){//adjoint field
     sim->p2  = alloc3float(sim->n1pad, sim->n2pad, sim->n3pad);
@@ -61,6 +64,19 @@ void fdtd_init(sim_t *sim, int flag)
       sim->vy2 = alloc3float(sim->n1pad, sim->n2pad, sim->n3pad);
       sim->memD3p2 = alloc3float(sim->n1pad, sim->n2pad, 2*sim->nb);
       sim->memD3vy2 = alloc3float(sim->n1pad, sim->n2pad, 2*sim->nb);
+    }
+  }else if(flag==3){//adjoint field
+    sim->p3  = alloc3float(sim->n1pad, sim->n2pad, sim->n3pad);
+    sim->vz3 = alloc3float(sim->n1pad, sim->n2pad, sim->n3pad);
+    sim->vx3 = alloc3float(sim->n1pad, sim->n2pad, sim->n3pad);
+    sim->memD1p3 = alloc3float(2*sim->nb, sim->n2pad, sim->n3pad);
+    sim->memD2p3 = alloc3float(sim->n1pad, 2*sim->nb, sim->n3pad);
+    sim->memD1vz3 = alloc3float(2*sim->nb, sim->n2pad, sim->n3pad);
+    sim->memD2vx3 = alloc3float(sim->n1pad, 2*sim->nb, sim->n3pad);
+    if(sim->n3>1){
+      sim->vy3 = alloc3float(sim->n1pad, sim->n2pad, sim->n3pad);
+      sim->memD3p3 = alloc3float(sim->n1pad, sim->n2pad, 2*sim->nb);
+      sim->memD3vy3 = alloc3float(sim->n1pad, sim->n2pad, 2*sim->nb);
     }
   }
 
@@ -81,6 +97,10 @@ void fdtd_null(sim_t *sim, int flag)
       memset(sim->memD3p0[0][0], 0, sim->n1pad*sim->n2pad*2*sim->nb*sizeof(float));
       memset(sim->memD3vy0[0][0], 0, sim->n1pad*sim->n2pad*2*sim->nb*sizeof(float));
     }
+    memset(&sim->divv0[0][0][0], 0, sim->n123pad*sizeof(float));
+    memset(&sim->dvzdt0[0][0][0], 0, sim->n123pad*sizeof(float));
+    memset(&sim->dvxdt0[0][0][0], 0, sim->n123pad*sizeof(float));
+    if(sim->n3>1) memset(&sim->dvydt0[0][0][0], 0, sim->n123pad*sizeof(float));
 
   }else if(flag==1){//forward field
     memset(sim->p1 [0][0], 0, sim->n123pad*sizeof(float));
@@ -99,7 +119,7 @@ void fdtd_null(sim_t *sim, int flag)
     memset(&sim->divv[0][0][0], 0, sim->n123pad*sizeof(float));
     memset(&sim->dvzdt[0][0][0], 0, sim->n123pad*sizeof(float));
     memset(&sim->dvxdt[0][0][0], 0, sim->n123pad*sizeof(float));
-    memset(&sim->dvydt[0][0][0], 0, sim->n123pad*sizeof(float));
+    if(sim->n3>1) memset(&sim->dvydt[0][0][0], 0, sim->n123pad*sizeof(float));
 
   }else if(flag==2){//adjoint field
     memset(sim->p2 [0][0], 0, sim->n123pad*sizeof(float));
@@ -113,6 +133,20 @@ void fdtd_null(sim_t *sim, int flag)
       memset(sim->vy2[0][0], 0, sim->n123pad*sizeof(float));
       memset(sim->memD3p2[0][0], 0, sim->n1pad*sim->n2pad*2*sim->nb*sizeof(float));
       memset(sim->memD3vy2[0][0], 0, sim->n1pad*sim->n2pad*2*sim->nb*sizeof(float));
+    }
+
+  }else if(flag==3){//adjoint field
+    memset(sim->p3 [0][0], 0, sim->n123pad*sizeof(float));
+    memset(sim->vz3[0][0], 0, sim->n123pad*sizeof(float));
+    memset(sim->vx3[0][0], 0, sim->n123pad*sizeof(float));
+    memset(sim->memD1p3[0][0], 0, 2*sim->nb*sim->n2pad*sim->n3pad*sizeof(float));
+    memset(sim->memD2p3[0][0], 0, sim->n1pad*2*sim->nb*sim->n3pad*sizeof(float));
+    memset(sim->memD1vz3[0][0], 0, 2*sim->nb*sim->n2pad*sim->n3pad*sizeof(float));
+    memset(sim->memD2vx3[0][0], 0, sim->n1pad*2*sim->nb*sim->n3pad*sizeof(float));
+    if(sim->n3>1){
+      memset(sim->vy3[0][0], 0, sim->n123pad*sizeof(float));
+      memset(sim->memD3p3[0][0], 0, sim->n1pad*sim->n2pad*2*sim->nb*sizeof(float));
+      memset(sim->memD3vy3[0][0], 0, sim->n1pad*sim->n2pad*2*sim->nb*sizeof(float));
     }
   }
 
@@ -133,6 +167,10 @@ void fdtd_close(sim_t *sim, int flag)
       free3float(sim->memD3p0);
       free3float(sim->memD3vy0);
     }
+    free3float(sim->divv0);
+    free3float(sim->dvzdt0);
+    free3float(sim->dvxdt0);
+    if(sim->n3>1) free3float(sim->dvydt0);
 
   }else if(flag==1){//forward field
     free3float(sim->p1);
@@ -148,9 +186,9 @@ void fdtd_close(sim_t *sim, int flag)
       free3float(sim->memD3vy1);
     }
     free3float(sim->divv);
-    free3float(sim->dvxdt);
-    free3float(sim->dvydt);
     free3float(sim->dvzdt);
+    free3float(sim->dvxdt);
+    if(sim->n3>1) free3float(sim->dvydt);
 
   }else if(flag==2){//adjoint field
     free3float(sim->p2);
@@ -164,6 +202,20 @@ void fdtd_close(sim_t *sim, int flag)
       free3float(sim->vy2);
       free3float(sim->memD3p2);
       free3float(sim->memD3vy2);
+    }
+
+  }else if(flag==3){//adjoint field
+    free3float(sim->p3);
+    free3float(sim->vx3);
+    free3float(sim->vz3);
+    free3float(sim->memD1p3);
+    free3float(sim->memD2p3);
+    free3float(sim->memD1vz3);
+    free3float(sim->memD2vx3);
+    if(sim->n3>1){
+      free3float(sim->vy3);
+      free3float(sim->memD3p3);
+      free3float(sim->memD3vy3);
     }
 
   }
@@ -183,36 +235,36 @@ void fdtd_update_v(sim_t *sim, int flag, int it, int adj, float ***kappa, float 
   float _d3 = 1./sim->d3;
 
   if(sim->order==4){
-    i1min=1;
-    i1max=sim->n1pad-3;
-    i2min=1;
-    i2max=sim->n2pad-3;
-    i3min=(sim->n3>1)?1:0;
-    i3max=(sim->n3>1)?(sim->n3pad-3):0;
+    i1min = 1;
+    i1max = sim->n1pad-3;
+    i2min = 1;
+    i2max = sim->n2pad-3;
+    i3min = (sim->n3>1)?1:0;
+    i3max = (sim->n3>1)?(sim->n3pad-3):0;
   }else if(sim->order==8){
-    i1min=3;
-    i1max=sim->n1pad-5;
-    i2min=3;
-    i2max=sim->n2pad-5;
-    i3min=(sim->n3>1)?3:0;
-    i3max=(sim->n3>1)?(sim->n3pad-5):0;
+    i1min = 3;
+    i1max = sim->n1pad-5;
+    i2min = 3;
+    i2max = sim->n2pad-5;
+    i3min = (sim->n3>1)?3:0;
+    i3max = (sim->n3>1)?(sim->n3pad-5):0;
   }
 
   if(sim->ibox){
     if(adj){
-      i1min=MAX(sim->i1min_adj[it], i1min);
-      i1max=MIN(sim->i1max_adj[it], i1max);
-      i2min=MAX(sim->i2min_adj[it], i2min);
-      i2max=MIN(sim->i2max_adj[it], i2max);
-      i3min=(sim->n3>1)?MAX(sim->i3min_adj[it], i3min):0;
-      i3max=(sim->n3>1)?MIN(sim->i3max_adj[it], i3max):0;
+      i1min = MAX(sim->i1min_adj[it], i1min);
+      i1max = MIN(sim->i1max_adj[it], i1max);
+      i2min = MAX(sim->i2min_adj[it], i2min);
+      i2max = MIN(sim->i2max_adj[it], i2max);
+      i3min = (sim->n3>1)?MAX(sim->i3min_adj[it], i3min):0;
+      i3max = (sim->n3>1)?MIN(sim->i3max_adj[it], i3max):0;
     }else{
-      i1min=MAX(sim->i1min_fwd[it], i1min);
-      i1max=MIN(sim->i1max_fwd[it], i1max);
-      i2min=MAX(sim->i2min_fwd[it], i2min);
-      i2max=MIN(sim->i2max_fwd[it], i2max);
-      i3min=(sim->n3>1)?MAX(sim->i3min_fwd[it], i3min):0;
-      i3max=(sim->n3>1)?MIN(sim->i3max_fwd[it], i3max):0;
+      i1min = MAX(sim->i1min_fwd[it], i1min);
+      i1max = MIN(sim->i1max_fwd[it], i1max);
+      i2min = MAX(sim->i2min_fwd[it], i2min);
+      i2max = MIN(sim->i2max_fwd[it], i2max);
+      i3min = (sim->n3>1)?MAX(sim->i3min_fwd[it], i3min):0;
+      i3max = (sim->n3>1)?MIN(sim->i3max_fwd[it], i3max):0;
     }
     if(sim->sign_dt<0 && flag==1){
       i1min = sim->nb;
@@ -226,7 +278,6 @@ void fdtd_update_v(sim_t *sim, int flag, int it, int adj, float ***kappa, float 
     }
     if(sim->freesurf) i1min = sim->nb;
   }
-
 
   if(flag==0){
     p = sim->p0;
@@ -252,6 +303,14 @@ void fdtd_update_v(sim_t *sim, int flag, int it, int adj, float ***kappa, float 
     memD1p = sim->memD1p2;
     memD2p = sim->memD2p2;
     memD3p = sim->memD3p2;
+  }else if(flag==3){
+    p = sim->p3;
+    vz = sim->vz3;
+    vx = sim->vx3;
+    vy = sim->vy3;
+    memD1p = sim->memD1p3;
+    memD2p = sim->memD2p3;
+    memD3p = sim->memD3p3;
   }
   
 #ifdef _OPENMP
@@ -308,6 +367,10 @@ void fdtd_update_v(sim_t *sim, int flag, int it, int adj, float ***kappa, float 
 	  sim->dvzdt[i3][i2][i1] = -buz[i3][i2][i1]*D1p;
 	  sim->dvxdt[i3][i2][i1] = -bux[i3][i2][i1]*D2p;
 	}
+	if(flag==0){
+	  sim->dvzdt0[i3][i2][i1] = -buz[i3][i2][i1]*D1p;
+	  sim->dvxdt0[i3][i2][i1] = -bux[i3][i2][i1]*D2p;
+	}
 	
 	if(sim->n3>1){
 	  if(sim->order==4){
@@ -332,7 +395,8 @@ void fdtd_update_v(sim_t *sim, int flag, int it, int adj, float ***kappa, float 
 	  
 	  vy[i3][i2][i1] -= dt*buy[i3][i2][i1]*D3p;
 	  if(flag==1) sim->dvydt[i3][i2][i1] = -buy[i3][i2][i1]*D3p;
-	}
+	  if(flag==0) sim->dvydt0[i3][i2][i1] = -buy[i3][i2][i1]*D3p;
+	}//end if n3>1
 	
       }//end for i3
     }//end for i2
@@ -387,36 +451,36 @@ void fdtd_update_p(sim_t *sim, int flag, int it, int adj, float ***kappa, float 
   float _d3 = 1./sim->d3;
 
   if(sim->order==4){
-    i1min=2;
-    i1max=sim->n1pad-2;
-    i2min=2;
-    i2max=sim->n2pad-2;
-    i3min=(sim->n3>1)?2:0;
-    i3max=(sim->n3>1)?(sim->n3pad-2):0;
+    i1min = 2;
+    i1max = sim->n1pad-2;
+    i2min = 2;
+    i2max = sim->n2pad-2;
+    i3min = (sim->n3>1)?2:0;
+    i3max = (sim->n3>1)?(sim->n3pad-2):0;
   }else if(sim->order==8){
-    i1min=4;
-    i1max=sim->n1pad-4;
-    i2min=4;
-    i2max=sim->n2pad-4;
-    i3min=(sim->n3>1)?4:0;
-    i3max=(sim->n3>1)?(sim->n3pad-4):0;
+    i1min = 4;
+    i1max = sim->n1pad-4;
+    i2min = 4;
+    i2max = sim->n2pad-4;
+    i3min = (sim->n3>1)?4:0;
+    i3max = (sim->n3>1)?(sim->n3pad-4):0;
   }
   
   if(sim->ibox){
     if(adj){
-      i1min=MAX(sim->i1min_adj[it], i1min);
-      i1max=MIN(sim->i1max_adj[it], i1max);
-      i2min=MAX(sim->i2min_adj[it], i2min);
-      i2max=MIN(sim->i2max_adj[it], i2max);
-      i3min=(sim->n3>1)?MAX(sim->i3min_adj[it], i3min):0;
-      i3max=(sim->n3>1)?MIN(sim->i3max_adj[it], i3max):0;
+      i1min = MAX(sim->i1min_adj[it], i1min);
+      i1max = MIN(sim->i1max_adj[it], i1max);
+      i2min = MAX(sim->i2min_adj[it], i2min);
+      i2max = MIN(sim->i2max_adj[it], i2max);
+      i3min = (sim->n3>1)?MAX(sim->i3min_adj[it], i3min):0;
+      i3max = (sim->n3>1)?MIN(sim->i3max_adj[it], i3max):0;
     }else{
-      i1min=MAX(sim->i1min_fwd[it], i1min);
-      i1max=MIN(sim->i1max_fwd[it], i1max);
-      i2min=MAX(sim->i2min_fwd[it], i2min);
-      i2max=MIN(sim->i2max_fwd[it], i2max);
-      i3min=(sim->n3>1)?MAX(sim->i3min_fwd[it], i3min):0;
-      i3max=(sim->n3>1)?MIN(sim->i3max_fwd[it], i3max):0;
+      i1min = MAX(sim->i1min_fwd[it], i1min);
+      i1max = MIN(sim->i1max_fwd[it], i1max);
+      i2min = MAX(sim->i2min_fwd[it], i2min);
+      i2max = MIN(sim->i2max_fwd[it], i2max);
+      i3min = (sim->n3>1)?MAX(sim->i3min_fwd[it], i3min):0;
+      i3max = (sim->n3>1)?MIN(sim->i3max_fwd[it], i3max):0;
     }
     if(sim->sign_dt<0 && flag==1){
       i1min = sim->nb;
@@ -455,6 +519,14 @@ void fdtd_update_p(sim_t *sim, int flag, int it, int adj, float ***kappa, float 
     memD1vz = sim->memD1vz2;
     memD2vx = sim->memD2vx2;
     memD3vy = sim->memD3vy2;
+  }else if(flag==3){
+    p = sim->p3;
+    vz = sim->vz3;
+    vx = sim->vx3;
+    vy = sim->vy3;
+    memD1vz = sim->memD1vz3;
+    memD2vx = sim->memD2vx3;
+    memD3vy = sim->memD3vy3;
   }
 
 #ifdef _OPENMP
@@ -532,6 +604,7 @@ void fdtd_update_p(sim_t *sim, int flag, int it, int adj, float ***kappa, float 
 	divv = (D1vz + D2vx + D3vy);
 	p[i3][i2][i1] -= dt*kappa[i3][i2][i1]*divv;
 	if(flag==1) sim->divv[i3][i2][i1] = divv;
+	if(flag==0) sim->divv0[i3][i2][i1] = divv;
       }
     }
   }

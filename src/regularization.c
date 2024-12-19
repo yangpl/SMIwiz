@@ -1,9 +1,10 @@
-/*
-  Copyright (c) Pengliang Yang, 2020, Harbin Institute of Technology, China
-  Copyright (c) Pengliang Yang, 2018, University Grenoble Alpes, France
-  Homepage: https://yangpl.wordpress.com
-  E-mail: ypl.2100@gmail.com
-*/
+/* model regularization by Tikhonov or Total variation (TV)
+ *--------------------------------------------------------------------------
+ *  Copyright (c) Pengliang Yang, 2020, Harbin Institute of Technology, China
+ *  Copyright (c) Pengliang Yang, 2018, University Grenoble Alpes, France
+ *  Homepage: https://yangpl.wordpress.com
+ *  E-mail: ypl.2100@gmail.com
+ *--------------------------------------------------------------------------*/
 #include "cstd.h"
 
 float regularization_tikhonov(float *x, float *g, int n1, int n2, int n3, float d1, float d2, float d3)

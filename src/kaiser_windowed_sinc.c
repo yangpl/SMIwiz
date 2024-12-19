@@ -1,12 +1,12 @@
-/*
-  Copyright (c) Pengliang Yang, 2020, Harbin Institute of Technology, China
-  Copyright (c) Pengliang Yang, 2018, University Grenoble Alpes, France
-  Homepage: https://yangpl.wordpress.com
-  E-mail: ypl.2100@gmail.com
-*/
+/* Kaiser-windowed sinc function
+ *-------------------------------------------------------------------------
+ *  Copyright (c) Pengliang Yang, 2020, Harbin Institute of Technology, China
+ *  Copyright (c) Pengliang Yang, 2018, University Grenoble Alpes, France
+ *  Homepage: https://yangpl.wordpress.com
+ *  E-mail: ypl.2100@gmail.com
+ *-------------------------------------------------------------------------*/
 #include <math.h>
 
-//=============================================================
 double sinc(double x)
 {
   const float PI = 3.141592653589793238462643;
@@ -16,11 +16,11 @@ double sinc(double x)
   if(fabs(x)>eps) {
     pix=PI*x;
     return sin(pix)/pix;
-  } return 1;
-
+  } 
+  
+  return 1;
 }
 
-//=============================================================
 double bessi0(double x)
 /*< Evaluate modified Bessel function In(x) and n=0.  >*/
 {
@@ -38,6 +38,7 @@ double bessi0(double x)
          +y*(-0.2057706e-1+y*(0.2635537e-1+y*(-0.1647633e-1
          +y*0.392377e-2))))))));
    }
+   
    return ans;
 }
 

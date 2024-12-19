@@ -1,5 +1,5 @@
 /* 2D/3D seismic modelling, RTM and FWI code
- *
+ *-----------------------------------------------------------------------
  *  Reference:
  *  Yang, P., Brossier, R., and Virieux, J. (2016). Wavefield reconstruction
  *  from significantly decimated boundaries. Geophysics, 81 (5) T197–T209
@@ -8,7 +8,6 @@
  *   over staggered grid, as I show in 2014 Computers & Geosciences. It is 
  *   not implemented for the ease of grid manipulation.
  *-----------------------------------------------------------------------
- *
  * Copyright (c) 2021 Harbin Institute of Technology. All rights reserved.
  * Author: Pengliang Yang 
  * Email: ypl.2100@gmail.com
@@ -20,35 +19,65 @@
 double sinc(double x);
 double bessi0(double x);
 
-void decimate_interp_init(sim_t *sim)
+void decimate_interp_init(sim_t *sim, int flag)
 {
-  if(sim->order==8){
-    //allocate memory to store decimated boundaries, 8 layers on each side
-    sim->face1 = alloc2float(sim->mt, 16*sim->n2*sim->n3);
-    sim->face2 = alloc2float(sim->mt, 16*sim->n1*sim->n3);
-    memset(sim->face1[0], 0, sim->mt*16*sim->n2*sim->n3*sizeof(float));
-    memset(sim->face2[0], 0, sim->mt*16*sim->n1*sim->n3*sizeof(float));
-    if(sim->n3>1){
-      sim->face3 = alloc2float(sim->mt, 16*sim->n1*sim->n2);
-      memset(sim->face3[0], 0, sim->mt*16*sim->n1*sim->n2*sizeof(float));
+  if(flag==1){
+    if(sim->order==8){
+      //allocate memory to store decimated boundaries, 8 layers on each side
+      sim->face1 = alloc2float(sim->mt, 16*sim->n2*sim->n3);
+      sim->face2 = alloc2float(sim->mt, 16*sim->n1*sim->n3);
+      memset(sim->face1[0], 0, sim->mt*16*sim->n2*sim->n3*sizeof(float));
+      memset(sim->face2[0], 0, sim->mt*16*sim->n1*sim->n3*sizeof(float));
+      if(sim->n3>1){
+	sim->face3 = alloc2float(sim->mt, 16*sim->n1*sim->n2);
+	memset(sim->face3[0], 0, sim->mt*16*sim->n1*sim->n2*sizeof(float));
+      }
+    }else if(sim->order==4){
+      sim->face1 = alloc2float(sim->mt, 8*sim->n2*sim->n3);
+      sim->face2 = alloc2float(sim->mt, 8*sim->n1*sim->n3);
+      memset(sim->face1[0], 0, sim->mt*8*sim->n2*sim->n3*sizeof(float));
+      memset(sim->face2[0], 0, sim->mt*8*sim->n1*sim->n3*sizeof(float));
+      if(sim->n3>1){
+	sim->face3 = alloc2float(sim->mt, 8*sim->n1*sim->n2);
+	memset(sim->face3[0], 0, sim->mt*8*sim->n1*sim->n2*sizeof(float));
+      }
     }
-  }else if(sim->order==4){
-    sim->face1 = alloc2float(sim->mt, 8*sim->n2*sim->n3);
-    sim->face2 = alloc2float(sim->mt, 8*sim->n1*sim->n3);
-    memset(sim->face1[0], 0, sim->mt*8*sim->n2*sim->n3*sizeof(float));
-    memset(sim->face2[0], 0, sim->mt*8*sim->n1*sim->n3*sizeof(float));
-    if(sim->n3>1){
-      sim->face3 = alloc2float(sim->mt, 8*sim->n1*sim->n2);
-      memset(sim->face3[0], 0, sim->mt*8*sim->n1*sim->n2*sizeof(float));
+  }else if(flag==0){
+    if(sim->order==8){
+      //allocate memory to store decimated boundaries, 8 layers on each side
+      sim->face1_ = alloc2float(sim->mt, 16*sim->n2*sim->n3);
+      sim->face2_ = alloc2float(sim->mt, 16*sim->n1*sim->n3);
+      memset(sim->face1_[0], 0, sim->mt*16*sim->n2*sim->n3*sizeof(float));
+      memset(sim->face2_[0], 0, sim->mt*16*sim->n1*sim->n3*sizeof(float));
+      if(sim->n3>1){
+	sim->face3_ = alloc2float(sim->mt, 16*sim->n1*sim->n2);
+	memset(sim->face3_[0], 0, sim->mt*16*sim->n1*sim->n2*sizeof(float));
+      }
+    }else if(sim->order==4){
+      sim->face1_ = alloc2float(sim->mt, 8*sim->n2*sim->n3);
+      sim->face2_ = alloc2float(sim->mt, 8*sim->n1*sim->n3);
+      memset(sim->face1_[0], 0, sim->mt*8*sim->n2*sim->n3*sizeof(float));
+      memset(sim->face2_[0], 0, sim->mt*8*sim->n1*sim->n3*sizeof(float));
+      if(sim->n3>1){
+	sim->face3_ = alloc2float(sim->mt, 8*sim->n1*sim->n2);
+	memset(sim->face3_[0], 0, sim->mt*8*sim->n1*sim->n2*sizeof(float));
+      }
     }
   }
+  
 }
 
-void decimate_interp_close(sim_t *sim)
+void decimate_interp_close(sim_t *sim, int flag)
 {
-  free2float(sim->face1);
-  free2float(sim->face2);
-  if(sim->n3>1) free2float(sim->face3);
+  if(flag==1){
+    free2float(sim->face1);
+    free2float(sim->face2);
+    if(sim->n3>1) free2float(sim->face3);
+  }else if(flag==0){
+    free2float(sim->face1_);
+    free2float(sim->face2_);
+    if(sim->n3>1) free2float(sim->face3_);
+  }
 }
 
 double kwsinc(double x, int l, int r)

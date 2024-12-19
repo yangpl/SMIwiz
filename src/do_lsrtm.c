@@ -1,6 +1,5 @@
 /* Data-domain Linearized waveform inversion (Least-squares RTM)
  *-----------------------------------------------------------------------
- *
  * Copyright (c) 2021 Harbin Institute of Technology. All rights reserved.
  * Author: Pengliang Yang 
  * Email: ypl.2100@gmail.com
@@ -35,8 +34,8 @@ void computing_box_close(sim_t *sim, int adj);
 void cpml_init(sim_t *sim);
 void cpml_close(sim_t *sim);
 
-void decimate_interp_init(sim_t *sim);
-void decimate_interp_close(sim_t *sim);
+void decimate_interp_init(sim_t *sim, int flag);
+void decimate_interp_close(sim_t *sim, int flag);
 void decimate_interp_bndr(sim_t *sim, int flag, int it, int interp, float **face1, float **face2, float **face3);
 
 void inject_source(sim_t *sim, acq_t *acq, float ***sp, float stf_it);
@@ -112,7 +111,7 @@ void do_lsrtm(sim_t *sim, acq_t *acq)
   fdtd_init(sim, 0);//flag=0, scattering field
   fdtd_init(sim, 1);//flag=1, incident field
   fdtd_init(sim, 2);//flag=2, adjoint field
-  decimate_interp_init(sim);
+  decimate_interp_init(sim, 1);
   extend_model(sim, sim->vp, sim->rho, sim->kappa, sim->buz, sim->bux, sim->buy);
   computing_box_init(acq, sim, 0);
   computing_box_init(acq, sim, 1);
@@ -324,10 +323,12 @@ void do_lsrtm(sim_t *sim, acq_t *acq)
       fwrite(&cg_x[0][0][0][0], fwi->n*sizeof(float), 1, fp);
       fclose(fp);
 
-      if(fwi->iter==0) fp = fopen("param_iter", "wb");
-      else             fp = fopen("param_iter", "ab");
-      fwrite(&cg_x[0][0][0][0], fwi->n*sizeof(float), 1, fp);
-      fclose(fp);
+      if(sim->n3==1){//we only store intermediate models for 2D case
+	if(fwi->iter==0) fp = fopen("param_iter", "wb");
+	else             fp = fopen("param_iter", "ab");
+	fwrite(&cg_x[0][0][0][0], fwi->n*sizeof(float), 1, fp);
+	fclose(fp);
+      }
     }
     
     if(iproc==0) printf("------ Born modelling/demigration, w_k=L p_k--------\n");
@@ -526,7 +527,7 @@ void do_lsrtm(sim_t *sim, acq_t *acq)
   fdtd_close(sim, 0);
   fdtd_close(sim, 1);
   fdtd_close(sim, 2);
-  decimate_interp_close(sim);
+  decimate_interp_close(sim, 1);
 
   free2float(sim->dcal);
   free2float(sim->dobs);

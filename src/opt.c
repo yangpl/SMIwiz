@@ -1,24 +1,24 @@
 /* interface to implement l-BFGS algorithm 
-
-   The Wolfe conditions can be found in Nocedal, Numerical Optimization,
-   2nd edition, p.33
-
-   The linesearch method in this code is based first on a bracketing
-   strategy, then on a dichotomy algorithm. See a full description in:
-   Numerical Optimizationn Theoretical and  Practical Aspects,
-   J.F.Bonnans, J.C.Gilbert,  C. Lemaréchal, C.A. Sagastizábal,
-   Springer-Verlag
-
-   Reference:
-   [1] Numerical Optimization, Nocedal, 2nd edition, 2006
-   Algorithm 7.4 p. 178, Algorithm 7.5 p. 179
-   [2] https://en.wikipedia.org/wiki/Limited-memory_BFGS
-
-   Copyright (c) Pengliang Yang, 2020, Harbin Institute of Technology, China
-   Copyright (c) Pengliang Yang, 2018, University Grenoble Alpes, France
-   Homepage: https://yangpl.wordpress.com
-   E-mail: ypl.2100@gmail.com
-*/
+ *-----------------------------------------------------------------------
+ *  The Wolfe conditions can be found in Nocedal, Numerical Optimization,
+ *  2nd edition, p.33
+ *
+ *  The linesearch method in this code is based first on a bracketing
+ *  strategy, then on a dichotomy algorithm. See a full description in:
+ *  Numerical Optimizationn Theoretical and  Practical Aspects,
+ *  J.F.Bonnans, J.C.Gilbert,  C. Lemaréchal, C.A. Sagastizábal,
+ *  Springer-Verlag
+ *
+ *  Reference:
+ *  [1] Numerical Optimization, Nocedal, 2nd edition, 2006
+ *  Algorithm 7.4 p. 178, Algorithm 7.5 p. 179
+ *  [2] https://en.wikipedia.org/wiki/Limited-memory_BFGS
+ *----------------------------------------------------------------------------
+ *  Copyright (c) Pengliang Yang, 2020, Harbin Institute of Technology, China
+ *  Copyright (c) Pengliang Yang, 2018, University Grenoble Alpes, France
+ *  Homepage: https://yangpl.wordpress.com
+ *  E-mail: ypl.2100@gmail.com
+ *------------------------------------------------------------------------*/
 #include "cstd.h"
 #include "opt.h"
 

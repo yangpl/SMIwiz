@@ -1,12 +1,10 @@
-/* 2D/3D seismic modelling, RTM and FWI code
+/* extend model domain with absorbing boundary layers
  *-----------------------------------------------------------------------
- *
  * Copyright (c) 2021 Harbin Institute of Technology. All rights reserved.
  * Author: Pengliang Yang 
  * Email: ypl.2100@gmail.com
  * Homepage: https://yangpl.wordpress.com/
- *-----------------------------------------------------------------------
- */
+ *----------------------------------------------------------------------*/
 #include "cstd.h"
 #include "sim.h"
 

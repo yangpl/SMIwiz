@@ -1,3 +1,5 @@
+/* this is Hoare's quantile algorithm implemented in Madagascar!
+ *--------------------------------------------------------------*/
 double quantile(int q    /* quantile */, 
 		int n    /* array length */, 
 		double* a /* array [n] */) 

@@ -7,7 +7,6 @@ typedef struct {
   int npar;//number of parameters to invert by FWI
   int *idxpar;//index of the inversion parameters
   float rhomin, rhomax, vpmin, vpmax;
-  float *minpar, *maxpar;
 
   float **bathy; //bathymetry to prescribe water bottom
   int **ibathy;//index of bathymetry at depth z
@@ -15,6 +14,7 @@ typedef struct {
   int itransition; //index of transition zone
 
   int niter; //maximum number of iterations
+  int niter_inner; //maximum number of iterations in inner loops
   int iter; //iteration index
   int restart;//restart iterations
   float fcost, fcost_dat, fcost_mod;
@@ -29,6 +29,7 @@ typedef struct {
   int isrcpershot;// estimate source per shot or not
   float *hess;//pseudo-Hessian
 
+  int objopt;//0=L2, 1=AWI
   int rwi;//1=RWI; 0=FWI
   int preco;//0=no precondition; 1=depth precondition; 2=pseudo-Hessian precondition
   int mdopt;//options for migration deconvolution 

@@ -1,4 +1,4 @@
-/* 2D/3D seismic modelling, RTM and FWI code
+/* inject sources, extract seismic data from receivers
  *-----------------------------------------------------------------------
  * Copyright (c) 2021 Harbin Institute of Technology. All rights reserved.
  * Author: Pengliang Yang 
@@ -8,7 +8,6 @@
 #include "sim.h"
 #include "acq.h"
 
-//======================================================================
 void inject_source(sim_t *sim, acq_t *acq, float ***sp, float stf_it)
 {
   int isrc, i1, i2, i3, i1_, i2_, i3_;
@@ -45,7 +44,6 @@ void inject_source(sim_t *sim, acq_t *acq, float ***sp, float stf_it)
   }//end for isrc
 }
 
-//======================================================================
 void extract_wavefield(sim_t *sim, acq_t *acq, float ***sp, float **dat, int it)
 /*< extract data from wavefield using Kaiser windowed sinc interpolation >*/
 {   
@@ -83,7 +81,6 @@ void extract_wavefield(sim_t *sim, acq_t *acq, float ***sp, float **dat, int it)
 }
 
 
-//===========================================================================
 void inject_adjoint_source(sim_t *sim, acq_t *acq, float ***rp, float **dres, int it)
 /*< inject adjoint source using Kaiser windowed sinc interpolation >*/
 {   

@@ -1,12 +1,10 @@
 /* 2D/3D seismic modelling, RTM and FWI code
  *-----------------------------------------------------------------------
- *
  * Copyright (c) 2021 Harbin Institute of Technology. All rights reserved.
  * Author: Pengliang Yang 
  * Email: ypl.2100@gmail.com
  * Homepage: https://yangpl.wordpress.com/
- *-----------------------------------------------------------------------
- */
+ *---------------------------------------------------------------------*/
 #include "cstd.h"
 #include "sim.h"
 #include "acq.h"
@@ -33,9 +31,10 @@ void do_adcig(sim_t *sim, acq_t *acq);
 
 int main(int argc, char* argv[])
 {
-  char *stffile="";
-  char *vpfile= "";
-  char *rhofile = "";
+  char current_time[128];
+  time_t      t;
+  struct tm*  ptm;
+  char *stffile, *vpfile, *rhofile;
   FILE *fp;
   acq_t *acq;
   sim_t *sim;
@@ -50,6 +49,10 @@ int main(int argc, char* argv[])
   
   if(!getparint("mode", &sim->mode)) sim->mode=0;
   if(iproc==0){
+    t = time(NULL);
+    ptm = localtime(&t);
+    strftime(current_time, 128, "%d-%b-%Y %H:%M:%S", ptm);
+    printf("  Current date and time: %s\n", current_time);
     printf("=====================================================\n");
     printf("   Welcome to SMIwiz software: an integrated toolbox \n");
     printf("   for seismic modeling, RTM imaging, linearized and \n");
@@ -67,7 +70,6 @@ int main(int argc, char* argv[])
     else if(sim->mode==7) printf(" Compute PSF Hessian\n");
     else if(sim->mode==8) printf(" Iterative migration deconvolution via PSF\n");
     else if(sim->mode==9) printf(" Migration deconvolution via FFT-Wiener filter\n");
-    else if(sim->mode==10)printf(" Up-down separation\n");
     printf("=====================================================\n");
   }
   if(!getparint("order",&sim->order)) sim->order = 4;//only accepts 4 or 8-th order FD

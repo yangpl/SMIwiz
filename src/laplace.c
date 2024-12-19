@@ -1,12 +1,10 @@
 /* Laplace filtering, output= -laplace(input)
  *-----------------------------------------------------------------------
- *
  * Copyright (c) 2021 Harbin Institute of Technology. All rights reserved.
  * Author: Pengliang Yang 
  * Email: ypl.2100@gmail.com
  * Homepage: https://yangpl.wordpress.com/
- *-----------------------------------------------------------------------
- */
+ *---------------------------------------------------------------------*/
  #include "cstd.h"
 #include <fftw3.h>
 

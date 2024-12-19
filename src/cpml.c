@@ -1,6 +1,5 @@
 /* 2D/3D seismic modelling, RTM and FWI code
  *-----------------------------------------------------------------------
- *
  * Copyright (c) 2021 Harbin Institute of Technology. All rights reserved.
  * Author: Pengliang Yang 
  * Email: ypl.2100@gmail.com

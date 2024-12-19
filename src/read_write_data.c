@@ -1,4 +1,5 @@
-/*---------------------------------------------------------------------------
+/* read/write seismic data 
+ *---------------------------------------------------------------------------
  *  Copyright (c) Pengliang Yang, 2020, Harbin Institute of Technology, China
  *  Copyright (c) Pengliang Yang, 2018, University Grenoble Alpes, France
  *  Homepage: https://yangpl.wordpress.com

@@ -1,4 +1,4 @@
-/* 2D/3D seismic modelling, RTM and FWI code
+/* 2D/3D isotropic acoustic forward modelling
  *-----------------------------------------------------------------------
  *
  * Copyright (c) 2021 Harbin Institute of Technology. All rights reserved.
@@ -42,7 +42,6 @@ void do_modelling(sim_t *sim, acq_t *acq)
   int i1, i2, i3, i1_, i2_, i3_, it;
   FILE *fp;
 
-  if(!getparint("check", &sim->check)) sim->check = 0;
   if(!getparint("itcheck", &sim->itcheck)) sim->itcheck = sim->nt/2;
 
   sim->dcal = alloc2float(sim->nt, acq->nrec);  
@@ -79,7 +78,7 @@ void do_modelling(sim_t *sim, acq_t *acq)
     extract_wavefield(sim, acq, sim->p1, sim->dcal, it);
     if(iproc==0) t_extract_field += MPI_Wtime()-t0;
     
-    if(iproc==0 && sim->check && it==sim->itcheck){
+    if(iproc==0 && it==sim->itcheck){
       fp = fopen("snapshot.bin", "wb");
       for(i3=0; i3<sim->n3; i3++){
       	i3_ = (sim->n3>1)?i3 + sim->nb:0;
