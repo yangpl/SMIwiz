@@ -21,6 +21,8 @@ Governing equation: 1st order acoustic wave equation
 
 * Pengliang Yang, SMIwiz: An integrated toolbox for multidimensional seismic modelling and imaging, Computer Physics Communications 2024, volume 295, 109011 [doi:10.1016/j.cpc.2023.109011](https://doi.org/10.1016/j.cpc.2023.109011)
 
+* Zhengyu Ji and Pengliang Yang: SMIwiz-2.0: Extended functionalities for wav­field decomposition, linearized and nonlinear inversion, Computer Physics Communications 2025, 109503 [doi:10.1016/j.cpc.2025.109503](https://doi.org/10.1016/j.cpc.2025.109503)
+
 A vedio has been recorded to explain the design of SMIwiz, thanks to the seminar invitation from the editor of Computer Physics Communictions: https://cassyni.com/events/P4W1QfiGXffuSf6Rv5VzJZ
 
 ## Code structure
