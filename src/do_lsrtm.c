@@ -9,7 +9,7 @@
 #include "sim.h"
 #include "acq.h"
 #include "fwi.h"
-#include "mpi_info.h"
+ 
 #include <mpi.h>
 
 void read_data(sim_t *sim, acq_t *acq);
@@ -20,22 +20,22 @@ void check_cfl(sim_t *sim);
 
 void fdtd_init(sim_t *sim, int flag);
 void fdtd_null(sim_t *sim, int flag);
-void fdtd_close(sim_t *sim, int flag);
+void fdtd_free(sim_t *sim, int flag);
 void fdtd_update_v(sim_t *sim, int flag, int it, int adj, float ***kappa, float ***buz, float ***bux, float ***buy);
 void fdtd_update_p(sim_t *sim, int flag, int it, int adj, float ***kappa, float ***buz, float ***bux, float ***buy);
 
 void extend_model_init(sim_t *sim);
 void extend_model(sim_t *sim, float ***vp, float ***rho, float ***kappa, float ***buz, float ***bux, float ***buy);
-void extend_model_close(sim_t *sim);
+void extend_model_free(sim_t *sim);
 
 void computing_box_init(acq_t *acq, sim_t *sim, int adj);
-void computing_box_close(sim_t *sim, int adj);
+void computing_box_free(sim_t *sim, int adj);
 
 void cpml_init(sim_t *sim);
-void cpml_close(sim_t *sim);
+void cpml_free(sim_t *sim);
 
 void decimate_interp_init(sim_t *sim, int flag);
-void decimate_interp_close(sim_t *sim, int flag);
+void decimate_interp_free(sim_t *sim, int flag);
 void decimate_interp_bndr(sim_t *sim, int flag, int it, int interp, float **face1, float **face2, float **face3);
 
 void inject_source(sim_t *sim, acq_t *acq, float ***sp, float stf_it);
@@ -520,14 +520,14 @@ void do_lsrtm(sim_t *sim, acq_t *acq)
     zrt_old = zrt_new;
   }
   
-  cpml_close(sim);
-  extend_model_close(sim);
-  computing_box_close(sim, 0);
-  computing_box_close(sim, 1);
-  fdtd_close(sim, 0);
-  fdtd_close(sim, 1);
-  fdtd_close(sim, 2);
-  decimate_interp_close(sim, 1);
+  cpml_free(sim);
+  extend_model_free(sim);
+  computing_box_free(sim, 0);
+  computing_box_free(sim, 1);
+  fdtd_free(sim, 0);
+  fdtd_free(sim, 1);
+  fdtd_free(sim, 2);
+  decimate_interp_free(sim, 1);
 
   free2float(sim->dcal);
   free2float(sim->dobs);

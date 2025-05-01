@@ -11,25 +11,25 @@
 #include "sim.h"
 #include "acq.h"
 #include "fwi.h"
-#include "mpi_info.h"
+ 
 
 void check_cfl(sim_t *sim);
 
 void fdtd_init(sim_t *sim, int flag);
 void fdtd_null(sim_t *sim, int flag);
-void fdtd_close(sim_t *sim, int flag);
+void fdtd_free(sim_t *sim, int flag);
 void fdtd_update_v(sim_t *sim, int flag, int it, int adj, float ***kappa, float ***buz, float ***bux, float ***buy);
 void fdtd_update_p(sim_t *sim, int flag, int it, int adj, float ***kappa, float ***buz, float ***bux, float ***buy);
 
 void extend_model_init(sim_t *sim);
 void extend_model(sim_t *sim, float ***vp, float ***rho, float ***kappa, float ***buz, float ***bux, float ***buy);
-void extend_model_close(sim_t *sim);
+void extend_model_free(sim_t *sim);
 
 void computing_box_init(acq_t *acq, sim_t *sim, int adj);
-void computing_box_close(sim_t *sim, int adj);
+void computing_box_free(sim_t *sim, int adj);
 
 void cpml_init(sim_t *sim);
-void cpml_close(sim_t *sim);
+void cpml_free(sim_t *sim);
 
 void inject_source(sim_t *sim, acq_t *acq, float ***sp, float stf_it);
 void extract_wavefield(sim_t *sim, acq_t *acq, float ***sp, float **dat, int it);
@@ -71,10 +71,10 @@ void do_invert_source(sim_t *sim, acq_t *acq)
     inject_source(sim, acq, sim->p1, sim->stf[it]);
     extract_wavefield(sim, acq, sim->p1, sim->dcal, it);
   }
-  extend_model_close(sim);
-  fdtd_close(sim, 1);
-  cpml_close(sim);
-  computing_box_close(sim, 0);
+  extend_model_free(sim);
+  fdtd_free(sim, 1);
+  cpml_free(sim);
+  computing_box_free(sim, 0);
 
   //----------------------------------------------------------------------
   //2. estimate wavelet in frequency domain, see eqn 17 Pratt Geophysics 1999

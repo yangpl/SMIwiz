@@ -67,7 +67,7 @@ void decimate_interp_init(sim_t *sim, int flag)
   
 }
 
-void decimate_interp_close(sim_t *sim, int flag)
+void decimate_interp_free(sim_t *sim, int flag)
 {
   if(flag==1){
     free2float(sim->face1);
@@ -83,7 +83,6 @@ void decimate_interp_close(sim_t *sim, int flag)
 double kwsinc(double x, int l, int r)
 {
   static float b = 6.31;
-  static float PI = 3.141592653589793238462643;
   double a = x/(l*r);
   if(fabs(a)>1) return 0;
 

@@ -30,7 +30,6 @@ void laplace_init(int n1_, int n2_, int n3_, int npar_, float d1_, float d2_, fl
   int i1, i2, i3;
   float d1, d2, d3;
   float dk1, dk2, dk3;
-  static float PI = 3.14159265359;
 
   n1 = n1_;
   n2 = n2_;
@@ -79,7 +78,7 @@ void laplace_init(int n1_, int n2_, int n3_, int npar_, float d1_, float d2_, fl
   ifft_plan = fftw_plan_dft_3d(n1fft, n2fft, n3fft, tmpfft, tmpfft, FFTW_BACKWARD, FFTW_ESTIMATE);  
 }
 
-void laplace_close()
+void laplace_free()
 {
   fftw_free(tmpfft);
   fftw_destroy_plan(fft_plan);
@@ -163,7 +162,7 @@ int main()
 
   laplace_apply(f, f);
 
-  laplace_close();
+  laplace_free();
 
 
   for(i=0; i<n; i++) in[i] = f[i];

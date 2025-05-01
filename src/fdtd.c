@@ -152,7 +152,7 @@ void fdtd_null(sim_t *sim, int flag)
 
 }
 
-void fdtd_close(sim_t *sim, int flag)
+void fdtd_free(sim_t *sim, int flag)
 {  
   if(flag==0){//scattering field for Born modelling
     free3float(sim->p0);

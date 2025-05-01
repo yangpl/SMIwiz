@@ -8,13 +8,13 @@
 #include "cstd.h"
 #include "sim.h"
 #include "acq.h"
-#include "mpi_info.h"
+ 
 #include <mpi.h>
 
 int iproc, nproc, ierr;
 
 void acq_init(sim_t *sim, acq_t *acq);
-void acq_close(sim_t *sim, acq_t *acq);
+void acq_free(sim_t *sim, acq_t *acq);
 
 void do_updown(sim_t *sim, acq_t *acq);
 void do_modelling(sim_t *sim, acq_t *acq);
@@ -183,7 +183,7 @@ int main(int argc, char* argv[])
   free3float(sim->vp);
   free3float(sim->rho);
 
-  acq_close(sim, acq);
+  acq_free(sim, acq);
   
   free(sim);
   free(acq);

@@ -7,7 +7,7 @@
  *-----------------------------------------------------------------------*/
 #include "cstd.h"
 #include "sim.h"
-#include "mpi_info.h"
+ 
 
 void check_cfl(sim_t *sim)
 {

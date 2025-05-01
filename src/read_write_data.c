@@ -8,7 +8,7 @@
 #include "cstd.h"
 #include "sim.h"
 #include "acq.h"
-#include "mpi_info.h"
+ 
 
 void read_data(sim_t *sim, acq_t *acq)
 /*< read observed data according to shot/process index >*/

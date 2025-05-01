@@ -32,6 +32,13 @@
 #ifndef NINT
 #define NINT(x) ((int)((x)>0.0?(x)+0.5:(x)-0.5))
 #endif
+#ifndef PI
+#define PI 3.14159265358979323846264
+#endif
+#ifndef mu0
+#define mu0 (4.*PI*1e-7)
+#endif
+
 
 /* allocate and free multi-dimensional arrays */
 void *alloc1 (size_t n1, size_t size);
@@ -111,6 +118,10 @@ void free1char(char *p);
 /* GLOBAL DECLARATIONS */
 extern int xargc; 
 extern char **xargv;
+
+extern int iproc;//index of MPI process
+extern int nproc;//number of MPI process
+extern int ierr;//MPI error code
 
 /* FUNCTION PROTOTYPES */
 

@@ -16,7 +16,7 @@ void extend_model_init(sim_t *sim)
   sim->kappa = alloc3float(sim->n1pad, sim->n2pad, sim->n3pad);
 }
 
-void extend_model_close(sim_t *sim)
+void extend_model_free(sim_t *sim)
 {
   free3float(sim->kappa);
   free3float(sim->buz);

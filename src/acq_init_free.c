@@ -8,7 +8,7 @@
 #include "cstd.h"
 #include "sim.h"
 #include "acq.h"
-#include "mpi_info.h"
+ 
 
 double kaiser_windowed_sinc(double x, double dx, int r);
 
@@ -215,7 +215,7 @@ void acq_init(sim_t *sim, acq_t *acq)
   free1float(rx3);
 }
 
-void acq_close(sim_t *sim, acq_t *acq)
+void acq_free(sim_t *sim, acq_t *acq)
 /*< free the allocated variables for acquisition >*/
 {
   free1float(acq->src_x1);

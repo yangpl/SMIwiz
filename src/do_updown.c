@@ -8,7 +8,7 @@
 #include "cstd.h"
 #include "sim.h"
 #include "acq.h"
-#include "mpi_info.h"
+ 
 #include <mpi.h>
 #include <fftw3.h>
 
@@ -16,19 +16,19 @@ void check_cfl(sim_t *sim);
 
 void fdtd_init(sim_t *sim, int flag);
 void fdtd_null(sim_t *sim, int flag);
-void fdtd_close(sim_t *sim, int flag);
+void fdtd_free(sim_t *sim, int flag);
 void fdtd_update_v(sim_t *sim, int flag, int it, int adj, float ***kappa, float ***buz, float ***bux, float ***buy);
 void fdtd_update_p(sim_t *sim, int flag, int it, int adj, float ***kappa, float ***buz, float ***bux, float ***buy);
 
 void extend_model_init(sim_t *sim);
 void extend_model(sim_t *sim, float ***vp, float ***rho, float ***kappa, float ***buz, float ***bux, float ***buy);
-void extend_model_close(sim_t *sim);
+void extend_model_free(sim_t *sim);
 
 void computing_box_init(acq_t *acq, sim_t *sim, int adj);
-void computing_box_close(sim_t *sim, int adj);
+void computing_box_free(sim_t *sim, int adj);
 
 void cpml_init(sim_t *sim);
-void cpml_close(sim_t *sim);
+void cpml_free(sim_t *sim);
 
 void inject_source(sim_t *sim, acq_t *acq, float ***sp, float stf_it);
 void extract_wavefield(sim_t *sim, acq_t *acq, float ***sp, float **dat, int it);
@@ -39,7 +39,6 @@ void do_updown(sim_t *sim, acq_t *acq)
 {
   int i1, i2, i3, i1_, i2_, i3_, it, j;
   int ntaper;
-  const double PI = 3.141592653589793238462643;
   FILE *fp;
 
   if(!getparint("itcheck", &sim->itcheck)) sim->itcheck = sim->nt/2;
@@ -176,11 +175,11 @@ void do_updown(sim_t *sim, acq_t *acq)
   }
   write_data(sim, acq);
 
-  extend_model_close(sim);
-  fdtd_close(sim, 1);//flag=1, incident field
-  fdtd_close(sim, 0);//flag=0, incident field
-  cpml_close(sim);
-  computing_box_close(sim, 0);
+  extend_model_free(sim);
+  fdtd_free(sim, 1);//flag=1, incident field
+  fdtd_free(sim, 0);//flag=0, incident field
+  cpml_free(sim);
+  computing_box_free(sim, 0);
 
   free1float(hstf);
   free3float(pu);

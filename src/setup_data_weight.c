@@ -8,12 +8,11 @@
 #include "cstd.h"
 #include "sim.h"
 #include "acq.h"
-#include "mpi_info.h"
+ 
 
 void setup_data_weight(acq_t *acq, sim_t *sim)
 /*< set up data weighting used in RTM and FWI >*/
 {
-  const float PI=3.141592653589793238462643;
   int ntaper;//number of points for cosine taper
   int nxwdat;//number of points in x-axis for data weights
   float dxwdat;//spatial interval in x-axis for data weights

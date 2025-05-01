@@ -22,7 +22,7 @@ void triangle_init(int nbox, int nd)
   
 }
 
-void triangle_close()
+void triangle_free()
 {
   free1float(pp);
   free1float(qq);
@@ -74,7 +74,7 @@ void triangle_smoothing(float ***mod, int n1, int n2, int n3, int r1, int r2, in
     for(i3=0; i3<n3; i3++)
       for(i2=0; i2<n2; i2++)
 	triangle_lop(r1, n1, mod[i3][i2]);
-    triangle_close();
+    triangle_free();
 
     /*-----------------------------------------*/
     triangle_init(r2, n2);
@@ -85,7 +85,7 @@ void triangle_smoothing(float ***mod, int n1, int n2, int n3, int r1, int r2, in
 	for(i2=0; i2<n2; i2++) mod[i3][i2][i1] = tmp[i2];
       }
     }
-    triangle_close();
+    triangle_free();
 
     /*-----------------------------------------*/
     if(n3>1){
@@ -97,7 +97,7 @@ void triangle_smoothing(float ***mod, int n1, int n2, int n3, int r1, int r2, in
 	  for(i3=0; i3<n3; i3++) mod[i3][i2][i1] = tmp2[i3];
 	}
       }
-      triangle_close();
+      triangle_free();
     }
   }
 

@@ -7,7 +7,7 @@
  *-----------------------------------------------------------------------*/
 #include "cstd.h"
 #include "sim.h"
-#include "mpi_info.h"
+ 
 
 void cpml_init(sim_t *sim)
 /*< initialize PML abosorbing coefficients >*/
@@ -34,7 +34,7 @@ void cpml_init(sim_t *sim)
 
 }
 
-void cpml_close(sim_t *sim)
+void cpml_free(sim_t *sim)
 {
   free1float(sim->pmla);
   free1float(sim->pmlb);

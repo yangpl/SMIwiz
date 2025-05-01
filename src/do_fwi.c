@@ -11,7 +11,7 @@
 #include "opt.h"
 #include "sim.h"
 #include "fwi.h"
-#include "mpi_info.h"
+ 
 
 float l2norm(int n, float *a);
 void flipsign(int n, float *a, float *b);
@@ -36,7 +36,7 @@ void cg_solve(int n, //dimension of x
 
 
 void fg_fwi_init(sim_t *sim_, acq_t *acq_, fwi_t *fwi_);
-void fg_fwi_close(sim_t *sim);
+void fg_fwi_free(sim_t *sim);
 void fg_mod_reg(sim_t *sim, fwi_t *fwi, float ***grad, float *x, float *g);
 float fg_fwi(float *x, float *g);
 void precondition(sim_t *sim, fwi_t *fwi, float *x);
@@ -330,7 +330,7 @@ void do_fwi(sim_t *sim, acq_t *acq)
     }
   }
 
-  fg_fwi_close(sim);
+  fg_fwi_free(sim);
   free1int(fwi->idxpar);
   free2float(fwi->bathy);
   free2int(fwi->ibathy);

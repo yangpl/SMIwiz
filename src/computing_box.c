@@ -119,7 +119,7 @@ void computing_box_init(acq_t *acq, sim_t *sim, int adj)
   }
 }
 
-void computing_box_close(sim_t *sim, int adj)
+void computing_box_free(sim_t *sim, int adj)
 {
   if(adj){
     free1int(sim->i1min_adj);
