@@ -276,8 +276,8 @@ void fdtd_update_v(sim_t *sim, int flag, int it, int adj, float ***kappa, float 
 	i3max = sim->n3pad-1-sim->nb;
       }
     }
-    if(sim->freesurf) i1min = sim->nb;
   }
+  if(sim->freesurf) i1min = sim->nb;
 
   if(flag==0){
     p = sim->p0;
@@ -492,8 +492,8 @@ void fdtd_update_p(sim_t *sim, int flag, int it, int adj, float ***kappa, float 
 	i3max = sim->n3pad-1-sim->nb;
       }
     }
-    if(sim->freesurf) i1min = sim->nb;
   }
+  if(sim->freesurf) i1min = sim->nb;
   
   if(flag==0){
     p = sim->p0;
