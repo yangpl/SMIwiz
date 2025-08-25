@@ -147,7 +147,7 @@ void do_lsrtm(sim_t *sim, acq_t *acq)
 	    h1[i3][i2][i1] += sim->divv[i3_][i2_][i1_]*sim->divv[i3_][i2_][i1_];
 	    h2[i3][i2][i1] += (sim->dvzdt[i3_][i2_][i1_] + sim->dvzdt[i3_][i2_][i1_-1])*(sim->dvzdt[i3_][i2_][i1_] + sim->dvzdt[i3_][i2_][i1_-1]);
 	    h2[i3][i2][i1] += (sim->dvxdt[i3_][i2_][i1_] + sim->dvxdt[i3_][i2_-1][i1_])*(sim->dvxdt[i3_][i2_][i1_] + sim->dvxdt[i3_][i2_-1][i1_]);
-	    if(sim->n3>1) h2[i3][i2][i1] += (sim->dvzdt[i3_][i2_][i1_] + sim->dvzdt[i3_-1][i2_][i1_])*(sim->dvzdt[i3_][i2_][i1_] + sim->dvzdt[i3_-1][i2_][i1_]);
+	    if(sim->n3>1) h2[i3][i2][i1] += (sim->dvydt[i3_][i2_][i1_] + sim->dvydt[i3_-1][i2_][i1_])*(sim->dvydt[i3_][i2_][i1_] + sim->dvydt[i3_-1][i2_][i1_]);
 	  }//end for i1
 	}//end for i2
       }//end for i3
