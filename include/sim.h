@@ -24,6 +24,8 @@ typedef struct {
 
   int ri;//radius for Kaiser windowed sinc interpolation, 2*ri+1 points in total    
   float *pmla, *pmlb;//CPML damping factor
+  float *pmla_mh, *pmlb_mh;//CPML damping factor with half grid shift
+  float *pmla_ph, *pmlb_ph;//CPML damping factor with half grid shift
   
   float ***vp, ***rho;//model of original size
   float ***ip, ***dm;//ip and dm=dln(ip) in RWI

@@ -343,21 +343,21 @@ void fdtd_update_v(sim_t *sim, int flag, int it, int adj, float ***kappa, float 
 	D2p *= _d2;
       
 	if(i1<sim->nb) {
-	  memD1p[i3][i2][i1] = sim->pmlb[i1]*memD1p[i3][i2][i1] + sim->pmla[i1]*D1p;
+	  memD1p[i3][i2][i1] = sim->pmlb_ph[i1]*memD1p[i3][i2][i1] + sim->pmla_ph[i1]*D1p;
 	  D1p += memD1p[i3][i2][i1];
 	}else if(i1>=sim->n1pad-sim->nb){
 	  j1 = sim->n1pad -1 - i1;
 	  k1 = j1 + sim->nb;
-	  memD1p[i3][i2][k1] = sim->pmlb[j1]*memD1p[i3][i2][k1] + sim->pmla[j1]*D1p;
+	  memD1p[i3][i2][k1] = sim->pmlb_mh[j1]*memD1p[i3][i2][k1] + sim->pmla_mh[j1]*D1p;
 	  D1p += memD1p[i3][i2][k1];
 	}
 	if(i2<sim->nb) {
-	  memD2p[i3][i2][i1] = sim->pmlb[i2]*memD2p[i3][i2][i1] + sim->pmla[i2]*D2p;
+	  memD2p[i3][i2][i1] = sim->pmlb_ph[i2]*memD2p[i3][i2][i1] + sim->pmla_ph[i2]*D2p;
 	  D2p += memD2p[i3][i2][i1];
 	}else if(i2>=sim->n2pad-sim->nb){
 	  j2 = sim->n2pad-1-i2;
 	  k2 = j2 + sim->nb;
-	  memD2p[i3][k2][i1] = sim->pmlb[j2]*memD2p[i3][k2][i1] + sim->pmla[j2]*D2p;
+	  memD2p[i3][k2][i1] = sim->pmlb_mh[j2]*memD2p[i3][k2][i1] + sim->pmla_mh[j2]*D2p;
 	  D2p += memD2p[i3][k2][i1];
 	}
       
@@ -384,12 +384,12 @@ void fdtd_update_v(sim_t *sim, int flag, int it, int adj, float ***kappa, float 
 	  }
 	  D3p *= _d3;
 	  if(i3<sim->nb){
-	    memD3p[i3][i2][i1] = sim->pmlb[i3]*memD3p[i3][i2][i1] + sim->pmla[i3]*D3p;
+	    memD3p[i3][i2][i1] = sim->pmlb_ph[i3]*memD3p[i3][i2][i1] + sim->pmla_ph[i3]*D3p;
 	    D3p += memD3p[i3][i2][i1];
 	  }else if(i3>=sim->n3pad-sim->nb){
 	    j3 = sim->n3pad-1-i3;
 	    k3 = j3 + sim->nb;
-	    memD3p[k3][i2][i1] = sim->pmlb[j3]*memD3p[k3][i2][i1] + sim->pmla[j3]*D3p;
+	    memD3p[k3][i2][i1] = sim->pmlb_mh[j3]*memD3p[k3][i2][i1] + sim->pmla_mh[j3]*D3p;
 	    D3p += memD3p[k3][i2][i1];
 	  }
 	  
