@@ -56,6 +56,9 @@ A vedio has been recorded to explain the design of SMIwiz, thanks to the seminar
   
 * run_updown: Example for up-going and down-going wavefield decomposition
 
+* run_adcig: Example for extracting ADCIG using Poynting vector.
+git checkout d27813a8d3752639df2aea199e534738f75d8c7f
+
 ## Instructions to run
 
 1. go to /src and compile:
