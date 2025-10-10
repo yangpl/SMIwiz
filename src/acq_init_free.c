@@ -9,7 +9,6 @@
 #include "sim.h"
 #include "acq.h"
  
-
 double kaiser_windowed_sinc(double x, double dx, int r);
 
 void acq_init(sim_t *sim, acq_t *acq)

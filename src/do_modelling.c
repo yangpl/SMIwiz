@@ -10,7 +10,6 @@
 #include "cstd.h"
 #include "sim.h"
 #include "acq.h"
- 
 #include <mpi.h>
 
 void check_cfl(sim_t *sim);

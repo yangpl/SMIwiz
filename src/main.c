@@ -170,7 +170,7 @@ int main(int argc, char* argv[])
   else if(sim->mode==3) do_lsrtm(sim, acq);
   else if(sim->mode==4) do_fwi(sim, acq); 
   else if(sim->mode==5) do_invert_source(sim, acq);
-  //else if(sim->mode==6) do_adcig(sim, acq);
+  else if(sim->mode==6) do_adcig(sim, acq);
   else if(sim->mode==7) do_psf_hessian(sim, acq);
   else if(sim->mode==8) do_mig_decon_pcgnr(sim, acq);
   else if(sim->mode==9) do_mig_decon_fft(sim, acq);
