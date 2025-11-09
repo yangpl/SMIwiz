@@ -108,28 +108,18 @@ int main(int argc, char* argv[])
     sim->mt = sim->nt/sim->dr;/* decimation ratio */
     if(sim->mt*sim->dr!=sim->nt) err("nt must be multiple of dr!");
   }
-
-
-  if(!getparfloat("zmin", &acq->zmin)) acq->zmin = 0;
-  if(!getparfloat("zmax", &acq->zmax)) acq->zmax = acq->zmin+(sim->n1-1)*sim->d1;
-  if(!getparfloat("xmin", &acq->xmin)) acq->xmin = 0;
-  if(!getparfloat("xmax", &acq->xmax)) acq->xmax = acq->xmin+(sim->n2-1)*sim->d2;
-  if(!getparfloat("ymin", &acq->ymin)) acq->ymin = 0;
-  if(!getparfloat("ymax", &acq->ymax)) acq->ymax = acq->ymin+(sim->n3-1)*sim->d3;
   if(iproc==0){
     printf("freesurf=%d (1=with free surface; 0=no free surface)\n", sim->freesurf);
     printf("ri=%d (interpolation radius)\n", sim->ri);
     printf("dt=%g (time step)\n", sim->dt);
     printf("nt=%d (number of time steps)\n", sim->nt);
     printf("nb=%d (number of boundary layers)\n", sim->nb);
-    printf("[zmin, zmax]=[%g, %g]\n", acq->zmin, acq->zmax);
-    printf("[xmin, xmax]=[%g, %g]\n", acq->xmin, acq->xmax);
-    printf("[ymin, ymax]=[%g, %g]\n", acq->ymin, acq->ymax);
     printf("[d1, d2, d3]=[%g, %g, %g]\n", sim->d1, sim->d2, sim->d3);
     printf("[n1, n2, n3]=[%d, %d, %d]\n", sim->n1, sim->n2, sim->n3);
     printf("[n1pad, n2pad, n3pad]=[%d, %d, %d]\n", sim->n1pad, sim->n2pad, sim->n3pad);
   }
-  
+
+
   if(!getparstring("stffile",&stffile)) err("mute give stffile= ");
   if(!getparstring("vpfile",&vpfile)) err("must give vpfile= ");
   if(!getparstring("rhofile",&rhofile)) err("must give rhofile= ");
@@ -159,6 +149,7 @@ int main(int argc, char* argv[])
   fclose(fp);
 
   ierr = MPI_Barrier(MPI_COMM_WORLD);
+  
   acq_init(sim, acq);
   ierr = MPI_Barrier(MPI_COMM_WORLD);
   if(iproc==0) printf("------------- acquisition init done ---------------\n");

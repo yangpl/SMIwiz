@@ -12,7 +12,35 @@
 
 double kaiser_windowed_sinc(double x, double dx, int r);
 
+void acq_file_init(sim_t *sim, acq_t *acq);
+void su_data_init(char *fname, sim_t *sim, acq_t *acq);
+
 void acq_init(sim_t *sim, acq_t *acq)
+{
+  char fname[sizeof "dat_0000"];
+  if(!getparint("suopt", &acq->suopt)) acq->suopt = 0;//1=for RTM,FWI,LSRTM
+  if(acq->suopt){
+    sprintf(fname, "dat_%04d", acq->shot_idx[iproc]);
+    su_data_init(fname, sim, acq);
+  }else{
+    if(!getparfloat("zmin", &acq->zmin)) acq->zmin = 0;
+    if(!getparfloat("zmax", &acq->zmax)) acq->zmax = acq->zmin+(sim->n1-1)*sim->d1;
+    if(!getparfloat("xmin", &acq->xmin)) acq->xmin = 0;
+    if(!getparfloat("xmax", &acq->xmax)) acq->xmax = acq->xmin+(sim->n2-1)*sim->d2;
+    if(!getparfloat("ymin", &acq->ymin)) acq->ymin = 0;
+    if(!getparfloat("ymax", &acq->ymax)) acq->ymax = acq->ymin+(sim->n3-1)*sim->d3;
+    if(iproc==0){
+      printf("[zmin, zmax]=[%g, %g]\n", acq->zmin, acq->zmax);
+      printf("[xmin, xmax]=[%g, %g]\n", acq->xmin, acq->xmax);
+      printf("[ymin, ymax]=[%g, %g]\n", acq->ymin, acq->ymax);
+    }
+    acq_file_init(sim, acq);
+  }
+
+
+}
+
+void acq_file_init(sim_t *sim, acq_t *acq)
 /*< read acquisition file to initialize acquisition geometry >*/
 {
   char *acquifile;
@@ -215,7 +243,7 @@ void acq_init(sim_t *sim, acq_t *acq)
   free1float(rx3);
 }
 
-void su_data_init(char *filename, sim_t *sim, acq_t *acq)
+void su_data_init(char *fname, sim_t *sim, acq_t *acq)
 /*< read SU file to initialize acquisition geometry >*/
 {
   unsigned short ns;
@@ -227,7 +255,7 @@ void su_data_init(char *filename, sim_t *sim, acq_t *acq)
   FILE *fp;
 
   acq->nsrc=1;//by default 1 shot per process
-  fp=fopen(filename,"rb");
+  fp=fopen(fname,"rb");
   if(fp==NULL) err("File does not exist!");
   fseek(fp, 114, SEEK_SET );//pointer skips first 114 bytes
   fread(&ns, 2, 1,fp); // ns 115-116 byte in the trace header
