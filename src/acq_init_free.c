@@ -13,7 +13,7 @@
 double kaiser_windowed_sinc(double x, double dx, int r);
 
 void acq_file_init(sim_t *sim, acq_t *acq);
-void su_data_init(char *fname, sim_t *sim, acq_t *acq);
+void su_file_init(char *fname, sim_t *sim, acq_t *acq);
 
 void acq_init(sim_t *sim, acq_t *acq)
 {
@@ -21,7 +21,7 @@ void acq_init(sim_t *sim, acq_t *acq)
   if(!getparint("suopt", &acq->suopt)) acq->suopt = 0;//1=for RTM,FWI,LSRTM
   if(acq->suopt){
     sprintf(fname, "dat_%04d", acq->shot_idx[iproc]);
-    su_data_init(fname, sim, acq);
+    su_file_init(fname, sim, acq);
   }else{
     if(!getparfloat("zmin", &acq->zmin)) acq->zmin = 0;
     if(!getparfloat("zmax", &acq->zmax)) acq->zmax = acq->zmin+(sim->n1-1)*sim->d1;
@@ -36,7 +36,6 @@ void acq_init(sim_t *sim, acq_t *acq)
     }
     acq_file_init(sim, acq);
   }
-
 
 }
 
@@ -243,7 +242,7 @@ void acq_file_init(sim_t *sim, acq_t *acq)
   free1float(rx3);
 }
 
-void su_data_init(char *fname, sim_t *sim, acq_t *acq)
+void su_file_init(char *fname, sim_t *sim, acq_t *acq)
 /*< read SU file to initialize acquisition geometry >*/
 {
   unsigned short ns;
