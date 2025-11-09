@@ -274,71 +274,6 @@ void su_data_init(char *filename, sim_t *sim, acq_t *acq)
   acq->rec_i2 = alloc1int(acq->nrec);
   acq->rec_i3 = alloc1int(acq->nrec);
   acq->rec_nm = alloc1int(acq->nrec);
-
-  //receiver position from SU header
-  for(irec=0; irec<acq->nrec; irec++){
-    if(trhdr[irec].scalel==0) tmp=1.;
-    else if(trhdr[irec].scalel>0) tmp=trhdr[irec].scalel;
-    else tmp=1./fabs(trhdr[irec].scalel);
-    acq->rec_x1[irec] = (trhdr[irec].selev + trhdr[irec].sdepth)*tmp;
-
-    if(trhdr[irec].scalco==0) tmp=1.;
-    else if(trhdr[irec].scalco>0) tmp=trhdr[irec].scalco;
-    else tmp=1./fabs(trhdr[irec].scalco);
-    acq->rec_x2[irec] = trhdr[irec].sx * tmp;
-    acq->rec_x3[irec] = trhdr[irec].sy * tmp;
-
-    //coorxinate of sources, origin stripped out
-    //z0=zs-acq->zmin;
-    //x0=xs-acq->xmin;
-
-    //reset the acquisition limits
-    zmin = (irec==0)? acq->rec_x1[irec] : MIN(zmin, acq->rec_x1[irec]);
-    zmax = (irec==0)? acq->rec_x1[irec] : MAX(zmax, acq->rec_x1[irec]);
-    xmin = (irec==0)? acq->rec_x2[irec] : MIN(xmin, acq->rec_x2[irec]);
-    xmax = (irec==0)? acq->rec_x2[irec] : MAX(xmax, acq->rec_x2[irec]);
-    if(sim->n3>1){
-      ymin = (irec==0)? acq->rec_x3[irec] : MIN(ymin, acq->rec_x3[irec]);
-      ymax = (irec==0)? acq->rec_x3[irec] : MAX(ymax, acq->rec_x3[irec]);
-    }
-
-    //point at true depth
-    tmp = (acq->rec_x1[irec]-acq->zmin)/sim->d1;
-    frac = tmp-NINT(tmp);
-    acq->rec_i1[irec] = NINT(tmp) + sim->nb;
-    acq->rec_nm[irec] = 0;
-    for(j=-sim->ri; j<=sim->ri; j++){
-      acq->rec_w1[irec][j+sim->ri] = kaiser_windowed_sinc(-frac+j, 1.0, sim->ri);
-      if(tmp-sim->ri+j<0.) acq->rec_nm[irec]++;//count number of points above free surface
-    }
-    //point at mirror location around free surface
-    tmp = -tmp;
-    frac = tmp-NINT(tmp);
-    acq->rec_i1m[irec] = NINT(tmp) + sim->nb;
-    for(j=-sim->ri; j<=sim->ri; j++)
-      acq->rec_w1m[irec][j+sim->ri] = kaiser_windowed_sinc(-frac+j, 1.0, sim->ri);
-
-    tmp = (acq->rec_x2[irec]-acq->xmin)/sim->d2;
-    frac = tmp-NINT(tmp);
-    acq->rec_i2[irec] = NINT(tmp) + sim->nb;
-    for(j=-sim->ri; j<=sim->ri; j++)
-      acq->rec_w2[irec][j+sim->ri] = kaiser_windowed_sinc(-frac+j, 1.0, sim->ri);
-
-    tmp = (acq->rec_x3[irec]-acq->ymin)/sim->d3;
-    frac = tmp-NINT(tmp);
-    acq->rec_i3[irec] = NINT(tmp) + sim->nb;
-    for(j=-sim->ri; j<=sim->ri; j++)
-      acq->rec_w3[irec][j+sim->ri] = kaiser_windowed_sinc(-frac+j, 1.0, sim->ri);
-  }
-  /* if(zmin<acq->zmin) err("source location: z<zmin"); */
-  /* if(zmax>acq->zmax) err("source location: z>zmax"); */
-  /* if(xmin<acq->xmin) err("source location: x<xmin"); */
-  /* if(xmax>acq->xmax) err("source location: x>xmax"); */
-  /* if(sim->n3>1){ */
-  /*   if(ymin<acq->ymin) err("source location: y<ymin"); */
-  /*   if(ymax>acq->ymax) err("source location: y>ymax"); */
-  /* } */
-
   for(isrc=0; isrc< acq->nsrc; isrc++){
     //source position from SU header
     if(trhdr[isrc].scalel==0) tmp=1.;
@@ -394,6 +329,71 @@ void su_data_init(char *filename, sim_t *sim, acq_t *acq)
     for(j=-sim->ri; j<=sim->ri; j++)
       acq->src_w3[isrc][j+sim->ri] = kaiser_windowed_sinc(-frac+j, 1.0, sim->ri);
 
+  }
+  /* if(zmin<acq->zmin) err("source location: z<zmin"); */
+  /* if(zmax>acq->zmax) err("source location: z>zmax"); */
+  /* if(xmin<acq->xmin) err("source location: x<xmin"); */
+  /* if(xmax>acq->xmax) err("source location: x>xmax"); */
+  /* if(sim->n3>1){ */
+  /*   if(ymin<acq->ymin) err("source location: y<ymin"); */
+  /*   if(ymax>acq->ymax) err("source location: y>ymax"); */
+  /* } */
+
+
+  //receiver position from SU header
+  for(irec=0; irec<acq->nrec; irec++){
+    if(trhdr[irec].scalel==0) tmp=1.;
+    else if(trhdr[irec].scalel>0) tmp=trhdr[irec].scalel;
+    else tmp=1./fabs(trhdr[irec].scalel);
+    acq->rec_x1[irec] = -trhdr[irec].gelev*tmp;
+
+    if(trhdr[irec].scalco==0) tmp=1.;
+    else if(trhdr[irec].scalco>0) tmp=trhdr[irec].scalco;
+    else tmp=1./fabs(trhdr[irec].scalco);
+    acq->rec_x2[irec] = trhdr[irec].gx * tmp;
+    acq->rec_x3[irec] = trhdr[irec].gy * tmp;
+
+    //coorxinate of sources, origin stripped out
+    //z0=zs-acq->zmin;
+    //x0=xs-acq->xmin;
+
+    //reset the acquisition limits
+    zmin = (irec==0)? acq->rec_x1[irec] : MIN(zmin, acq->rec_x1[irec]);
+    zmax = (irec==0)? acq->rec_x1[irec] : MAX(zmax, acq->rec_x1[irec]);
+    xmin = (irec==0)? acq->rec_x2[irec] : MIN(xmin, acq->rec_x2[irec]);
+    xmax = (irec==0)? acq->rec_x2[irec] : MAX(xmax, acq->rec_x2[irec]);
+    if(sim->n3>1){
+      ymin = (irec==0)? acq->rec_x3[irec] : MIN(ymin, acq->rec_x3[irec]);
+      ymax = (irec==0)? acq->rec_x3[irec] : MAX(ymax, acq->rec_x3[irec]);
+    }
+
+    //point at true depth
+    tmp = (acq->rec_x1[irec]-acq->zmin)/sim->d1;
+    frac = tmp-NINT(tmp);
+    acq->rec_i1[irec] = NINT(tmp) + sim->nb;
+    acq->rec_nm[irec] = 0;
+    for(j=-sim->ri; j<=sim->ri; j++){
+      acq->rec_w1[irec][j+sim->ri] = kaiser_windowed_sinc(-frac+j, 1.0, sim->ri);
+      if(tmp-sim->ri+j<0.) acq->rec_nm[irec]++;//count number of points above free surface
+    }
+    //point at mirror location around free surface
+    tmp = -tmp;
+    frac = tmp-NINT(tmp);
+    acq->rec_i1m[irec] = NINT(tmp) + sim->nb;
+    for(j=-sim->ri; j<=sim->ri; j++)
+      acq->rec_w1m[irec][j+sim->ri] = kaiser_windowed_sinc(-frac+j, 1.0, sim->ri);
+
+    tmp = (acq->rec_x2[irec]-acq->xmin)/sim->d2;
+    frac = tmp-NINT(tmp);
+    acq->rec_i2[irec] = NINT(tmp) + sim->nb;
+    for(j=-sim->ri; j<=sim->ri; j++)
+      acq->rec_w2[irec][j+sim->ri] = kaiser_windowed_sinc(-frac+j, 1.0, sim->ri);
+
+    tmp = (acq->rec_x3[irec]-acq->ymin)/sim->d3;
+    frac = tmp-NINT(tmp);
+    acq->rec_i3[irec] = NINT(tmp) + sim->nb;
+    for(j=-sim->ri; j<=sim->ri; j++)
+      acq->rec_w3[irec][j+sim->ri] = kaiser_windowed_sinc(-frac+j, 1.0, sim->ri);
   }
   /* if(zmin<acq->zmin) err("source location: z<zmin"); */
   /* if(zmax>acq->zmax) err("source location: z>zmax"); */
