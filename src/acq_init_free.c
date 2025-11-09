@@ -17,10 +17,10 @@ void su_file_init(char *fname, sim_t *sim, acq_t *acq);
 
 void acq_init(sim_t *sim, acq_t *acq)
 {
-  char fname[sizeof "dat_0000"];
+  char fname[sizeof "shot_0000"];
   if(!getparint("suopt", &acq->suopt)) acq->suopt = 0;//0=default, 1=for real data precessing using RTM,FWI,LSRTM 
   if(acq->suopt){
-    sprintf(fname, "dat_%04d", acq->shot_idx[iproc]);
+    sprintf(fname, "shot_%04d", acq->shot_idx[iproc]);
     su_file_init(fname, sim, acq);
   }else{
     if(!getparfloat("zmin", &acq->zmin)) acq->zmin = 0;
