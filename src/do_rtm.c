@@ -81,13 +81,15 @@ void do_rtm(sim_t *sim, acq_t *acq)
   
   fwi->n = fwi->npar*sim->n123;//number of unknowns
   sim->dcal = alloc2float(sim->nt, acq->nrec);//synthetic data - direct wave
-  sim->dobs = alloc2float(sim->nt, acq->nrec);
   sim->dres = alloc2float(sim->nt, acq->nrec);
   g1 = alloc3float(sim->n1, sim->n2, sim->n3);
   g2 = alloc3float(sim->n1, sim->n2, sim->n3);
   mm = alloc3float(sim->n1, sim->n2, sim->n3);
-  
-  read_data(sim, acq);
+
+  if(acq->suopt==0){
+    sim->dobs = alloc2float(sim->nt, acq->nrec);
+    read_data(sim, acq);
+  }
   setup_data_weight(acq, sim);//the muting will be used to remove direct waves
   
   check_cfl(sim);
@@ -201,8 +203,8 @@ void do_rtm(sim_t *sim, acq_t *acq)
   fdtd_free(sim, 2);
   decimate_interp_free(sim, 1);
 
+  if(acq->suopt==0) free2float(sim->dobs);
   free2float(sim->dcal);
-  free2float(sim->dobs);
   free2float(sim->dres);
   free3float(g1);
   free3float(g2);

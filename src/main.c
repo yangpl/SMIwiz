@@ -47,6 +47,7 @@ int main(int argc, char* argv[])
   acq = (acq_t *)malloc(sizeof(acq_t));
   sim = (sim_t *)malloc(sizeof(sim_t));
   
+  if(!getparint("suopt", &acq->suopt)) acq->suopt = 0;//0=default, 1=for real data precessing using RTM,FWI,LSRTM 
   if(!getparint("mode", &sim->mode)) sim->mode=0;
   if(iproc==0){
     t = time(NULL);
@@ -119,7 +120,6 @@ int main(int argc, char* argv[])
     printf("[n1pad, n2pad, n3pad]=[%d, %d, %d]\n", sim->n1pad, sim->n2pad, sim->n3pad);
   }
 
-
   if(!getparstring("stffile",&stffile)) err("mute give stffile= ");
   if(!getparstring("vpfile",&vpfile)) err("must give vpfile= ");
   if(!getparstring("rhofile",&rhofile)) err("must give rhofile= ");
@@ -148,14 +148,12 @@ int main(int argc, char* argv[])
     err("error reading vpfile=%s, size unmatched",vpfile);
   fclose(fp);
 
+
+  if(!acq->suopt) acq_init(sim, acq);
   ierr = MPI_Barrier(MPI_COMM_WORLD);
-  
-  acq_init(sim, acq);
-  ierr = MPI_Barrier(MPI_COMM_WORLD);
-  if(iproc==0) printf("------------- acquisition init done ---------------\n");
 
   //====================do the job here========================
-  if(sim->mode==0)      do_modelling(sim, acq); 
+  if(sim->mode==0) do_modelling(sim, acq); 
   else if(sim->mode==1) do_fwi(sim, acq);
   else if(sim->mode==2) do_rtm(sim, acq);
   else if(sim->mode==3) do_lsrtm(sim, acq);
@@ -166,15 +164,13 @@ int main(int argc, char* argv[])
   else if(sim->mode==8) do_mig_decon_pcgnr(sim, acq);
   else if(sim->mode==9) do_mig_decon_fft(sim, acq);
   else if(sim->mode==10) do_updown(sim, acq);
+  
   //===========================================================
-
-  ierr = MPI_Barrier(MPI_COMM_WORLD);
-
   free(sim->stf);
   free3float(sim->vp);
   free3float(sim->rho);
 
-  acq_free(sim, acq);
+  if(!acq->suopt) acq_free(sim, acq);
   
   free(sim);
   free(acq);
