@@ -148,6 +148,7 @@ int main(int argc, char* argv[])
 
 
   if(!acq->suopt) acq_init(sim, acq);
+  //else acquisition will be specified in read_data by data in SU format
   ierr = MPI_Barrier(MPI_COMM_WORLD);
 
   //====================do the job here========================
