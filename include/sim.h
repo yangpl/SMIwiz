@@ -14,7 +14,6 @@ typedef struct {
   float freq;//dominant frequency for PML
   float *stf;//source time function
 
-  int ps;//1=PS decomposition;0=no PS decomposition
   int freesurf;//1, stress-free surface condition;0, no free surface
   int sign_dt;//sign of dt used for back propagation
   float cfl;//CFL number for stability

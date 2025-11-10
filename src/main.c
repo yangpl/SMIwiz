@@ -100,7 +100,6 @@ int main(int argc, char* argv[])
   sim->n123pad = sim->n1pad*sim->n2pad*sim->n3pad;
   sim->ibox = 1;//by default, computing box should be applied
   sim->ri = sim->order/2;//interpolation radius of Bessel I0 function for sinc
-  if(!getparint("ps", &sim->ps)) sim->ps = 0; //1=PS decomposition; 0=no PS decomposition
   
   if(sim->mode!=0){
     if(!getparint("dr", &sim->dr)) sim->dr = 1;/* decimation ratio */
