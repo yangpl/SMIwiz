@@ -96,7 +96,7 @@ void do_updown(sim_t *sim, acq_t *acq)
   fdtd_null(sim, 0);//flag=0, incident field
 
   for(it=0; it<sim->nt; it++){
-    if(iproc==0 && it%sim->nt_verb==0) printf("it-----%d\n", it);
+    if(iproc==0 && it%100==0) printf("it-----%d\n", it);
 
     fdtd_update_v(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);//flag=1
     fdtd_update_p(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);//flag=1

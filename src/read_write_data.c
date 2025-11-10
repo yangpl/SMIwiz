@@ -36,10 +36,10 @@ void read_data(sim_t *sim, acq_t *acq)
   float zmin, zmax, xmin, xmax, ymin, ymax;
   int j, isrc, irec;
   FILE *fp;
-  char fname[sizeof "shot_0000"];
 
   if(acq->suopt){//deal with observed in SU format
     //======================================================
+    char fname[sizeof("shot_0000")];
     sprintf(fname, "shot_%04d", acq->shot_idx[iproc]);
 
     acq->nsrc = 1;//by default 1 shot per process
@@ -211,6 +211,7 @@ void read_data(sim_t *sim, acq_t *acq)
 
   }else{//deal with observed data in binary after modelling
     //======================================================
+    char fname[sizeof("dat_0000")];
     sprintf(fname, "dat_%04d", acq->shot_idx[iproc]);
     
     fp = fopen(fname,"rb");

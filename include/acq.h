@@ -2,6 +2,7 @@
 #define _acq_h_
 
 typedef struct {
+  int suopt;//1=SU format; 0=specify it by acquisition.txt
   int nsrc, nrec;//number of sources and receivers on each processor
   float zmin, zmax, xmin, xmax, ymin, ymax;//domain [zmin,zmax]*[xmin,xmax]*[ymin,ymax]
 

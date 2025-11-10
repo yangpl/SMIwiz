@@ -269,7 +269,7 @@ float fg_fwi(float *x, float *g)
     if(iproc==0) printf("----stage 1: forward modelling!--------\n");
     sim->sign_dt = 1;
     for(it=0; it<sim->nt; it++){
-      if(iproc==0 && it%sim->nt_verb==0) printf("it-----%d\n", it);
+      if(iproc==0 && it%100==0) printf("it-----%d\n", it);
 
       decimate_interp_bndr(sim, 1, it, 0, sim->face1, sim->face2, sim->face3);/* interp=0 */
       fdtd_update_v(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);
@@ -328,7 +328,7 @@ float fg_fwi(float *x, float *g)
     if(iproc==0) printf("----stage 2: adjoint modelling!-----------\n");
     sim->sign_dt = -1;
     for(it=sim->nt-1; it>=0; it--){
-      if(iproc==0 && it%sim->nt_verb==0) printf("it-----%d\n", it);
+      if(iproc==0 && it%100==0) printf("it-----%d\n", it);
   
       inject_adjoint_source(sim, acq, sim->p2, sim->dres, it);
       fdtd_update_v(sim, 2, it, 1, sim->kappa, sim->buz, sim->bux, sim->buy);
@@ -577,7 +577,7 @@ float fg_rwi(float *x, float *g)
   if(iproc==0) printf("----stage 1: forward modelling --------\n");
   sim->sign_dt = 1;
   for(it=0; it<sim->nt; it++){
-    if(iproc==0 && it%sim->nt_verb==0) printf("it-----%d\n", it);
+    if(iproc==0 && it%100==0) printf("it-----%d\n", it);
 
     //A(m+dm)(u+du)=f
     decimate_interp_bndr(sim, 0, it, 0, sim->face1_, sim->face2_, sim->face3_);/* interp=0 */
@@ -620,7 +620,7 @@ float fg_rwi(float *x, float *g)
   if(iproc==0) printf("----stage 2: adjoint modelling -----------\n");
   sim->sign_dt = -1;
   for(it=sim->nt-1; it>=0; it--){
-    if(iproc==0 && it%sim->nt_verb==0) printf("it-----%d\n", it);
+    if(iproc==0 && it%100==0) printf("it-----%d\n", it);
 
     //A^H(m+dm) lambda2=R^H(delta_d-R delta_u)
     inject_adjoint_source(sim, acq, sim->p3, sim->dres, it);

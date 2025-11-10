@@ -5,7 +5,6 @@ typedef struct {
   int mode;//0=modelling;1=FWI, 2=RTM;3= LSRTM, 4=FWI gradient
   int order;//order of FD scheme
   int nt;//number of time steps
-  int nt_verb;//verbose display every nt_verb time steps
   int n1, n2, n3, nb;//number grid points in 1st, 2nd and 3rd coorindate, number of ABC layers
   int n1pad, n2pad, n3pad;//model dimensions 
   int n123, n123pad;

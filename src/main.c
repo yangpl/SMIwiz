@@ -84,7 +84,6 @@ int main(int argc, char* argv[])
   if(!getparint("n2",&sim->n2)) err("must give n2= for FD grid");
   if(!getparfloat("d1",&sim->d1)) err("must give d1= for FD grid"); 
   if(!getparfloat("d2",&sim->d2)) err("must give d2= for FD grid");
-  if(!getparint("nt_verb", &sim->nt_verb)) sim->nt_verb = 100;//verbose display every nt_verb timesteps
   sim->n1pad = sim->n1+2*sim->nb;
   sim->n2pad = sim->n2+2*sim->nb;
   if(!getparint("n3",&sim->n3)) { //default, 2D

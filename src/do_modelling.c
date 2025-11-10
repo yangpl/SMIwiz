@@ -59,7 +59,7 @@ void do_modelling(sim_t *sim, acq_t *acq)
   t_inject_src = 0.;
   t_extract_field = 0.;
   for(it=0; it<sim->nt; it++){
-    if(iproc==0 && it%sim->nt_verb==0) printf("it-----%d\n", it);
+    if(iproc==0 && it%100==0) printf("it-----%d\n", it);
 
     if(iproc==0) t0 = MPI_Wtime();
     fdtd_update_v(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);//flag=1

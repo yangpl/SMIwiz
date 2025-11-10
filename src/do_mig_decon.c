@@ -140,7 +140,7 @@ void do_psf_hessian(sim_t *sim, acq_t *acq)
   fdtd_null(sim, 1);//flag=1, incident field
   sim->sign_dt = 1;
   for(it=0; it<sim->nt; it++){
-    if(iproc==0 && it%sim->nt_verb==0) printf("it-----%d\n", it);
+    if(iproc==0 && it%100==0) printf("it-----%d\n", it);
 
     decimate_interp_bndr(sim, 1, it, 0, sim->face1, sim->face2, sim->face3);//interp=0
     fdtd_update_v(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);
@@ -181,7 +181,7 @@ void do_psf_hessian(sim_t *sim, acq_t *acq)
   fdtd_null(sim, 2);//flag=2, adjoint field
   sim->sign_dt = -1;
   for(it=sim->nt-1; it>=0; it--){
-    if(iproc==0 && it%sim->nt_verb==0) printf("it-----%d\n", it);
+    if(iproc==0 && it%100==0) printf("it-----%d\n", it);
 
     //adjoint field modelling
     inject_adjoint_source(sim, acq, sim->p2, sim->dres, it);
@@ -280,7 +280,7 @@ void do_psf_hessian(sim_t *sim, acq_t *acq)
   fdtd_null(sim, 1);//flag=1, incident field
   sim->sign_dt = 1;
   for(it=0; it<sim->nt; it++){
-    if(iproc==0 && it%sim->nt_verb==0) printf("it-----%d\n", it);
+    if(iproc==0 && it%100==0) printf("it-----%d\n", it);
 
     //background field modelling, p1
     decimate_interp_bndr(sim, 1, it, 0, sim->face1, sim->face2, sim->face3);//interp=0
@@ -333,7 +333,7 @@ void do_psf_hessian(sim_t *sim, acq_t *acq)
   fdtd_null(sim, 2);//flag=2, adjoint field
   sim->sign_dt = -1;
   for(it=sim->nt-1; it>=0; it--){
-    if(iproc==0 && it%sim->nt_verb==0) printf("it-----%d\n", it);
+    if(iproc==0 && it%100==0) printf("it-----%d\n", it);
 
     //adjoint field modelling
     inject_adjoint_source(sim, acq, sim->p2, sim->dcal, it);
