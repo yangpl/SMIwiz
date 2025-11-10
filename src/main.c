@@ -168,8 +168,7 @@ int main(int argc, char* argv[])
   free3float(sim->vp);
   free3float(sim->rho);
 
-  if(!acq->suopt) acq_free(sim, acq);
-  
+  acq_free(sim, acq);  
   free(sim);
   free(acq);
   
