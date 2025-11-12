@@ -47,7 +47,6 @@ int main(int argc, char* argv[])
   acq = (acq_t *)malloc(sizeof(acq_t));
   sim = (sim_t *)malloc(sizeof(sim_t));
   
-  if(!getparint("suopt", &acq->suopt)) acq->suopt = 0;//0=default, 1=for real data precessing using RTM,FWI,LSRTM 
   if(!getparint("mode", &sim->mode)) sim->mode=0;
   if(iproc==0){
     t = time(NULL);
@@ -118,38 +117,48 @@ int main(int argc, char* argv[])
     printf("[n1pad, n2pad, n3pad]=[%d, %d, %d]\n", sim->n1pad, sim->n2pad, sim->n3pad);
   }
 
-  if(!getparstring("stffile",&stffile)) err("mute give stffile= ");
   if(!getparstring("vpfile",&vpfile)) err("must give vpfile= ");
-  if(!getparstring("rhofile",&rhofile)) err("must give rhofile= ");
-  
-  sim->stf = alloc1float(sim->nt); //source wavelet
   sim->vp = alloc3float(sim->n1, sim->n2, sim->n3);
+  fp=fopen(vpfile, "rb");
+  if(fp==NULL) err("cannot open vpfile=%s", vpfile);
+  if(fread(&sim->vp[0][0][0], sizeof(float), sim->n123, fp)!=sim->n123)
+    err("error reading vpfile=%s,  size unmatched", vpfile);
+  fclose(fp);
+  
+  if(!getparstring("rhofile",&rhofile)) err("must give rhofile= ");
   sim->rho = alloc3float(sim->n1, sim->n2, sim->n3);
+  fp = fopen(rhofile, "rb");
+  if(fp==NULL) err("cannot open rhofile=%s", rhofile);
+  if(fread(&sim->rho[0][0][0], sizeof(float), sim->n123, fp)!=sim->n123)
+    err("error reading rhofile=%s,  size unmatched", rhofile);
+  fclose(fp);
 
+  sim->stf = alloc1float(sim->nt); //source wavelet
   if(sim->mode!=5){
-    fp=fopen(stffile,"rb");
+    if(!getparstring("stffile",&stffile)) err("must give stffile= ");
+    fp=fopen(stffile, "rb");
     if(fp==NULL) err("cannot open stffile=%s", stffile);
-    if(fread(sim->stf,sizeof(float),sim->nt,fp)!=sim->nt) 
-      err("error reading stffile=%s, size unmatched",stffile);
+    if(fread(sim->stf, sizeof(float), sim->nt, fp)!=sim->nt) 
+      err("error reading stffile=%s,  size unmatched", stffile);
     fclose(fp);
   }
-  
-  fp=fopen(rhofile,"rb");
-  if(fp==NULL) err("cannot open rhofile=%s", rhofile);
-  if(fread(sim->rho[0][0],sizeof(float),sim->n123,fp)!=sim->n123)
-    err("error reading rhofile=%s, size unmatched",rhofile);
-  fclose(fp);
-  
-  fp=fopen(vpfile,"rb");
-  if(fp==NULL) err("cannot open vpfile=%s", vpfile);
-  if(fread(sim->vp[0][0],sizeof(float),sim->n123,fp)!=sim->n123)
-    err("error reading vpfile=%s, size unmatched",vpfile);
-  fclose(fp);
+  fflush(stdout);
 
-
+  //-------------------------------------------------------
+  if(!getparint("suopt", &acq->suopt)) acq->suopt = 0;//0=default, 1=for real data precessing using RTM,FWI,LSRTM
+  acq->shot_idx = alloc1int(nproc);
+  int nsrc = countparval("shots");
+  if(nsrc>0){
+    if(nsrc<nproc) err("nproc > number of shot indices! ");
+    getparint("shots", acq->shot_idx);/* a list of source index separated by comma */
+  }
+  if(nsrc==0){
+    for(int j=0; j<nproc; j++) acq->shot_idx[j] = j+1;//index starts from 1
+  }
+  
   if(!acq->suopt) acq_init(sim, acq);
-  //else acquisition will be specified in read_data by data in SU format
   ierr = MPI_Barrier(MPI_COMM_WORLD);
+
 
   //====================do the job here========================
   if(sim->mode==0) do_modelling(sim, acq); 
@@ -172,6 +181,7 @@ int main(int argc, char* argv[])
   acq_free(sim, acq);  
   free(sim);
   free(acq);
+
   
   MPI_Finalize();
 

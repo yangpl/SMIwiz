@@ -12,7 +12,6 @@
 #include "acq.h"
 #include "fwi.h"
  
-
 void check_cfl(sim_t *sim);
 
 void fdtd_init(sim_t *sim, int flag);
@@ -46,8 +45,6 @@ void do_invert_source(sim_t *sim, acq_t *acq)
   int it,irec,ntpow2;
   char *fname;
 
-  sim->dcal = alloc2float(sim->nt, acq->nrec);
-  sim->dobs = alloc2float(sim->nt, acq->nrec);
   read_data(sim, acq);
   setup_data_weight(acq, sim);
   
@@ -162,5 +159,4 @@ void do_invert_source(sim_t *sim, acq_t *acq)
   fftw_destroy_plan(fft);
   fftw_destroy_plan(ifft);
 
-  free2float(sim->dcal);
 }

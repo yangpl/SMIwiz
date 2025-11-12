@@ -12,21 +12,6 @@
 
 double kaiser_windowed_sinc(double x, double dx, int r);
 
-//linearly interpolate trace obtained from SU file
-void interp_trace(int ntin, float dtin, float *intrace,
-		  int ntout, float dtout, float *outtrace)
-{
-  int i, j;
-  float t, w;
-  
-  for(i=0; i<ntout; i++){
-    t = i*dtout;
-    j = (int)(t/dtin);
-    w = (t-j*dtin)/dtin;//weight
-    outtrace[j] = (1.-w)*intrace[MIN(j,ntin-1)] + w*intrace[MIN(j+1,ntin-1)];      
-  }
-}
-
 //read SU/binary data file to initialize sim->dobs
 void read_data(sim_t *sim, acq_t *acq)
 {
@@ -34,42 +19,64 @@ void read_data(sim_t *sim, acq_t *acq)
   unsigned long int filesize;
   float dt_trace, tmp, frac;
   float zmin, zmax, xmin, xmax, ymin, ymax;
-  int j, isrc, irec;
+  int it, j, isrc, irec;
   FILE *fp;
 
   if(acq->suopt){//deal with observed in SU format
     //======================================================
-    char fname[sizeof("shot_0000")];
-    sprintf(fname, "shot_%04d", acq->shot_idx[iproc]);
-
-    acq->nsrc = 1;//by default 1 shot per process
+    char fname[sizeof("dat_0000.su")];
+    sprintf(fname, "dat_%04d.su", acq->shot_idx[iproc]);
+    
     fp = fopen(fname,"rb");
     if(fp==NULL) { fprintf(stderr,"error in read_data in SU format"); exit(1); }
     fseek(fp, 114, SEEK_SET );//pointer skips first 114 bytes
     fread(&ns, 2, 1,fp); // ns 115-116 byte in the trace header
-
+    if(iproc==0) printf("ns=%d\n", ns);
+    
     fseek(fp, 0, SEEK_END);//pointer goes to the end of the file
     filesize = ftell(fp);//ftell tells you the number of bytes the file has
     //each trace starts with 240 bytes header, proceeds with ns samples in float point.
     acq->nrec = filesize/(240+ns*4);
+    acq->nsrc = 1;//by default 1 shot per process
+    if(iproc==0) printf("nrec=%d\n", acq->nrec);
 
-    trace_header *trhdr = (trace_header*)malloc(acq->nrec*sizeof(trace_header));
-    float *trace = malloc(acq->nrec*sizeof(float));
+    sim->dcal = alloc2float(sim->nt, acq->nrec);
+    sim->dobs = alloc2float(sim->nt, acq->nrec);
+    sim->dres = alloc2float(sim->nt, acq->nrec);
+
+    trace_header *trhdr = malloc(acq->nrec*sizeof(trace_header));
+    float *trace = malloc(ns*sizeof(float));
+
+    rewind(fp);//pointer goes to the beginning of the file
+    fread(&trhdr[0], 240, 1, fp);//240 Byte for trace header
+    dt_trace = trhdr[0].dt*1e-6;//convert micro-seconds to seconds
+    if(iproc==0){
+      printf("dt_trace=%g\n", dt_trace);
+      if(ns*dt_trace<sim->nt*sim->dt) printf("traces will be extrapolated longer\n");
+      if(ns*dt_trace>sim->nt*sim->dt) printf("traces will be cut shorter!\n");
+    }
 
     rewind(fp);//pointer goes to the beginning of the file
     for(irec=0; irec<acq->nrec; irec++){
-      fread(&trhdr[irec], 240, 1, fp);//240 Byte for trace header
-      fread(trace, ns*sizeof(float), 1, fp);//then ns float numbers as trace
-      dt_trace = trhdr[irec].dt*1e-6;//note the unit of trhdr[irec].dt is 10^{-6}s
-      interp_trace(ns, dt_trace, trace, sim->nt, sim->dt, sim->dobs[irec]);
+      fread(&trhdr[irec], 240, 1, fp);//sizeof(trace_header)=240 Byte
+      fread(trace, ns*sizeof(float), 1, fp);//then ns float numbers as one trace
+
+      //linearly interpolate trace obtained from SU file
+      for(it=0; it<sim->nt; it++){
+	tmp = it*sim->dt;
+	j = (int)(tmp/dt_trace);
+	frac = (tmp-j*dt_trace)/dt_trace;
+	//printf("t=%g, j=%d, frac=%g\n", tmp, j, frac);
+	//printf("a=%g, b=%g\n", trace[MIN(j,ns-1)], trace[MIN(j+1,ns-1)]);
+	printf("irec=%d, it=%d\n", irec, it);
+	sim->dobs[irec][it] = (1.-frac)*trace[MIN(j,ns-1)] + frac*trace[MIN(j+1,ns-1)];      
+	//tmp = (1.-frac)*trace[MIN(j,ns-1)] + frac*trace[MIN(j+1,ns-1)];      
+      }
+
     }
     fclose(fp);
-
-    if(iproc==0){//warning if SU data has different time length 
-      if(ns*dt_trace>sim->nt*sim->dt) printf("traces are cut shorter");
-      if(ns*dt_trace<sim->nt*sim->dt) printf("traces are extrapolated longer");
-    }
-
+    fflush(stdout);
+    
     acq->rec_x1 = alloc1float(acq->nrec);
     acq->rec_x2 = alloc1float(acq->nrec);
     acq->rec_x3 = alloc1float(acq->nrec);
@@ -134,7 +141,7 @@ void read_data(sim_t *sim, acq_t *acq)
 	acq->rec_w3[irec][j+sim->ri] = kaiser_windowed_sinc(-frac+j, 1.0, sim->ri);
     }
     if(iproc==0){
-      printf("domain of receiver locations:\n");
+      printf("domain of source locations:\n");
       printf("[zmin, zmax]=[%g, %g]\n", zmin, zmax);
       printf("[xmin, xmax]=[%g, %g]\n", xmin, xmax);
       printf("[ymin, ymax]=[%g, %g]\n", ymin, ymax);
@@ -231,13 +238,14 @@ void read_data(sim_t *sim, acq_t *acq)
 void write_data(sim_t *sim, acq_t *acq)
 /*< write synthetic data for each shot/process >*/
 {
-  char fname[sizeof("dat_0000")];
+  char fname[sizeof "dat_0000"];
   FILE *fp;
 
   sprintf(fname, "dat_%04d", acq->shot_idx[iproc]);
   fp=fopen(fname,"wb");
-  if(fp==NULL) { fprintf(stderr,"error in write_data\n"); exit(1);}
+  if(fp==NULL) { fprintf(stderr,"write_data, error opening file\n"); exit(1);}
   fwrite(&sim->dcal[0][0], sim->nt*acq->nrec*sizeof(float), 1, fp);
+  fflush(fp);
   fclose(fp);
-  fflush(stdout);
+
 }

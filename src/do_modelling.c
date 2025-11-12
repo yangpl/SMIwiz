@@ -43,8 +43,6 @@ void do_modelling(sim_t *sim, acq_t *acq)
 
   if(!getparint("itcheck", &sim->itcheck)) sim->itcheck = sim->nt/2;
 
-  sim->dcal = alloc2float(sim->nt, acq->nrec);  
-
   sim->sign_dt = 1;
   check_cfl(sim);
   cpml_init(sim);
@@ -120,7 +118,6 @@ void do_modelling(sim_t *sim, acq_t *acq)
   }
   write_data(sim, acq);
 
-
   if(iproc==0) {
     t0 = t_update_v + t_update_p + t_inject_src + t_extract_field;
     FILE *fp = fopen("time_info.txt", "w");
@@ -144,6 +141,4 @@ void do_modelling(sim_t *sim, acq_t *acq)
   cpml_free(sim);
   computing_box_free(sim, 0);
 
-
-  free2float(sim->dcal);
 }

@@ -63,13 +63,6 @@ void fg_fwi_init(sim_t *sim_, acq_t *acq_, fwi_t *fwi_)
   acq = acq_;
   fwi = fwi_;
   
-  sim->dobs = alloc2float(sim->nt,acq->nrec);
-  sim->dcal = alloc2float(sim->nt,acq->nrec);
-  sim->dres = alloc2float(sim->nt,acq->nrec);
-  memset(sim->dobs[0], 0, sim->nt*acq->nrec*sizeof(float));
-  memset(sim->dcal[0], 0, sim->nt*acq->nrec*sizeof(float));
-  memset(sim->dres[0], 0, sim->nt*acq->nrec*sizeof(float));
-
   read_data(sim, acq);//read observed data
   setup_data_weight(acq, sim);
 
@@ -119,9 +112,7 @@ void fg_fwi_init(sim_t *sim_, acq_t *acq_, fwi_t *fwi_)
 /*--------------------------------------------------------------*/
 void fg_fwi_free(sim_t *sim)
 {
-  free2float(sim->dobs);
-  free2float(sim->dcal);
-  free2float(sim->dres);
+
   if(fwi->rwi){
     free3float(sim->ip);
     free3float(sim->dm);

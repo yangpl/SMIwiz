@@ -112,9 +112,6 @@ void do_psf_hessian(sim_t *sim, acq_t *acq)
   }
   
   fwi->n = fwi->npar*sim->n123;//number of unknowns
-  sim->dcal = alloc2float(sim->nt, acq->nrec);//synthetic data
-  sim->dobs = alloc2float(sim->nt, acq->nrec);
-  sim->dres = alloc2float(sim->nt, acq->nrec);
   g1 = alloc3float(sim->n1, sim->n2, sim->n3);
   g2 = alloc3float(sim->n1, sim->n2, sim->n3);
   mr = alloc4float(sim->n1, sim->n2, sim->n3, fwi->npar);
@@ -402,10 +399,6 @@ void do_psf_hessian(sim_t *sim, acq_t *acq)
   fdtd_free(sim, 1);
   fdtd_free(sim, 2);
   decimate_interp_free(sim, 1);
-
-  free2float(sim->dcal);
-  free2float(sim->dobs);
-  free2float(sim->dres);
 
   free3float(g1);
   free3float(g2);

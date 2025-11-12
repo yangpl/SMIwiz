@@ -44,8 +44,6 @@ void do_updown(sim_t *sim, acq_t *acq)
   if(!getparint("itcheck", &sim->itcheck)) sim->itcheck = sim->nt/2;
   if(!getparint("ntaper",&ntaper)) ntaper = 10;
 
-  sim->dcal = alloc2float(sim->nt, acq->nrec);  
-
   //---------------------------------------------------------------
   float *hstf = alloc1float(sim->nt);//hilbert transform of source time function
 
@@ -184,5 +182,4 @@ void do_updown(sim_t *sim, acq_t *acq)
   free1float(hstf);
   free3float(pu);
 
-  free2float(sim->dcal);
 }

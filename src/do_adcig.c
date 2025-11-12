@@ -108,9 +108,6 @@ void do_adcig(sim_t *sim, acq_t *acq)
   memset(&adcig[0][0][0][0], 0, sim->na*sim->n123*sizeof(float));
 
   fwi->n = fwi->npar*sim->n123;//number of unknowns
-  sim->dcal = alloc2float(sim->nt, acq->nrec);//synthetic data - direct wave
-  sim->dobs = alloc2float(sim->nt, acq->nrec);
-  sim->dres = alloc2float(sim->nt, acq->nrec);
     
   read_data(sim, acq);
   setup_data_weight(acq, sim);//the muting will be used to remove direct waves
@@ -292,10 +289,6 @@ void do_adcig(sim_t *sim, acq_t *acq)
   fdtd_free(sim, 2);
   decimate_interp_free(sim, 1);
 
-  free2float(sim->dcal);
-  free2float(sim->dobs);
-  free2float(sim->dres);
-  
   free1float(win);
   free4float(image);
   free4float(adcig);

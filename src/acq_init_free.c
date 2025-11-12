@@ -15,7 +15,7 @@ void acq_init(sim_t *sim, acq_t *acq)
 /*< read acquisition file to initialize acquisition geometry >*/
 {
   char *acquifile;
-  int nrec_max, nsrc;
+  int nrec_max;
   float *rx1, *rx2, *rx3;
   float zs, xs, ys;
   float zz, xx, yy, dip, azimuth,  tmp,  frac;
@@ -29,24 +29,13 @@ void acq_init(sim_t *sim, acq_t *acq)
   if(!getparfloat("xmax", &acq->xmax)) acq->xmax = acq->xmin+(sim->n2-1)*sim->d2;
   if(!getparfloat("ymin", &acq->ymin)) acq->ymin = 0;
   if(!getparfloat("ymax", &acq->ymax)) acq->ymax = acq->ymin+(sim->n3-1)*sim->d3;
+  if(!getparint("nrec_max", &nrec_max)) nrec_max = 100000;//maximum dimensions/receivers per shot
   if(iproc==0){
     printf("[zmin, zmax]=[%g, %g]\n", acq->zmin, acq->zmax);
     printf("[xmin, xmax]=[%g, %g]\n", acq->xmin, acq->xmax);
     printf("[ymin, ymax]=[%g, %g]\n", acq->ymin, acq->ymax);
+    printf("nrec_max=%d \n", nrec_max);
   }
-
-  acq->shot_idx = alloc1int(nproc);
-  nsrc = countparval("shots");
-  if(nsrc>0){
-    if(nsrc<nproc) err("nproc > number of shot indices! ");
-    getparint("shots", acq->shot_idx);/* a list of source index separated by comma */
-  }
-  if(nsrc==0){
-    for(j=0; j<nproc; j++) acq->shot_idx[j] = j+1;//index starts from 1
-  }
-  
-  if(!getparint("nrec_max", &nrec_max)) nrec_max = 100000;//maximum dimensions/receivers per shot
-  if(iproc==0) printf("nrec_max=%d \n", nrec_max);
   if(!getparstring("acquifile", &acquifile)) err("must give acquifile= ");
 
   rx1 = alloc1float(nrec_max);
@@ -225,6 +214,14 @@ void acq_init(sim_t *sim, acq_t *acq)
   free1float(rx1);
   free1float(rx2);
   free1float(rx3);
+
+  //allocate memory for observed and synthetic data, and data residual
+  sim->dobs = alloc2float(sim->nt,acq->nrec);
+  sim->dcal = alloc2float(sim->nt,acq->nrec);
+  sim->dres = alloc2float(sim->nt,acq->nrec);
+  memset(&sim->dobs[0][0], 0, sim->nt*acq->nrec*sizeof(float));
+  memset(&sim->dcal[0][0], 0, sim->nt*acq->nrec*sizeof(float));
+  memset(&sim->dres[0][0], 0, sim->nt*acq->nrec*sizeof(float));
 }
 
 
@@ -260,4 +257,7 @@ void acq_free(sim_t *sim, acq_t *acq)
   free1int(acq->rec_nm);
   free1int(acq->shot_idx);
 
+  free2float(sim->dobs);
+  free2float(sim->dcal);
+  free2float(sim->dres);
 }

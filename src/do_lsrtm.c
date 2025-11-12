@@ -86,9 +86,6 @@ void do_lsrtm(sim_t *sim, acq_t *acq)
   if(!getparint("preco", &fwi->preco)) fwi->preco = 0;//1=precondition, 0=not
 
   fwi->n = fwi->npar*sim->n123;//number of unknowns
-  sim->dcal = alloc2float(sim->nt, acq->nrec);//synthetic data - direct wave
-  sim->dobs = alloc2float(sim->nt, acq->nrec);
-  sim->dres = alloc2float(sim->nt, acq->nrec);
   g1 = alloc3float(sim->n1, sim->n2, sim->n3);
   g2 = alloc3float(sim->n1, sim->n2, sim->n3);
 
@@ -529,9 +526,6 @@ void do_lsrtm(sim_t *sim, acq_t *acq)
   fdtd_free(sim, 2);
   decimate_interp_free(sim, 1);
 
-  free2float(sim->dcal);
-  free2float(sim->dobs);
-  free2float(sim->dres);
   free3float(g1);
   free3float(g2);
   
