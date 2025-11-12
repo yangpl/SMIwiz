@@ -66,13 +66,8 @@ void read_data(sim_t *sim, acq_t *acq)
 	tmp = it*sim->dt;
 	j = (int)(tmp/dt_trace);
 	frac = (tmp-j*dt_trace)/dt_trace;
-	//printf("t=%g, j=%d, frac=%g\n", tmp, j, frac);
-	//printf("a=%g, b=%g\n", trace[MIN(j,ns-1)], trace[MIN(j+1,ns-1)]);
-	printf("irec=%d, it=%d\n", irec, it);
 	sim->dobs[irec][it] = (1.-frac)*trace[MIN(j,ns-1)] + frac*trace[MIN(j+1,ns-1)];      
-	//tmp = (1.-frac)*trace[MIN(j,ns-1)] + frac*trace[MIN(j+1,ns-1)];      
       }
-
     }
     fclose(fp);
     fflush(stdout);
@@ -107,10 +102,8 @@ void read_data(sim_t *sim, acq_t *acq)
       zmax = (irec==0)? acq->rec_x1[irec] : MAX(zmax, acq->rec_x1[irec]);
       xmin = (irec==0)? acq->rec_x2[irec] : MIN(xmin, acq->rec_x2[irec]);
       xmax = (irec==0)? acq->rec_x2[irec] : MAX(xmax, acq->rec_x2[irec]);
-      if(sim->n3>1){
-	ymin = (irec==0)? acq->rec_x3[irec] : MIN(ymin, acq->rec_x3[irec]);
-	ymax = (irec==0)? acq->rec_x3[irec] : MAX(ymax, acq->rec_x3[irec]);
-      }
+      ymin = (irec==0)? acq->rec_x3[irec] : MIN(ymin, acq->rec_x3[irec]);
+      ymax = (irec==0)? acq->rec_x3[irec] : MAX(ymax, acq->rec_x3[irec]);
 
       //point at true depth
       tmp = (acq->rec_x1[irec]-acq->zmin)/sim->d1;
@@ -141,7 +134,7 @@ void read_data(sim_t *sim, acq_t *acq)
 	acq->rec_w3[irec][j+sim->ri] = kaiser_windowed_sinc(-frac+j, 1.0, sim->ri);
     }
     if(iproc==0){
-      printf("domain of source locations:\n");
+      printf("receiver range:\n");
       printf("[zmin, zmax]=[%g, %g]\n", zmin, zmax);
       printf("[xmin, xmax]=[%g, %g]\n", xmin, xmax);
       printf("[ymin, ymax]=[%g, %g]\n", ymin, ymax);
@@ -178,10 +171,8 @@ void read_data(sim_t *sim, acq_t *acq)
       zmax = (isrc==0)? acq->src_x1[isrc] : MAX(zmax, acq->src_x1[isrc]);
       xmin = (isrc==0)? acq->src_x2[isrc] : MIN(xmin, acq->src_x2[isrc]);
       xmax = (isrc==0)? acq->src_x2[isrc] : MAX(xmax, acq->src_x2[isrc]);
-      if(sim->n3>1){
-	ymin = (isrc==0)? acq->src_x3[isrc] : MIN(ymin, acq->src_x3[isrc]);
-	ymax = (isrc==0)? acq->src_x3[isrc] : MAX(ymax, acq->src_x3[isrc]);
-      }
+      ymin = (isrc==0)? acq->src_x3[isrc] : MIN(ymin, acq->src_x3[isrc]);
+      ymax = (isrc==0)? acq->src_x3[isrc] : MAX(ymax, acq->src_x3[isrc]);
     
       //point at true depth
       tmp = (acq->src_x1[isrc]-acq->zmin)/sim->d1;
@@ -212,7 +203,7 @@ void read_data(sim_t *sim, acq_t *acq)
 	acq->src_w3[isrc][j+sim->ri] = kaiser_windowed_sinc(-frac+j, 1.0, sim->ri);
     }
     if(iproc==0){
-      printf("domain of source locations:\n");
+      printf("source range:\n");
       printf("[zmin, zmax]=[%g, %g]\n", zmin, zmax);
       printf("[xmin, xmax]=[%g, %g]\n", xmin, xmax);
       printf("[ymin, ymax]=[%g, %g]\n", ymin, ymax);

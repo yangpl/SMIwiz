@@ -33,7 +33,7 @@ void acq_init(sim_t *sim, acq_t *acq)
   if(iproc==0){
     printf("[zmin, zmax]=[%g, %g]\n", acq->zmin, acq->zmax);
     printf("[xmin, xmax]=[%g, %g]\n", acq->xmin, acq->xmax);
-    printf("[ymin, ymax]=[%g, %g]\n", acq->ymin, acq->ymax);
+    if(sim->n3>1) printf("[ymin, ymax]=[%g, %g]\n", acq->ymin, acq->ymax);
     printf("nrec_max=%d \n", nrec_max);
   }
   if(!getparstring("acquifile", &acquifile)) err("must give acquifile= ");
