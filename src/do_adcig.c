@@ -55,6 +55,9 @@ void do_adcig(sim_t *sim, acq_t *acq)
   FILE *fp;
   char fname[sizeof("dres_0000")];
 
+  read_data(sim, acq);
+  setup_data_weight(acq, sim);//the muting will be used to remove direct waves
+  
   fwi = (fwi_t*)malloc(sizeof(fwi_t));
   fwi->bathy = alloc2float(sim->n2, sim->n3);
   fwi->ibathy = alloc2int(sim->n2, sim->n3);
@@ -109,9 +112,6 @@ void do_adcig(sim_t *sim, acq_t *acq)
 
   fwi->n = fwi->npar*sim->n123;//number of unknowns
     
-  read_data(sim, acq);
-  setup_data_weight(acq, sim);//the muting will be used to remove direct waves
-  
   check_cfl(sim);
   cpml_init(sim);  
   extend_model_init(sim);

@@ -58,6 +58,9 @@ void do_lsrtm(sim_t *sim, acq_t *acq)
   FILE *fp;
   char fname[sizeof("dres_0000")];
 
+  read_data(sim, acq);
+  setup_data_weight(acq, sim);//the muting will be used to remove direct waves
+
   fwi = (fwi_t*)malloc(sizeof(fwi_t));
   fwi->bathy=alloc2float(sim->n2, sim->n3);
   fwi->ibathy=alloc2int(sim->n2, sim->n3);
@@ -98,9 +101,6 @@ void do_lsrtm(sim_t *sim, acq_t *acq)
   cg_rt = alloc4float(sim->n1, sim->n2, sim->n3, fwi->npar);
   if(fwi->preco) hess = alloc4float(sim->n1, sim->n2, sim->n3, fwi->npar);
   memset(&cg_x[0][0][0][0], 0, fwi->n*sizeof(float));
-
-  read_data(sim, acq);
-  setup_data_weight(acq, sim);//the muting will be used to remove direct waves
   
   check_cfl(sim);
   cpml_init(sim);  

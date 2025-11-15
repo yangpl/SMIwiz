@@ -68,6 +68,10 @@ void do_psf_hessian(sim_t *sim, acq_t *acq)
   fwi_t *fwi;
   FILE *fp;
   
+  read_data(sim, acq);
+  setup_data_weight(acq, sim);//the muting will be used to remove direct waves
+  if(sim->muteopt==0) err("RTM must assign muteopt=1");
+  
   fwi = (fwi_t*)malloc(sizeof(fwi_t));
   fwi->bathy=alloc2float(sim->n2, sim->n3);
   fwi->ibathy=alloc2int(sim->n2, sim->n3);
@@ -117,10 +121,6 @@ void do_psf_hessian(sim_t *sim, acq_t *acq)
   mr = alloc4float(sim->n1, sim->n2, sim->n3, fwi->npar);
   m1 = alloc4float(sim->n1, sim->n2, sim->n3, fwi->npar);
   m2 = alloc4float(sim->n1, sim->n2, sim->n3, fwi->npar);
-  
-  read_data(sim, acq);
-  setup_data_weight(acq, sim);//the muting will be used to remove direct waves
-  if(sim->muteopt==0) err("RTM must assign muteopt=1");
   
   check_cfl(sim);
   cpml_init(sim);  
