@@ -158,7 +158,7 @@ void read_data(sim_t *sim, acq_t *acq)
       if(trhdr[0].scalel==0) tmp=1.;
       else if(trhdr[0].scalel>0) tmp=trhdr[0].scalel;
       else tmp=1./fabs(trhdr[0].scalel);
-      acq->src_x1[isrc] = (trhdr[0].selev + trhdr[0].sdepth)*tmp;
+      acq->src_x1[isrc] = -(trhdr[0].selev + trhdr[0].sdepth)*tmp;
 
       if(trhdr[0].scalco==0) tmp=1.;
       else if(trhdr[0].scalco>0) tmp=trhdr[0].scalco;

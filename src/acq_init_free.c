@@ -23,19 +23,7 @@ void acq_init(sim_t *sim, acq_t *acq)
   int isreceiver, isrc, irec, iseof, j;
   FILE *fp;
   
-  if(!getparfloat("zmin", &acq->zmin)) acq->zmin = 0;
-  if(!getparfloat("zmax", &acq->zmax)) acq->zmax = acq->zmin+(sim->n1-1)*sim->d1;
-  if(!getparfloat("xmin", &acq->xmin)) acq->xmin = 0;
-  if(!getparfloat("xmax", &acq->xmax)) acq->xmax = acq->xmin+(sim->n2-1)*sim->d2;
-  if(!getparfloat("ymin", &acq->ymin)) acq->ymin = 0;
-  if(!getparfloat("ymax", &acq->ymax)) acq->ymax = acq->ymin+(sim->n3-1)*sim->d3;
   if(!getparint("nrec_max", &nrec_max)) nrec_max = 100000;//maximum dimensions/receivers per shot
-  if(iproc==0){
-    printf("[zmin, zmax]=[%g, %g]\n", acq->zmin, acq->zmax);
-    printf("[xmin, xmax]=[%g, %g]\n", acq->xmin, acq->xmax);
-    if(sim->n3>1) printf("[ymin, ymax]=[%g, %g]\n", acq->ymin, acq->ymax);
-    printf("nrec_max=%d \n", nrec_max);
-  }
   if(!getparstring("acquifile", &acquifile)) err("must give acquifile= ");
 
   rx1 = alloc1float(nrec_max);

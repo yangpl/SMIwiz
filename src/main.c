@@ -146,6 +146,17 @@ int main(int argc, char* argv[])
 
   //-------------------------------------------------------
   if(!getparint("suopt", &acq->suopt)) acq->suopt = 0;//0=default, 1=for real data precessing using RTM,FWI,LSRTM
+  if(!getparfloat("zmin", &acq->zmin)) acq->zmin = 0;
+  if(!getparfloat("zmax", &acq->zmax)) acq->zmax = acq->zmin+(sim->n1-1)*sim->d1;
+  if(!getparfloat("xmin", &acq->xmin)) acq->xmin = 0;
+  if(!getparfloat("xmax", &acq->xmax)) acq->xmax = acq->xmin+(sim->n2-1)*sim->d2;
+  if(!getparfloat("ymin", &acq->ymin)) acq->ymin = 0;
+  if(!getparfloat("ymax", &acq->ymax)) acq->ymax = acq->ymin+(sim->n3-1)*sim->d3;
+  if(iproc==0){
+    printf("[zmin, zmax]=[%g, %g]\n", acq->zmin, acq->zmax);
+    printf("[xmin, xmax]=[%g, %g]\n", acq->xmin, acq->xmax);
+    if(sim->n3>1) printf("[ymin, ymax]=[%g, %g]\n", acq->ymin, acq->ymax);
+  }
   acq->shot_idx = alloc1int(nproc);
   int nsrc = countparval("shots");
   if(nsrc>0){
