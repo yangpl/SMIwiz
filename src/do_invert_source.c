@@ -37,16 +37,16 @@ void read_data(sim_t *sim, acq_t *acq);
 void write_data(sim_t *sim, acq_t *acq);
 void setup_data_weight(acq_t *acq, sim_t *sim);
 
-
 void do_invert_source(sim_t *sim, acq_t *acq)
 /*< invert source time function in FWI >*/
 {
   FILE *fp;
   int it,irec,ntpow2;
-  char *fname;
+  char *stffile;
 
   read_data(sim, acq);
   setup_data_weight(acq, sim);
+  if(!getparstring("stffile",&stffile)) err("must give stffile= ");
   
   //-----------------------------------------------------------------------
   //1. simulate synthetic data (Green's function) using Dirac delta function
@@ -143,9 +143,8 @@ void do_invert_source(sim_t *sim, acq_t *acq)
   //truncate real part of src to be of length nt
   for(it=0; it<sim->nt; it++) sim->stf[it]=creal(tmp[it])/ntpow2;
 
-  fname="src_inverted";
   if(iproc==0){
-    fp=fopen(fname,"wb");
+    fp=fopen(stffile,"wb");
     fwrite(sim->stf, sim->nt*sizeof(float), 1, fp);
     fclose(fp);
   }
