@@ -229,7 +229,7 @@ void read_data(sim_t *sim, acq_t *acq)
 void write_data(sim_t *sim, acq_t *acq)
 /*< write synthetic data for each shot/process >*/
 {
-  char fname[sizeof "dat_0000"];
+  char fname[sizeof("dat_0000")];
   FILE *fp;
 
   sprintf(fname, "dat_%04d", acq->shot_idx[iproc]);

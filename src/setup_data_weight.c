@@ -145,7 +145,7 @@ void setup_data_weight(acq_t *acq, sim_t *sim)
   }
 
   if(iproc==0){
-    char fname[sizeof "mask_0000"];
+    char fname[sizeof("mask_0000")];
     sprintf(fname, "mask_%04d", acq->shot_idx[iproc]);
 
     fp=fopen(fname,"wb");
