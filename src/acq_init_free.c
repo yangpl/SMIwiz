@@ -23,8 +23,8 @@ void acq_init(sim_t *sim, acq_t *acq)
   int isreceiver, isrc, irec, iseof, j;
   FILE *fp;
   
-  if(!getparint("nrec_max", &nrec_max)) nrec_max = 100000;//maximum dimensions/receivers per shot
   if(!getparstring("acquifile", &acquifile)) err("must give acquifile= ");
+  if(!getparint("nrec_max", &nrec_max)) nrec_max = 100000;//maximum dimensions/receivers per shot
 
   rx1 = alloc1float(nrec_max);
   rx2 = alloc1float(nrec_max);
@@ -204,9 +204,9 @@ void acq_init(sim_t *sim, acq_t *acq)
   free1float(rx3);
 
   //allocate memory for observed and synthetic data, and data residual
-  sim->dobs = alloc2float(sim->nt,acq->nrec);
-  sim->dcal = alloc2float(sim->nt,acq->nrec);
-  sim->dres = alloc2float(sim->nt,acq->nrec);
+  sim->dobs = alloc2float(sim->nt, acq->nrec);
+  sim->dcal = alloc2float(sim->nt, acq->nrec);
+  sim->dres = alloc2float(sim->nt, acq->nrec);
   memset(&sim->dobs[0][0], 0, sim->nt*acq->nrec*sizeof(float));
   memset(&sim->dcal[0][0], 0, sim->nt*acq->nrec*sizeof(float));
   memset(&sim->dres[0][0], 0, sim->nt*acq->nrec*sizeof(float));
