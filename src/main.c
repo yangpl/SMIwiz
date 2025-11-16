@@ -172,12 +172,11 @@ int main(int argc, char* argv[])
   }
   
   if(!acq->suopt) acq_init(sim, acq);//read acquisition file if suopt==0
-  if(sim->mode>=1 && sim->mode<=7){//mode=1,2,3,4,5,6,7 requires reading data
+  if(sim->mode>=1 && sim->mode<=7){//mode=1,2,3,4,5,6,7,9 requires reading data
     read_data(sim, acq);//read data in binary or SU format
     setup_data_weight(acq, sim);//the muting will be used to remove direct waves
   }
   ierr = MPI_Barrier(MPI_COMM_WORLD);
-
 
   //====================do the job here========================
   if(sim->mode==0) do_modelling(sim, acq); 
@@ -197,7 +196,7 @@ int main(int argc, char* argv[])
   free3float(sim->vp);
   free3float(sim->rho);
 
-  acq_free(sim, acq);  
+  if(sim->mode!=8 && sim->mode!=9) acq_free(sim, acq);  
   free(sim);
   free(acq);
   
