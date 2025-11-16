@@ -48,9 +48,7 @@ void inject_adjoint_source(sim_t *sim, acq_t *acq, float ***rp, float **dres, in
 
 float awi_adjoint_source(acq_t *acqui, sim_t *sim, fwi_t *fwi);
 
-void read_data(sim_t *sim, acq_t *acq);
 void write_data(sim_t *sim, acq_t *acq);
-void setup_data_weight(acq_t *acq, sim_t *sim);
 
 float regularization_tikhonov(float *x, float *g, int n1, int n2, int n3, float d1, float d2, float d3);
 float regularization_tv(float *x, float *g, int n1, int n2, int n3, float d1, float d2, float d3);
@@ -62,9 +60,6 @@ void fg_fwi_init(sim_t *sim_, acq_t *acq_, fwi_t *fwi_)
   sim = sim_;
   acq = acq_;
   fwi = fwi_;
-  
-  read_data(sim, acq);//read observed data
-  setup_data_weight(acq, sim);
 
   if(!getparint("itcheck", &sim->itcheck)) sim->itcheck = sim->nt/2;
   

@@ -11,9 +11,7 @@
 #include "fwi.h"
 #include <mpi.h>
 
-void read_data(sim_t *sim, acq_t *acq);
 void write_data(sim_t *sim, acq_t *acq);
-void setup_data_weight(acq_t *acq, sim_t *sim);
 
 void check_cfl(sim_t *sim);
 
@@ -55,9 +53,6 @@ void do_adcig(sim_t *sim, acq_t *acq)
   FILE *fp;
   char fname[sizeof("dres_0000")];
 
-  read_data(sim, acq);
-  setup_data_weight(acq, sim);//the muting will be used to remove direct waves
-  
   fwi = (fwi_t*)malloc(sizeof(fwi_t));
   fwi->bathy = alloc2float(sim->n2, sim->n3);
   fwi->ibathy = alloc2int(sim->n2, sim->n3);

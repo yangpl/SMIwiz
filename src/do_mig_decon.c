@@ -16,14 +16,12 @@
 #include "sim.h"
 #include "acq.h"
 #include "fwi.h"
- 
+
 #include <mpi.h>
 #include "opt.h"
 #include <fftw3.h>
 
-void read_data(sim_t *sim, acq_t *acq);
 void write_data(sim_t *sim, acq_t *acq);
-void setup_data_weight(acq_t *acq, sim_t *sim);
 
 void check_cfl(sim_t *sim);
 
@@ -68,8 +66,6 @@ void do_psf_hessian(sim_t *sim, acq_t *acq)
   fwi_t *fwi;
   FILE *fp;
   
-  read_data(sim, acq);
-  setup_data_weight(acq, sim);//the muting will be used to remove direct waves
   if(sim->muteopt==0) err("RTM must assign muteopt=1");
   
   fwi = (fwi_t*)malloc(sizeof(fwi_t));

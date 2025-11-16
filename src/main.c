@@ -16,6 +16,9 @@ int iproc, nproc, ierr;
 void acq_init(sim_t *sim, acq_t *acq);
 void acq_free(sim_t *sim, acq_t *acq);
 
+void read_data(sim_t *sim, acq_t *acq);
+void setup_data_weight(acq_t *acq, sim_t *sim);
+
 void do_updown(sim_t *sim, acq_t *acq);
 void do_modelling(sim_t *sim, acq_t *acq);
 void do_fwi(sim_t *sim, acq_t *acq);
@@ -168,7 +171,11 @@ int main(int argc, char* argv[])
     for(int j=0; j<nproc; j++) acq->shot_idx[j] = j+1;//index starts from 1
   }
   
-  if(!acq->suopt) acq_init(sim, acq);
+  if(!acq->suopt) acq_init(sim, acq);//read acquisition file if suopt==0
+  if(sim->mode>=1 && sim->mode<=7){//mode=1,2,3,4,5,6,7 requires reading data
+    read_data(sim, acq);//read data in binary or SU format
+    setup_data_weight(acq, sim);//the muting will be used to remove direct waves
+  }
   ierr = MPI_Barrier(MPI_COMM_WORLD);
 
 
@@ -193,7 +200,6 @@ int main(int argc, char* argv[])
   acq_free(sim, acq);  
   free(sim);
   free(acq);
-
   
   MPI_Finalize();
 

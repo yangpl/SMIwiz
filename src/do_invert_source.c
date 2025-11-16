@@ -33,9 +33,7 @@ void cpml_free(sim_t *sim);
 void inject_source(sim_t *sim, acq_t *acq, float ***sp, float stf_it);
 void extract_wavefield(sim_t *sim, acq_t *acq, float ***sp, float **dat, int it);
 
-void read_data(sim_t *sim, acq_t *acq);
 void write_data(sim_t *sim, acq_t *acq);
-void setup_data_weight(acq_t *acq, sim_t *sim);
 
 void do_invert_source(sim_t *sim, acq_t *acq)
 /*< invert source time function in FWI >*/
@@ -44,8 +42,6 @@ void do_invert_source(sim_t *sim, acq_t *acq)
   int it,irec,ntpow2;
   char *stffile;
 
-  read_data(sim, acq);
-  setup_data_weight(acq, sim);
   if(!getparstring("stffile",&stffile)) err("must give stffile= ");
   
   //-----------------------------------------------------------------------
