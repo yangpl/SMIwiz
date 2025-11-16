@@ -1,5 +1,5 @@
 #get Viking Graben data from the web
-wget https://s3.amazonaws.com/open.source.geoscience/open_data/Mobil_Avo_Viking_Graben_Line_12/seismic.segy
+#wget https://s3.amazonaws.com/open.source.geoscience/open_data/Mobil_Avo_Viking_Graben_Line_12/seismic.segy
 
 #clean up all non-segy data
 rm *.su *.bin *.txt
@@ -8,6 +8,8 @@ rm *.su *.bin *.txt
 segyread tape=seismic.segy hfile=header.txt bfile=binary.bin | segyclean> seismic.su
 
 #kill traces with amplitude=0
+
+#surange < seismic.su will print out all relevant details on sources and receivers
 
 
 #3D (scales with 1/r) to 2D (scales with 1/sqrt(r)) conversion, multiply by sqrt(r) (equivalent to multply by sqrt(t))
