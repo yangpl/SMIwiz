@@ -8,6 +8,7 @@
 #include "sim.h"
 #include "acq.h"
 
+//inject point source based on delta distribution
 void inject_source(sim_t *sim, acq_t *acq, float ***sp, float stf_it)
 {
   int isrc, i1, i2, i3, i1_, i2_, i3_;
@@ -32,7 +33,8 @@ void inject_source(sim_t *sim, acq_t *acq, float ***sp, float stf_it)
 	  i1_ = acq->src_i1[isrc] + i1;
 	  sp[i3_][i2_][i1_] += s*w1*w2*w3;
 
-	  if(sim->freesurf && acq->src_nm[isrc]>0){//subtract response at mirror location
+          //for points above free surface, subtract response at mirror location
+	  if(sim->freesurf && acq->src_nm[isrc]>0){
 	    w1 = acq->src_w1m[isrc][i1+sim->ri];
 	    i1_ = acq->src_i1m[isrc] + i1;
 	    sp[i3_][i2_][i1_] -= s*w1*w2*w3;
