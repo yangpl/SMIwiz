@@ -15,4 +15,18 @@ pswigb < stf n1=2500 d1=0.0024 label1='Time (s)' title='(b)'> stf.ps
 psmerge in=dat_0001.ps translate=0,0 in=stf.ps translate=7,0 > dat_wlt.ps
 epstopdf dat_wlt.ps
 
+
+dd if=param_final_rtm of=rtm_ip skip=1 bs=1260672
+dd if=param_final of=lsrtm_ip skip=1 bs=1260672
+
+psimage < rtm_ip n1=201 d1=20 n2=1568 d2=20 d1num=1000 d2num=5000 perc=99 label1="Z (m)" label2="X (m)" title='(a)' width=6. height=4.> rtm_ip.ps
+psimage < lsrtm_ip n1=201 d1=20 n2=1568 d2=20 d1num=1000 d2num=5000 perc=99 label1="Z (m)" label2="X (m)" title='(b)' width=6. height=4.> lsrtm_ip.ps
+
+psimage < param_final_psf n1=201 d1=20 n2=1568 d2=20 d1num=1000 d2num=5000 perc=99 label1="Z (m)" label2="X (m)" title='(c)' width=6. height=4.> psf_ip.ps
+psimage < param_final_fft n1=201 d1=20 n2=1568 d2=20 d1num=1000 d2num=5000 perc=99 label1="Z (m)" label2="X (m)" title='(d)' width=6. height=4.> fft_ip.ps
+
+psmerge in=rtm_ip.ps translate=0,0 in=lsrtm_ip.ps translate=8,0 in=psf_ip.ps translate=0,-5.5 in=fft_ip.ps translate=8,-5.5 > viking_rtm_lsrtm.ps
+epstopdf viking_rtm_lsrtm.ps
+
+
 rm *.ps
