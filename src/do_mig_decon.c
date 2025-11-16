@@ -16,9 +16,7 @@
 #include "sim.h"
 #include "acq.h"
 #include "fwi.h"
-
 #include <mpi.h>
-#include "opt.h"
 #include <fftw3.h>
 
 
