@@ -12,8 +12,6 @@
 #include "fwi.h"
 #include <mpi.h>
 
-void write_data(sim_t *sim, acq_t *acq);
-
 void check_cfl(sim_t *sim);
 
 void fdtd_init(sim_t *sim, int flag);
@@ -39,6 +37,8 @@ void decimate_interp_bndr(sim_t *sim, int flag, int it, int interp, float **face
 void inject_source(sim_t *sim, acq_t *acq, float ***sp, float stf_it);
 void inject_adjoint_source(sim_t *sim, acq_t *acq, float ***rp, float **dres, int it);
 void extract_wavefield(sim_t *sim, acq_t *acq, float ***sp, float **dat, int it);
+
+void write_data(sim_t *sim, acq_t *acq);
 
 void do_rtm(sim_t *sim, acq_t *acq)
 {

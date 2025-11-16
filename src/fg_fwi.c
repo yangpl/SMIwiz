@@ -12,7 +12,6 @@
 #include "acq.h"
 #include "fwi.h"
  
-
 sim_t *sim;
 acq_t *acq;
 fwi_t *fwi;

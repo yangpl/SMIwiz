@@ -11,7 +11,6 @@
 #include "opt.h"
 #include "sim.h"
 #include "fwi.h"
- 
 
 float l2norm(int n, float *a);
 void flipsign(int n, float *a, float *b);

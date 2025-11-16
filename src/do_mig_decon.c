@@ -21,7 +21,6 @@
 #include "opt.h"
 #include <fftw3.h>
 
-void write_data(sim_t *sim, acq_t *acq);
 
 void check_cfl(sim_t *sim);
 
@@ -48,6 +47,8 @@ void decimate_interp_bndr(sim_t *sim, int flag, int it, int interp, float **face
 void inject_source(sim_t *sim, acq_t *acq, float ***sp, float stf_it);
 void extract_wavefield(sim_t *sim, acq_t *acq, float ***sp, float **dat, int it);
 void inject_adjoint_source(sim_t *sim, acq_t *acq, float ***rp, float **dres, int it);
+
+void write_data(sim_t *sim, acq_t *acq);
 
 void cal_diagonal_hessian(sim_t *sim, fwi_t *fwi, float ****psf, float *hess);
 void matmul_Hv(sim_t *sim, fwi_t *fwi, float ****psf, int adj, double *x, double *y);

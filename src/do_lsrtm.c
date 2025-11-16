@@ -11,8 +11,6 @@
 #include "fwi.h"
 #include <mpi.h>
 
-void write_data(sim_t *sim, acq_t *acq);
-
 void check_cfl(sim_t *sim);
 
 void fdtd_init(sim_t *sim, int flag);
@@ -39,6 +37,7 @@ void inject_source(sim_t *sim, acq_t *acq, float ***sp, float stf_it);
 void extract_wavefield(sim_t *sim, acq_t *acq, float ***sp, float **dat, int it);
 void inject_adjoint_source(sim_t *sim, acq_t *acq, float ***rp, float **dres, int it);
 
+void write_data(sim_t *sim, acq_t *acq);
 
 //PCGNR=preconditioned CGNR algorithm, see Algorithm 9.7 in Saad book
 void do_lsrtm(sim_t *sim, acq_t *acq)
