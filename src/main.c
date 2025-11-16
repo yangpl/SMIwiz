@@ -8,7 +8,6 @@
 #include "cstd.h"
 #include "sim.h"
 #include "acq.h"
- 
 #include <mpi.h>
 
 int iproc, nproc, ierr;
@@ -30,7 +29,6 @@ void do_mig_decon_pcgnr(sim_t *sim, acq_t *acq);
 void do_mig_decon_fft(sim_t *sim, acq_t *acq);
 void do_mig_decon(sim_t *sim, acq_t *acq);
 void do_adcig(sim_t *sim, acq_t *acq);
-
 
 int main(int argc, char* argv[])
 {
@@ -76,6 +74,8 @@ int main(int argc, char* argv[])
     else if(sim->mode==10) printf(" Up-down wavefield separation\n");
     printf("=====================================================\n");
   }
+  
+  //=========== specify parameters for simulation ============
   if(!getparint("order",&sim->order)) sim->order = 4;//only accepts 4 or 8-th order FD
   if(!getparint("freesurf", &sim->freesurf)) sim->freesurf = 1;// 1=free surface; 0=no freesurf
   if(!getparint("nb", &sim->nb)) sim->nb = 20;   //number of layers for PML absorbing boundary
@@ -147,7 +147,7 @@ int main(int argc, char* argv[])
   }
   fflush(stdout);
 
-  //-------------------------------------------------------
+  //=================== specify acquisition ================
   if(!getparint("suopt", &acq->suopt)) acq->suopt = 0;//0=default, 1=for real data precessing using RTM,FWI,LSRTM
   if(!getparfloat("zmin", &acq->zmin)) acq->zmin = 0;
   if(!getparfloat("zmax", &acq->zmax)) acq->zmax = acq->zmin+(sim->n1-1)*sim->d1;
