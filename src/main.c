@@ -145,6 +145,7 @@ int main(int argc, char* argv[])
       char number[sizeof("0000")];
       char fname[10];
       sprintf(number, "%04d", acq->shot_idx[iproc]);
+      //sources will be named stf_0001, stf_0002, ..., where stffile='stf'
       snprintf(fname, sizeof(fname), "%s_%s", stffile, number);
     
       fp=fopen(fname,"rb");
