@@ -1,4 +1,4 @@
-/* set data weights to mimic sumute in Seismic Unix 
+/* set data mask with weights to mimic sumute in Seismic Unix 
  *---------------------------------------------------------------------------
  *  Copyright (c) Pengliang Yang, 2020, Harbin Institute of Technology, China
  *  Copyright (c) Pengliang Yang, 2018, University Grenoble Alpes, France
@@ -9,8 +9,8 @@
 #include "sim.h"
 #include "acq.h"
 
-//set up data weighting used in RTM and FWI 
-void setup_data_weight(acq_t *acq, sim_t *sim)
+//set up data mask used in RTM and FWI 
+void setup_data_mask(acq_t *acq, sim_t *sim)
 {
   int ntaper;//number of points for cosine taper
   int nxwdat;//number of points in x-axis for data weights

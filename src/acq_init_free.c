@@ -23,6 +23,7 @@ void acq_init(sim_t *sim, acq_t *acq)
   int isreceiver, isrc, irec, iseof, j;
   FILE *fp;
   
+  if(iproc==0) printf("--------- acquisition init -----------\n");
   if(!getparstring("acquifile", &acquifile)) err("must give acquifile= ");
   if(!getparint("nrec_max", &nrec_max)) nrec_max = 100000;//maximum dimensions/receivers per shot
 
@@ -197,7 +198,6 @@ void acq_init(sim_t *sim, acq_t *acq)
     if(ymin<acq->ymin) err("receiver location: y<ymin");
     if(ymax>acq->ymax) err("receiver location: y>ymax");
   }
-  if(iproc==0) printf("------------- acquisition init done ---------------\n");
 
   free1float(rx1);
   free1float(rx2);

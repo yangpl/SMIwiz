@@ -43,7 +43,6 @@ void do_invert_source(sim_t *sim, acq_t *acq)
   char *stffile;
 
   if(!getparstring("stffile",&stffile)) err("must give stffile= ");
-  if(!getparint("eachopt", &sim->eachopt)) sim->eachopt = 0;
   //0=one source for all shots; 1=one source for each shot
   
   //-----------------------------------------------------------------------

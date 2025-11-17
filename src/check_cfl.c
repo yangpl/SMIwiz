@@ -29,6 +29,7 @@ void check_cfl(sim_t *sim)
     }
   }
   if(iproc==0) {
+    printf("--------- check CFL ----------------\n");
     printf("[rhomin, rhomax]=[%g, %g]\n", sim->rhomin, sim->rhomax);
     printf("[vmin, vmax]=[%g, %g]\n", sim->vmin, sim->vmax);
   }
