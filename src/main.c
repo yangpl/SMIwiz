@@ -16,7 +16,7 @@ void acq_init(sim_t *sim, acq_t *acq);
 void acq_free(sim_t *sim, acq_t *acq);
 
 void read_data(sim_t *sim, acq_t *acq);
-void setup_data_weight(acq_t *acq, sim_t *sim);
+void setup_data_mask(acq_t *acq, sim_t *sim);
 
 void do_updown(sim_t *sim, acq_t *acq);
 void do_modelling(sim_t *sim, acq_t *acq);
@@ -76,13 +76,9 @@ int main(int argc, char* argv[])
   }
   
   //=========== specify parameters for simulation ============
-  if(!getparint("eachopt", &sim->eachopt)) sim->eachopt = 0;//1=each shot use different source wavelet
-  if(!getparint("order",&sim->order)) sim->order = 4;//only accepts 4 or 8-th order FD
-  if(!getparint("freesurf", &sim->freesurf)) sim->freesurf = 1;// 1=free surface; 0=no freesurf
-  if(!getparint("nb", &sim->nb)) sim->nb = 20;   //number of layers for PML absorbing boundary
-  if(!getparfloat("freq",&sim->freq)) sim->freq = 15;//reference frequency for PML
-  if(!getparfloat("dt",&sim->dt)) err("must give dt= "); //temporal sampling
   if(!getparint("nt", &sim->nt)) err("must give nt= "); //total number of time steps
+  if(!getparfloat("dt",&sim->dt)) err("must give dt= "); //temporal sampling
+  if(!getparint("nb", &sim->nb)) sim->nb = 20;   //number of layers for PML absorbing boundary
   if(!getparint("n1",&sim->n1)) err("must give n1= for FD grid");
   if(!getparint("n2",&sim->n2)) err("must give n2= for FD grid");
   if(!getparfloat("d1",&sim->d1)) err("must give d1= for FD grid"); 
@@ -99,27 +95,33 @@ int main(int argc, char* argv[])
     sim->n3pad = sim->n3+2*sim->nb;
     sim->volume = sim->d1*sim->d2*sim->d3;
   }else  sim->volume = sim->d1*sim->d2;
+  if(!getparint("order",&sim->order)) sim->order = 4;//only accepts 4 or 8-th order FD
   sim->n123 = sim->n1*sim->n2*sim->n3;
   sim->n123pad = sim->n1pad*sim->n2pad*sim->n3pad;
   sim->ibox = 1;//by default, computing box should be applied
   sim->ri = sim->order/2;//interpolation radius of Bessel I0 function for sinc
-  
   if(sim->mode!=0){
     if(!getparint("dr", &sim->dr)) sim->dr = 1;/* decimation ratio */
     if(sim->n3>1) sim->dr = 10;//r=5*vmax/vmin, assume vmax/vmin>=2
     sim->mt = sim->nt/sim->dr;/* decimation ratio */
     if(sim->mt*sim->dr!=sim->nt) err("nt must be multiple of dr!");
   }
+  
+  if(!getparint("eachopt", &sim->eachopt)) sim->eachopt = 0;//1=each shot use different source wavelet
+  if(!getparint("freesurf", &sim->freesurf)) sim->freesurf = 1;// 1=free surface; 0=no freesurf
+  if(!getparfloat("freq",&sim->freq)) sim->freq = 15;//reference frequency for PML
   if(iproc==0){
-    printf("eachopt=%d (1=one source per shot; 0=one source for all shots)\n", sim->eachopt);
-    printf("freesurf=%d (1=with free surface; 0=no free surface)\n", sim->freesurf);
-    printf("ri=%d (interpolation radius)\n", sim->ri);
-    printf("dt=%g (time step)\n", sim->dt);
     printf("nt=%d (number of time steps)\n", sim->nt);
+    printf("dt=%g (time step)\n", sim->dt);
     printf("nb=%d (number of boundary layers)\n", sim->nb);
     printf("[d1, d2, d3]=[%g, %g, %g]\n", sim->d1, sim->d2, sim->d3);
     printf("[n1, n2, n3]=[%d, %d, %d]\n", sim->n1, sim->n2, sim->n3);
     printf("[n1pad, n2pad, n3pad]=[%d, %d, %d]\n", sim->n1pad, sim->n2pad, sim->n3pad);
+    printf("FD order=%d\n", sim->order);
+    printf("ri=%d (interpolation radius)\n", sim->ri);
+    if(sim->mode!=0) printf("dr=%d (ratio for boundary decimation + interpolation)\n", sim->dr);
+    printf("eachopt=%d (1=one source per shot; 0=one source for all shots)\n", sim->eachopt);
+    printf("freesurf=%d (1=with free surface; 0=no free surface)\n", sim->freesurf);
   }
 
   //=================== specify acquisition ================
@@ -149,7 +151,7 @@ int main(int argc, char* argv[])
   if(!acq->suopt) acq_init(sim, acq);//read acquisition file if suopt==0
   if(sim->mode>=1 && sim->mode<=7){//mode=1,2,3,4,5,6,7,9 requires reading data
     read_data(sim, acq);//read data in binary or SU format
-    setup_data_weight(acq, sim);//the muting will be used to remove direct waves
+    setup_data_mask(acq, sim);//the muting will be used to remove direct waves
   }
   ierr = MPI_Barrier(MPI_COMM_WORLD);
 
