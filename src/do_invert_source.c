@@ -43,6 +43,8 @@ void do_invert_source(sim_t *sim, acq_t *acq)
   char *stffile;
 
   if(!getparstring("stffile",&stffile)) err("must give stffile= ");
+  if(!getparint("eachopt", &sim->eachopt)) sim->eachopt = 0;
+  //0=one source for all shots; 1=one source for each shot
   
   //-----------------------------------------------------------------------
   //1. simulate synthetic data (Green's function) using Dirac delta function
@@ -113,9 +115,15 @@ void do_invert_source(sim_t *sim, acq_t *acq)
     num_real[it]=creal(num[it]);
     num_imag[it]=cimag(num[it]);
   }
-  MPI_Allreduce(num_real,num_sum_real,ntpow2,MPI_FLOAT,MPI_SUM,MPI_COMM_WORLD);
-  MPI_Allreduce(num_imag,num_sum_imag,ntpow2,MPI_FLOAT,MPI_SUM,MPI_COMM_WORLD);
-  MPI_Allreduce(den,den_sum,ntpow2,MPI_FLOAT,MPI_SUM,MPI_COMM_WORLD);
+  if(sim->eachopt){
+    memcpy(num_sum_real, num_real, ntpow2*sizeof(float));
+    memcpy(num_sum_imag, num_imag, ntpow2*sizeof(float));
+    memcpy(den_sum, den, ntpow2*sizeof(float));
+  }else{
+    MPI_Allreduce(num_real,num_sum_real,ntpow2,MPI_FLOAT,MPI_SUM,MPI_COMM_WORLD);
+    MPI_Allreduce(num_imag,num_sum_imag,ntpow2,MPI_FLOAT,MPI_SUM,MPI_COMM_WORLD);
+    MPI_Allreduce(den,den_sum,ntpow2,MPI_FLOAT,MPI_SUM,MPI_COMM_WORLD);
+  }
   for(it=0; it<ntpow2; it++){
     num[it]=num_sum_real[it]+I*num_sum_imag[it];
     den[it]=den_sum[it];
@@ -128,7 +136,7 @@ void do_invert_source(sim_t *sim, acq_t *acq)
   free1float(den_sum);
   MPI_Barrier(MPI_COMM_WORLD);
   //num[] and den[] sums over all traces, then do the division
-  float maxval=fabs(den[0]);
+  float maxval = fabs(den[0]);
   for(it=0; it<ntpow2; it++){ 
     if(maxval<fabs(den[it])) maxval=fabs(den[it]);
   }
@@ -139,10 +147,21 @@ void do_invert_source(sim_t *sim, acq_t *acq)
   //truncate real part of src to be of length nt
   for(it=0; it<sim->nt; it++) sim->stf[it]=creal(tmp[it])/ntpow2;
 
-  if(iproc==0){
-    fp=fopen(stffile,"wb");
+  if(sim->eachopt){
+    char number[sizeof("0000")];
+    char fname[10];
+    sprintf(number, "%04d", acq->shot_idx[iproc]);
+    snprintf(fname, sizeof(fname), "%s_%s", stffile, number);
+    
+    fp=fopen(fname,"wb");
     fwrite(sim->stf, sim->nt*sizeof(float), 1, fp);
     fclose(fp);
+  }else{
+    if(iproc==0){
+      fp=fopen(stffile,"wb");
+      fwrite(sim->stf, sim->nt*sizeof(float), 1, fp);
+      fclose(fp);
+    }
   }
 
 
