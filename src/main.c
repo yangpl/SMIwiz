@@ -122,6 +122,38 @@ int main(int argc, char* argv[])
     printf("[n1pad, n2pad, n3pad]=[%d, %d, %d]\n", sim->n1pad, sim->n2pad, sim->n3pad);
   }
 
+  //=================== specify acquisition ================
+  if(!getparint("suopt", &acq->suopt)) acq->suopt = 0;//0=default, 1=for real data precessing using RTM,FWI,LSRTM
+  if(!getparfloat("zmin", &acq->zmin)) acq->zmin = 0;
+  if(!getparfloat("zmax", &acq->zmax)) acq->zmax = acq->zmin+(sim->n1-1)*sim->d1;
+  if(!getparfloat("xmin", &acq->xmin)) acq->xmin = 0;
+  if(!getparfloat("xmax", &acq->xmax)) acq->xmax = acq->xmin+(sim->n2-1)*sim->d2;
+  if(!getparfloat("ymin", &acq->ymin)) acq->ymin = 0;
+  if(!getparfloat("ymax", &acq->ymax)) acq->ymax = acq->ymin+(sim->n3-1)*sim->d3;
+  if(iproc==0){
+    printf("-------- input model range -----------\n");
+    printf("[zmin, zmax]=[%g, %g]\n", acq->zmin, acq->zmax);
+    printf("[xmin, xmax]=[%g, %g]\n", acq->xmin, acq->xmax);
+    if(sim->n3>1) printf("[ymin, ymax]=[%g, %g]\n", acq->ymin, acq->ymax);
+  }
+  acq->shot_idx = alloc1int(nproc);
+  int nsrc = countparval("shots");
+  if(nsrc>0){
+    if(nsrc<nproc) err("nproc > number of shot indices! ");
+    getparint("shots", acq->shot_idx);/* a list of source index separated by comma */
+  }
+  if(nsrc==0){
+    for(int j=0; j<nproc; j++) acq->shot_idx[j] = j+1;//index starts from 1
+  }
+  
+  if(!acq->suopt) acq_init(sim, acq);//read acquisition file if suopt==0
+  if(sim->mode>=1 && sim->mode<=7){//mode=1,2,3,4,5,6,7,9 requires reading data
+    read_data(sim, acq);//read data in binary or SU format
+    setup_data_weight(acq, sim);//the muting will be used to remove direct waves
+  }
+  ierr = MPI_Barrier(MPI_COMM_WORLD);
+
+  //=================== read vp,rho,stf files =================
   if(!getparstring("vpfile",&vpfile)) err("must give vpfile= ");
   sim->vp = alloc3float(sim->n1, sim->n2, sim->n3);
   fp=fopen(vpfile, "rb");
@@ -161,37 +193,6 @@ int main(int argc, char* argv[])
       fclose(fp);
     }
   }
-
-  //=================== specify acquisition ================
-  if(!getparint("suopt", &acq->suopt)) acq->suopt = 0;//0=default, 1=for real data precessing using RTM,FWI,LSRTM
-  if(!getparfloat("zmin", &acq->zmin)) acq->zmin = 0;
-  if(!getparfloat("zmax", &acq->zmax)) acq->zmax = acq->zmin+(sim->n1-1)*sim->d1;
-  if(!getparfloat("xmin", &acq->xmin)) acq->xmin = 0;
-  if(!getparfloat("xmax", &acq->xmax)) acq->xmax = acq->xmin+(sim->n2-1)*sim->d2;
-  if(!getparfloat("ymin", &acq->ymin)) acq->ymin = 0;
-  if(!getparfloat("ymax", &acq->ymax)) acq->ymax = acq->ymin+(sim->n3-1)*sim->d3;
-  if(iproc==0){
-    printf("-------- input model range -----------\n");
-    printf("[zmin, zmax]=[%g, %g]\n", acq->zmin, acq->zmax);
-    printf("[xmin, xmax]=[%g, %g]\n", acq->xmin, acq->xmax);
-    if(sim->n3>1) printf("[ymin, ymax]=[%g, %g]\n", acq->ymin, acq->ymax);
-  }
-  acq->shot_idx = alloc1int(nproc);
-  int nsrc = countparval("shots");
-  if(nsrc>0){
-    if(nsrc<nproc) err("nproc > number of shot indices! ");
-    getparint("shots", acq->shot_idx);/* a list of source index separated by comma */
-  }
-  if(nsrc==0){
-    for(int j=0; j<nproc; j++) acq->shot_idx[j] = j+1;//index starts from 1
-  }
-  
-  if(!acq->suopt) acq_init(sim, acq);//read acquisition file if suopt==0
-  if(sim->mode>=1 && sim->mode<=7){//mode=1,2,3,4,5,6,7,9 requires reading data
-    read_data(sim, acq);//read data in binary or SU format
-    setup_data_weight(acq, sim);//the muting will be used to remove direct waves
-  }
-  ierr = MPI_Barrier(MPI_COMM_WORLD);
 
   //====================do the job here========================
   if(sim->mode==0) do_modelling(sim, acq); 
