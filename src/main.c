@@ -117,8 +117,8 @@ int main(int argc, char* argv[])
     printf("[d1, d2, d3]=[%g, %g, %g]\n", sim->d1, sim->d2, sim->d3);
     printf("[n1, n2, n3]=[%d, %d, %d]\n", sim->n1, sim->n2, sim->n3);
     printf("[n1pad, n2pad, n3pad]=[%d, %d, %d]\n", sim->n1pad, sim->n2pad, sim->n3pad);
-    printf("FD order=%d\n", sim->order);
-    printf("ri=%d (interpolation radius)\n", sim->ri);
+    printf("order=%d (FD order=4 or 8)\n", sim->order);
+    printf("ri=%d (interpolation radius ri=order/4)\n", sim->ri);
     if(sim->mode!=0) printf("dr=%d (ratio for boundary decimation + interpolation)\n", sim->dr);
     printf("eachopt=%d (1=one source per shot; 0=one source for all shots)\n", sim->eachopt);
     printf("freesurf=%d (1=with free surface; 0=no free surface)\n", sim->freesurf);
