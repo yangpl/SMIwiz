@@ -134,7 +134,7 @@ void read_data(sim_t *sim, acq_t *acq)
 	acq->rec_w3[irec][j+sim->ri] = kaiser_windowed_sinc(-frac+j, 1.0, sim->ri);
     }
     if(iproc==0){
-      printf("receiver range:\n");
+      printf("--------- receiver range -----------\n");
       printf("[zmin, zmax]=[%g, %g]\n", zmin, zmax);
       printf("[xmin, xmax]=[%g, %g]\n", xmin, xmax);
       printf("[ymin, ymax]=[%g, %g]\n", ymin, ymax);
@@ -203,7 +203,7 @@ void read_data(sim_t *sim, acq_t *acq)
 	acq->src_w3[isrc][j+sim->ri] = kaiser_windowed_sinc(-frac+j, 1.0, sim->ri);
     }
     if(iproc==0){
-      printf("source range:\n");
+      printf("-------- source range ----------\n");
       printf("[zmin, zmax]=[%g, %g]\n", zmin, zmax);
       printf("[xmin, xmax]=[%g, %g]\n", xmin, xmax);
       printf("[ymin, ymax]=[%g, %g]\n", ymin, ymax);

@@ -145,7 +145,6 @@ int main(int argc, char* argv[])
       err("error reading stffile=%s,  size unmatched", stffile);
     fclose(fp);
   }
-  fflush(stdout);
 
   //=================== specify acquisition ================
   if(!getparint("suopt", &acq->suopt)) acq->suopt = 0;//0=default, 1=for real data precessing using RTM,FWI,LSRTM
@@ -156,7 +155,7 @@ int main(int argc, char* argv[])
   if(!getparfloat("ymin", &acq->ymin)) acq->ymin = 0;
   if(!getparfloat("ymax", &acq->ymax)) acq->ymax = acq->ymin+(sim->n3-1)*sim->d3;
   if(iproc==0){
-    printf("input model range:\n");
+    printf("-------- input model range -----------\n");
     printf("[zmin, zmax]=[%g, %g]\n", acq->zmin, acq->zmax);
     printf("[xmin, xmax]=[%g, %g]\n", acq->xmin, acq->xmax);
     if(sim->n3>1) printf("[ymin, ymax]=[%g, %g]\n", acq->ymin, acq->ymax);

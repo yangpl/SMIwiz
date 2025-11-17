@@ -8,10 +8,9 @@
 #include "cstd.h"
 #include "sim.h"
 #include "acq.h"
- 
 
+//set up data weighting used in RTM and FWI 
 void setup_data_weight(acq_t *acq, sim_t *sim)
-/*< set up data weighting used in RTM and FWI >*/
 {
   int ntaper;//number of points for cosine taper
   int nxwdat;//number of points in x-axis for data weights
