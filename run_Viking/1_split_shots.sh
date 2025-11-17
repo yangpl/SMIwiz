@@ -16,7 +16,7 @@ segyread tape=seismic.segy hfile=header.txt bfile=binary.bin | segyclean> seismi
 sugain < seismic.su tpow=0.5 > seismic2d.su
 
 #select shots every 500 m, surange < seismic_converted.su will give you an idea on the range of sx
-suwind < seismic2d.su key=sx s=3237 j=250 > seismic_subsampled.su
+suwind < seismic2d.su key=sx s=3237 j=300 > seismic_subsampled.su
 
 #we use reciprocotiy to switch source and receiver locations:
 #get headers associated with sx,sy,selev,gx,gy,gelev and print in txt file as 6 columns with order: gx,gy,gelev,sx,sy,-selev
