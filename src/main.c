@@ -76,6 +76,7 @@ int main(int argc, char* argv[])
   }
   
   //=========== specify parameters for simulation ============
+  if(!getparint("eachopt", &sim->eachopt)) sim->eachopt = 0;//1=each shot use different source wavelet
   if(!getparint("order",&sim->order)) sim->order = 4;//only accepts 4 or 8-th order FD
   if(!getparint("freesurf", &sim->freesurf)) sim->freesurf = 1;// 1=free surface; 0=no freesurf
   if(!getparint("nb", &sim->nb)) sim->nb = 20;   //number of layers for PML absorbing boundary
@@ -110,6 +111,7 @@ int main(int argc, char* argv[])
     if(sim->mt*sim->dr!=sim->nt) err("nt must be multiple of dr!");
   }
   if(iproc==0){
+    printf("eachopt=%d (1=one source per shot; 0=one source for all shots)\n", sim->eachopt);
     printf("freesurf=%d (1=with free surface; 0=no free surface)\n", sim->freesurf);
     printf("ri=%d (interpolation radius)\n", sim->ri);
     printf("dt=%g (time step)\n", sim->dt);
@@ -139,11 +141,24 @@ int main(int argc, char* argv[])
   sim->stf = alloc1float(sim->nt); //source wavelet
   if(sim->mode!=5){
     if(!getparstring("stffile",&stffile)) err("must give stffile= ");
-    fp=fopen(stffile, "rb");
-    if(fp==NULL) err("cannot open stffile=%s", stffile);
-    if(fread(sim->stf, sizeof(float), sim->nt, fp)!=sim->nt) 
-      err("error reading stffile=%s,  size unmatched", stffile);
-    fclose(fp);
+    if(sim->eachopt){//read each source wavelet for every shot
+      char number[sizeof("0000")];
+      char fname[10];
+      sprintf(number, "%04d", acq->shot_idx[iproc]);
+      snprintf(fname, sizeof(fname), "%s_%s", stffile, number);
+    
+      fp=fopen(fname,"rb");
+      if(fp==NULL) err("cannot open stffile=%s", fname);
+      if(fread(sim->stf, sizeof(float), sim->nt, fp)!=sim->nt) 
+	err("error reading stffile=%s,  size unmatched", stffile);
+      fclose(fp);
+    }else{//read the same wavelet for all shots
+      fp=fopen(stffile, "rb");
+      if(fp==NULL) err("cannot open stffile=%s", stffile);
+      if(fread(sim->stf, sizeof(float), sim->nt, fp)!=sim->nt) 
+	err("error reading stffile=%s,  size unmatched", stffile);
+      fclose(fp);
+    }
   }
 
   //=================== specify acquisition ================
