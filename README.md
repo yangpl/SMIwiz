@@ -59,6 +59,11 @@ A vedio has been recorded to explain the design of SMIwiz, thanks to the seminar
 * run_adcig: Example for extracting ADCIG using Poynting vector.
 git checkout d27813a8d3752639df2aea199e534738f75d8c7f
 
+* run_Viking: A real data exampling using Vking Graben Line 12 for linearized inversion (data-domain LSRTM, image-domain LSRTM using PSF and nonstationary deblurring filter)
+
+  Please follow the workflow listed in  /run_Viking/0_readme.txt to reproduce this example.
+
+
 ## Instructions to run
 
 1. go to /src and compile:
