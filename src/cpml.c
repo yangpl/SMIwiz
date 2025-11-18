@@ -14,7 +14,7 @@ void cpml_init(sim_t *sim)
   int ib;
   float x, lx, damp, damp0;
   float Rc = 1e-5;
-  float alpha = 3.1415926*sim->freq;
+  float alpha = PI*sim->freq;
 
   sim->pmla = alloc1float(sim->nb);
   sim->pmlb = alloc1float(sim->nb);

@@ -185,7 +185,7 @@ int main(int argc, char* argv[])
       fp=fopen(fname,"rb");
       if(fp==NULL) err("cannot open stffile=%s", fname);
       if(fread(sim->stf, sizeof(float), sim->nt, fp)!=sim->nt) 
-	err("error reading stffile=%s,  size unmatched", stffile);
+	err("error reading stffile=%s,  size unmatched", fname);
       fclose(fp);
     }else{//read the same wavelet for all shots
       fp=fopen(stffile, "rb");
