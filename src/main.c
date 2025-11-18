@@ -96,13 +96,12 @@ int main(int argc, char* argv[])
     sim->volume = sim->d1*sim->d2*sim->d3;
   }else  sim->volume = sim->d1*sim->d2;
   if(!getparint("order",&sim->order)) sim->order = 4;//only accepts 4 or 8-th order FD
+  sim->ri = sim->order/2;//interpolation radius of Bessel I0 function for sinc
+  sim->ibox = 1;//by default, computing box should be applied
   sim->n123 = sim->n1*sim->n2*sim->n3;
   sim->n123pad = sim->n1pad*sim->n2pad*sim->n3pad;
-  sim->ibox = 1;//by default, computing box should be applied
-  sim->ri = sim->order/2;//interpolation radius of Bessel I0 function for sinc
   if(sim->mode!=0){
-    if(!getparint("dr", &sim->dr)) sim->dr = 1;/* decimation ratio */
-    if(sim->n3>1) sim->dr = 10;//r=5*vmax/vmin, assume vmax/vmin>=2
+    if(!getparint("dr", &sim->dr)) sim->dr = (sim->n3>1)?10:1;//decimation ratio dr=5*vmax/vmin, assume vmax/vmin>=2
     sim->mt = sim->nt/sim->dr;/* decimation ratio */
     if(sim->mt*sim->dr!=sim->nt) err("nt must be multiple of dr!");
   }
@@ -119,6 +118,7 @@ int main(int argc, char* argv[])
     printf("[n1pad, n2pad, n3pad]=[%d, %d, %d]\n", sim->n1pad, sim->n2pad, sim->n3pad);
     printf("order=%d (FD order=4 or 8)\n", sim->order);
     printf("ri=%d (interpolation radius ri=order/4)\n", sim->ri);
+    printf("ibox=%d (1=apply computing box; 0=no computing box)\n", sim->ibox);
     if(sim->mode!=0) printf("dr=%d (ratio for boundary decimation + interpolation)\n", sim->dr);
     printf("eachopt=%d (1=one source per shot; 0=one source for all shots)\n", sim->eachopt);
     printf("freesurf=%d (1=with free surface; 0=no free surface)\n", sim->freesurf);
