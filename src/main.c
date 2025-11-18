@@ -60,6 +60,7 @@ int main(int argc, char* argv[])
     printf("         nonlinear full waveform inversion           \n");
     printf("             Copyright (c) Pengliang Yang            \n");
     printf("       2021, Harbin Institute of Technology, China   \n");
+    printf("             E-mail: ypl.2100@gmail.com              \n");
     printf("=====================================================\n");
     if(sim->mode==0) printf(" Forward modeling \n");
     else if(sim->mode==1) printf(" FWI in the time domain \n");
