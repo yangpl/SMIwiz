@@ -13,6 +13,7 @@ void check_cfl(sim_t *sim)
 {
   float tmp;// freqmax, lambda_min, ppw1, ppw2, ppw3;
   int i1, i2, i3;
+  int ok;
 
   //todolist: consider VTI/TTI anisotropic medium in CFL stability
   sim->vmin = sim->vp[0][0][0];
@@ -20,6 +21,7 @@ void check_cfl(sim_t *sim)
   sim->vphasemax = sim->vmax;
   sim->rhomin = sim->rho[0][0][0];
   sim->rhomax = sim->rho[0][0][0];
+  ok = 1;
   for(i3=0; i3<sim->n3; i3++){
     for(i2=0; i2<sim->n2; i2++){
       for(i1=0; i1<sim->n1; i1++){
@@ -28,9 +30,11 @@ void check_cfl(sim_t *sim)
 	sim->vphasemax = MAX(sim->vphasemax, sim->vp[i3][i2][i1]*sqrt(1.+2*sim->epsil[i3][i2][i1]));
 	sim->rhomin = MIN(sim->rhomin, sim->rho[i3][i2][i1]);
 	sim->rhomax = MAX(sim->rhomax, sim->rho[i3][i2][i1]);
+	if(sim->aniso && sim->epsil[i3][i2][i1]<sim->delta[i3][i2][i1]) ok = 0;
       }
     }
   }
+  if(!ok) err("Anisotropy input error: epsil<delta!\n"); 
   if(iproc==0) {
     printf("--------- check CFL ----------------\n");
     printf("[rhomin, rhomax]=[%g, %g]\n", sim->rhomin, sim->rhomax);
