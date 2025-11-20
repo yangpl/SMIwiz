@@ -36,6 +36,8 @@ int main(int argc, char* argv[])
   time_t      t;
   struct tm*  ptm;
   char *stffile, *vpfile, *rhofile;
+  char *epsilfile, *deltafile;
+  char *azimulfile, *dipfile;
   FILE *fp;
   acq_t *acq;
   sim_t *sim;
@@ -173,6 +175,43 @@ int main(int argc, char* argv[])
     err("error reading rhofile=%s,  size unmatched", rhofile);
   fclose(fp);
 
+  if(!getparint("aniso", &sim->aniso)) sim->aniso = 0;//0=isotropic, 1=VTI, 2=TTI
+  if(sim->aniso>0){
+    if(!getparstring("epsilfile",&epsilfile)) err("must give epsilfile= ");
+    sim->epsil = alloc3float(sim->n1, sim->n2, sim->n3);
+    fp = fopen(epsilfile, "rb");
+    if(fp==NULL) err("cannot open epsilfile=%s", epsilfile);
+    if(fread(&sim->epsil[0][0][0], sizeof(float), sim->n123, fp)!=sim->n123)
+      err("error reading epsilfile=%s,  size unmatched", epsilfile);
+    fclose(fp);
+
+    if(!getparstring("deltafile",&deltafile)) err("must give deltafile= ");
+    sim->delta = alloc3float(sim->n1, sim->n2, sim->n3);
+    fp = fopen(deltafile, "rb");
+    if(fp==NULL) err("cannot open deltafile=%s", deltafile);
+    if(fread(&sim->delta[0][0][0], sizeof(float), sim->n123, fp)!=sim->n123)
+      err("error reading deltafile=%s,  size unmatched", deltafile);
+    fclose(fp);
+  }
+  if(sim->aniso==2){
+    if(!getparstring("azimulfile",&azimulfile)) err("must give azimulfile= ");
+    sim->azimul = alloc3float(sim->n1, sim->n2, sim->n3);
+    fp = fopen(azimulfile, "rb");
+    if(fp==NULL) err("cannot open azimulfile=%s", azimulfile);
+    if(fread(&sim->azimul[0][0][0], sizeof(float), sim->n123, fp)!=sim->n123)
+      err("error reading azimulfile=%s,  size unmatched", azimulfile);
+    fclose(fp);
+
+    if(!getparstring("dipfile",&dipfile)) err("must give dipfile= ");
+    sim->dip = alloc3float(sim->n1, sim->n2, sim->n3);
+    fp = fopen(dipfile, "rb");
+    if(fp==NULL) err("cannot open dipfile=%s", dipfile);
+    if(fread(&sim->dip[0][0][0], sizeof(float), sim->n123, fp)!=sim->n123)
+      err("error reading dipfile=%s,  size unmatched", dipfile);
+    fclose(fp);
+  }
+
+  
   sim->stf = alloc1float(sim->nt); //source wavelet
   if(sim->mode!=5){
     if(!getparstring("stffile",&stffile)) err("must give stffile= ");

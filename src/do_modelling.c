@@ -19,6 +19,8 @@ void fdtd_null(sim_t *sim, int flag);
 void fdtd_free(sim_t *sim, int flag);
 void fdtd_update_v(sim_t *sim, int flag, int it, int adj, float ***kappa, float ***buz, float ***bux, float ***buy);
 void fdtd_update_p(sim_t *sim, int flag, int it, int adj, float ***kappa, float ***buz, float ***bux, float ***buy);
+void aniso_fdtd_update_v(sim_t *sim, int flag, int it, int adj, float ***kappa, float ***buz, float ***bux, float ***buy);
+void aniso_fdtd_update_p(sim_t *sim, int flag, int it, int adj, float ***kappa, float ***buz, float ***bux, float ***buy);
 
 void extend_model_init(sim_t *sim);
 void extend_model(sim_t *sim, float ***vp, float ***rho, float ***kappa, float ***buz, float ***bux, float ***buy);
@@ -60,11 +62,13 @@ void do_modelling(sim_t *sim, acq_t *acq)
     if(iproc==0 && it%100==0) printf("it-----%d\n", it);
 
     if(iproc==0) t0 = MPI_Wtime();
-    fdtd_update_v(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);//flag=1
+    if(sim->aniso) aniso_fdtd_update_v(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);//flag=1
+    else fdtd_update_v(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);//flag=1
     if(iproc==0) t_update_v += MPI_Wtime()-t0;
     
     if(iproc==0) t0 = MPI_Wtime();
-    fdtd_update_p(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);//flag=1
+    if(sim->aniso) aniso_fdtd_update_p(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);//flag=1
+    else fdtd_update_p(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);//flag=1
     if(iproc==0) t_update_p += MPI_Wtime()-t0;
 
     if(iproc==0) t0 = MPI_Wtime();
@@ -87,33 +91,7 @@ void do_modelling(sim_t *sim, acq_t *acq)
       	  }
       	}
       }
-      //fwrite(&sim->p1[0][0][0], sim->n123pad*sizeof(float), 1, fp);
       fclose(fp);
-
-      /* fp = fopen("box.txt", "w"); */
-      /* int k = 0; */
-      /* i1=sim->i1min_fwd[it]; */
-      /* for(i2=sim->i2min_fwd[it]; i2<=sim->i2max_fwd[it]; i2++){ */
-      /* 	fprintf(fp, "%e \t %e\n", i1*sim->d2, i2*sim->d2); */
-      /* 	k++; */
-      /* } */
-      /* i2 = sim->i2max_fwd[it]; */
-      /* for(i1=sim->i1min_fwd[it]; i1<=sim->i1max_fwd[it]; i1++){ */
-      /* 	fprintf(fp, "%e \t %e\n", i1*sim->d2, i2*sim->d2); */
-      /* 	k++; */
-      /* } */
-      /* i1=sim->i1max_fwd[it]; */
-      /* for(i2=sim->i2max_fwd[it]; i2>=sim->i2min_fwd[it]; i2--){ */
-      /* 	fprintf(fp, "%e \t %e\n", i1*sim->d2, i2*sim->d2); */
-      /* 	k++; */
-      /* } */
-      /* i2 = sim->i2min_fwd[it]; */
-      /* for(i1=sim->i1max_fwd[it]; i1>=sim->i1min_fwd[it]; i1--){ */
-      /* 	fprintf(fp, "%e \t %e\n", i1*sim->d2, i2*sim->d2); */
-      /* 	k++; */
-      /* } */
-      /* printf("k=%d\n", k); */
-      /* fclose(fp); */
     }//end if
   }
   write_data(sim, acq);

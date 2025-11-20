@@ -14,6 +14,7 @@ typedef struct {
   float freq;//dominant frequency for PML
   float *stf;//source time function
   int eachopt;//stf for each shot
+  int aniso;//0=isotropic, 1=VTI, 2=TTI anisotropy
   
   int freesurf;//1, stress-free surface condition;0, no free surface
   int sign_dt;//sign of dt used for back propagation
@@ -28,6 +29,8 @@ typedef struct {
   
   float ***vp, ***rho;//model of original size
   float ***ip, ***dm;//ip and dm=dln(ip) in RWI
+  float ***epsil, ***delta;//TI medium parameters
+  float ***azimul, ***dip;//TTI Euler angles
   float ***kappa, ***buz, ***bux, ***buy;//bulk modulus and buoyancy=1/rho 
 
   //computing box for forward and adjoint wavefields
@@ -43,7 +46,8 @@ typedef struct {
   float ***vz1, ***vx1, ***vy1, ***p1;
   float ***memD1p1, ***memD2p1, ***memD3p1;
   float ***memD1vz1, ***memD2vx1, ***memD3vy1;
-
+  float ***ph1, ***pv1;//sigma_H, sigma_V
+  
   //adjoint field and PML variables
   float ***vz2, ***vx2, ***vy2, ***p2;
   float ***memD1p2, ***memD2p2, ***memD3p2;
@@ -64,7 +68,8 @@ typedef struct {
   float **dobs, **dcal, **dres;//observed, calculated and residual data
   int dr;//decimation ratio
   int mt;//mt=nt/dr, number of time steps after decimation
-
+  
+  
   //data weighting and muting option
   int muteopt;//mute options
   int na;//number of discrete angles
