@@ -61,7 +61,7 @@ git checkout d27813a8d3752639df2aea199e534738f75d8c7f
 
 * run_Viking: A real data exampling using Vking Graben Line 12 for linearized inversion (data-domain LSRTM, image-domain LSRTM using PSF and nonstationary deblurring filter)
 
-  Please follow the workflow listed in  /run_Viking/0_readme.txt to reproduce this example.
+  Please follow the workflow listed in  /run_Viking/0_readme.txt to reproduce this example. Version: git checkout f3d2d693ae42d0689348cbaf527ba90a99943644 (2025/11/20 updated for VTI modelling)
 
 
 ## Instructions to run
