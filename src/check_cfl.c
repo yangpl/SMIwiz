@@ -14,6 +14,7 @@ void check_cfl(sim_t *sim)
   float tmp;// freqmax, lambda_min, ppw1, ppw2, ppw3;
   int i1, i2, i3;
 
+  //todolist: consider VTI/TTI anisotropic medium in CFL stability
   sim->vmin = sim->vp[0][0][0];
   sim->vmax = sim->vp[0][0][0];
   sim->rhomin = sim->rho[0][0][0];
