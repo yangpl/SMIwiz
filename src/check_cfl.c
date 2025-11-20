@@ -17,6 +17,7 @@ void check_cfl(sim_t *sim)
   //todolist: consider VTI/TTI anisotropic medium in CFL stability
   sim->vmin = sim->vp[0][0][0];
   sim->vmax = sim->vp[0][0][0];
+  sim->vphasemax = sim->vmax;
   sim->rhomin = sim->rho[0][0][0];
   sim->rhomax = sim->rho[0][0][0];
   for(i3=0; i3<sim->n3; i3++){
@@ -24,6 +25,7 @@ void check_cfl(sim_t *sim)
       for(i1=0; i1<sim->n1; i1++){
 	sim->vmin = MIN(sim->vmin, sim->vp[i3][i2][i1]);
 	sim->vmax = MAX(sim->vmax, sim->vp[i3][i2][i1]);
+	sim->vphasemax = MAX(sim->vphasemax, sim->vp[i3][i2][i1]*sqrt(1.+2*sim->epsil[i3][i2][i1]));
 	sim->rhomin = MIN(sim->rhomin, sim->rho[i3][i2][i1]);
 	sim->rhomax = MAX(sim->rhomax, sim->rho[i3][i2][i1]);
       }
@@ -33,6 +35,7 @@ void check_cfl(sim_t *sim)
     printf("--------- check CFL ----------------\n");
     printf("[rhomin, rhomax]=[%g, %g]\n", sim->rhomin, sim->rhomax);
     printf("[vmin, vmax]=[%g, %g]\n", sim->vmin, sim->vmax);
+    printf("vphasemax=%g\n", sim->vphasemax);
   }
 
   /* CFL = dt*vmax* \sum_i |c_i|sqrt(1/dx^2 + 1/dy^2 + 1/dz^2), where c_i are finite difference coefficients */
@@ -40,7 +43,7 @@ void check_cfl(sim_t *sim)
     tmp = 1./(sim->d1*sim->d1) + 1./(sim->d2*sim->d2) + 1./(sim->d3*sim->d3);
   else
     tmp = 1./(sim->d1*sim->d1) + 1./(sim->d2*sim->d2);
-  sim->cfl = sim->dt*sim->vmax*sqrt(tmp);
+  sim->cfl = sim->dt*sim->vphasemax*sqrt(tmp);
   if(sim->order==4) tmp = 1.125 + 0.041666666666666664;
   else tmp = (1.196289062500000 + 0.079752604166667 + 0.009570312500000 + 0.000697544642857);
   sim->cfl *= tmp;
