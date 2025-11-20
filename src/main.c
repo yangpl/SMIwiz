@@ -176,9 +176,10 @@ int main(int argc, char* argv[])
   fclose(fp);
 
   if(!getparint("aniso", &sim->aniso)) sim->aniso = 0;//0=isotropic, 1=VTI, 2=TTI
+  sim->epsil = alloc3float(sim->n1, sim->n2, sim->n3);
+  sim->delta = alloc3float(sim->n1, sim->n2, sim->n3);
   if(sim->aniso>0){
     if(!getparstring("epsilfile",&epsilfile)) err("must give epsilfile= ");
-    sim->epsil = alloc3float(sim->n1, sim->n2, sim->n3);
     fp = fopen(epsilfile, "rb");
     if(fp==NULL) err("cannot open epsilfile=%s", epsilfile);
     if(fread(&sim->epsil[0][0][0], sizeof(float), sim->n123, fp)!=sim->n123)
@@ -186,12 +187,14 @@ int main(int argc, char* argv[])
     fclose(fp);
 
     if(!getparstring("deltafile",&deltafile)) err("must give deltafile= ");
-    sim->delta = alloc3float(sim->n1, sim->n2, sim->n3);
     fp = fopen(deltafile, "rb");
     if(fp==NULL) err("cannot open deltafile=%s", deltafile);
     if(fread(&sim->delta[0][0][0], sizeof(float), sim->n123, fp)!=sim->n123)
       err("error reading deltafile=%s,  size unmatched", deltafile);
     fclose(fp);
+  }else{
+    memset(&sim->epsil[0][0][0], 0, sim->n123*sizeof(float));
+    memset(&sim->delta[0][0][0], 0, sim->n123*sizeof(float));
   }
   if(sim->aniso==2){
     if(!getparstring("azimulfile",&azimulfile)) err("must give azimulfile= ");

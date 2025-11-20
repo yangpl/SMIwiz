@@ -17,11 +17,10 @@ void check_cfl(sim_t *sim);
 void fdtd_init(sim_t *sim, int flag);
 void fdtd_null(sim_t *sim, int flag);
 void fdtd_free(sim_t *sim, int flag);
-void fdtd_update_v(sim_t *sim, int flag, int it, int adj, float ***kappa, float ***buz, float ***bux, float ***buy);
-void fdtd_update_p(sim_t *sim, int flag, int it, int adj, float ***kappa, float ***buz, float ***bux, float ***buy);
+void fdtd_update_v(sim_t *sim, int flag, int it, int adj);
+void fdtd_update_p(sim_t *sim, int flag, int it, int adj);
 
 void extend_model_init(sim_t *sim);
-void extend_model(sim_t *sim, float ***vp, float ***rho, float ***kappa, float ***buz, float ***bux, float ***buy);
 void extend_model_free(sim_t *sim);
 
 void computing_box_init(acq_t *acq, sim_t *sim, int adj);
@@ -86,7 +85,6 @@ void do_updown(sim_t *sim, acq_t *acq)
   check_cfl(sim);
   cpml_init(sim);
   extend_model_init(sim);
-  extend_model(sim, sim->vp, sim->rho, sim->kappa, sim->buz, sim->bux, sim->buy);
   computing_box_init(acq, sim, 0);
   fdtd_init(sim, 1);//flag=1, incident field
   fdtd_null(sim, 1);//flag=1, incident field
@@ -96,13 +94,13 @@ void do_updown(sim_t *sim, acq_t *acq)
   for(it=0; it<sim->nt; it++){
     if(iproc==0 && it%100==0) printf("it-----%d\n", it);
 
-    fdtd_update_v(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);//flag=1
-    fdtd_update_p(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);//flag=1
+    fdtd_update_v(sim, 1, it, 0);//flag=1
+    fdtd_update_p(sim, 1, it, 0);//flag=1
     inject_source(sim, acq, sim->p1, sim->stf[it]);
     extract_wavefield(sim, acq, sim->p1, sim->dcal, it);
 
-    fdtd_update_v(sim, 0, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);//flag=1
-    fdtd_update_p(sim, 0, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);//flag=1
+    fdtd_update_v(sim, 0, it, 0);//flag=1
+    fdtd_update_p(sim, 0, it, 0);//flag=1
     inject_source(sim, acq, sim->p0, hstf[it]);
 
     memset(tmp, 0, len*sizeof(fftw_complex));

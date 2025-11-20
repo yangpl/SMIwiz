@@ -22,8 +22,10 @@ void check_cfl(sim_t *sim);
 void fdtd_init(sim_t *sim, int flag);
 void fdtd_null(sim_t *sim, int flag);
 void fdtd_free(sim_t *sim, int flag);
-void fdtd_update_v(sim_t *sim, int flag, int it, int adj, float ***kappa, float ***buz, float ***bux, float ***buy);
-void fdtd_update_p(sim_t *sim, int flag, int it, int adj, float ***kappa, float ***buz, float ***bux, float ***buy);
+void fdtd_update_v(sim_t *sim, int flag, int it, int adj);
+void fdtd_update_p(sim_t *sim, int flag, int it, int adj);
+void rwi_fdtd_update_v(sim_t *sim, int flag, int it, int adj, float ***kappa, float ***buz, float ***bux, float ***buy);
+void rwi_fdtd_update_p(sim_t *sim, int flag, int it, int adj, float ***kappa, float ***buz, float ***bux, float ***buy);
 
 void decimate_interp_init(sim_t *sim, int flag);
 void decimate_interp_free(sim_t *sim, int flag);
@@ -32,8 +34,8 @@ void decimate_interp_bndr(sim_t *sim, int flag, int it, int interp, float **face
 void check_cfl(sim_t *sim);
 
 void extend_model_init(sim_t *sim);
-void extend_model(sim_t *sim, float ***vp, float ***rho, float ***kappa, float ***buz, float ***bux, float ***buy);
 void extend_model_free(sim_t *sim);
+void rwi_extend_model_init(sim_t *sim, float ***vp, float ***rho, float ***kappa, float ***buz, float ***bux, float ***buy);
 
 void computing_box_init(acq_t *acq, sim_t *sim, int adj);
 void computing_box_free(sim_t *sim, int adj);
@@ -60,6 +62,7 @@ void fg_fwi_init(sim_t *sim_, acq_t *acq_, fwi_t *fwi_)
   acq = acq_;
   fwi = fwi_;
 
+  if(iproc==0) printf("------------- fwi init ----------------\n"); 
   if(!getparint("itcheck", &sim->itcheck)) sim->itcheck = sim->nt/2;
   
   fwi->iter = 0;
@@ -99,7 +102,6 @@ void fg_fwi_init(sim_t *sim_, acq_t *acq_, fwi_t *fwi_)
   if(!getparint("r3", &fwi->r3)) fwi->r3 = 1;
   if(!getparint("repeat", &fwi->repeat)) fwi->repeat = 3;
 
-  if(iproc==0) printf("-----------------fwi init done----------------------\n"); 
 }
 
 
@@ -246,7 +248,6 @@ float fg_fwi(float *x, float *g)
     fdtd_null(sim, 1);//flag=1, incident field
     fdtd_null(sim, 2);//flag=2, adjoint field
     decimate_interp_init(sim, 1);
-    extend_model(sim, sim->vp, sim->rho, sim->kappa, sim->buz, sim->bux, sim->buy);
     computing_box_init(acq, sim, 0);
     computing_box_init(acq, sim, 1);
   
@@ -257,8 +258,8 @@ float fg_fwi(float *x, float *g)
       if(iproc==0 && it%100==0) printf("it-----%d\n", it);
 
       decimate_interp_bndr(sim, 1, it, 0, sim->face1, sim->face2, sim->face3);/* interp=0 */
-      fdtd_update_v(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);
-      fdtd_update_p(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);
+      fdtd_update_v(sim, 1, it, 0);
+      fdtd_update_p(sim, 1, it, 0);
       inject_source(sim, acq, sim->p1, sim->stf[it]);
       extract_wavefield(sim, acq, sim->p1, sim->dcal, it);
     
@@ -316,12 +317,12 @@ float fg_fwi(float *x, float *g)
       if(iproc==0 && it%100==0) printf("it-----%d\n", it);
   
       inject_adjoint_source(sim, acq, sim->p2, sim->dres, it);
-      fdtd_update_v(sim, 2, it, 1, sim->kappa, sim->buz, sim->bux, sim->buy);
-      fdtd_update_p(sim, 2, it, 1, sim->kappa, sim->buz, sim->bux, sim->buy);
+      fdtd_update_v(sim, 2, it, 1);
+      fdtd_update_p(sim, 2, it, 1);
 
       inject_source(sim, acq, sim->p1, sim->stf[it]);
-      fdtd_update_p(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);
-      fdtd_update_v(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);
+      fdtd_update_p(sim, 1, it, 0);
+      fdtd_update_v(sim, 1, it, 0);
       decimate_interp_bndr(sim, 1, it, 1, sim->face1, sim->face2, sim->face3);/* interp=1 */
 
       if(iproc==0 && it==sim->itcheck){
@@ -555,8 +556,7 @@ float fg_rwi(float *x, float *g)
   decimate_interp_init(sim, 1);
   computing_box_init(acq, sim, 0);
   computing_box_init(acq, sim, 1);
-  extend_model(sim, sim->vp, rho_, kappa_, buz_, bux_, buy_);
-  extend_model(sim, sim->vp, sim->rho, sim->kappa, sim->buz, sim->bux, sim->buy);
+  rwi_extend_model_init(sim, sim->vp, rho_, kappa_, buz_, bux_, buy_);
   
   /*--------------------------------------------------------------*/
   if(iproc==0) printf("----stage 1: forward modelling --------\n");
@@ -566,15 +566,15 @@ float fg_rwi(float *x, float *g)
 
     //A(m+dm)(u+du)=f
     decimate_interp_bndr(sim, 0, it, 0, sim->face1_, sim->face2_, sim->face3_);/* interp=0 */
-    fdtd_update_v(sim, 0, it, 0, kappa_, buz_, bux_, buy_);
-    fdtd_update_p(sim, 0, it, 0, kappa_, buz_, bux_, buy_);
+    rwi_fdtd_update_v(sim, 0, it, 0, kappa_, buz_, bux_, buy_);
+    rwi_fdtd_update_p(sim, 0, it, 0, kappa_, buz_, bux_, buy_);
     inject_source(sim, acq, sim->p0, sim->stf[it]);
     extract_wavefield(sim, acq, sim->p0, sim->dcal, it);//dcal=R(u+du)
 
     //A(m)u=f
     decimate_interp_bndr(sim, 1, it, 0, sim->face1, sim->face2, sim->face3);/* interp=0 */
-    fdtd_update_v(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);
-    fdtd_update_p(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);
+    fdtd_update_v(sim, 1, it, 0);
+    fdtd_update_p(sim, 1, it, 0);
     inject_source(sim, acq, sim->p1, sim->stf[it]);
     extract_wavefield(sim, acq, sim->p1, d0, it);//d=Ru
   }//end for it
@@ -609,22 +609,22 @@ float fg_rwi(float *x, float *g)
 
     //A^H(m+dm) lambda2=R^H(delta_d-R delta_u)
     inject_adjoint_source(sim, acq, sim->p3, sim->dres, it);
-    fdtd_update_v(sim, 3, it, 1, kappa_, buz_, bux_, buy_);
-    fdtd_update_p(sim, 3, it, 1, kappa_, buz_, bux_, buy_);
+    rwi_fdtd_update_v(sim, 3, it, 1, kappa_, buz_, bux_, buy_);
+    rwi_fdtd_update_p(sim, 3, it, 1, kappa_, buz_, bux_, buy_);
 
     inject_source(sim, acq, sim->p0, sim->stf[it]);
-    fdtd_update_p(sim, 0, it, 0, kappa_, buz_, bux_, buy_);
-    fdtd_update_v(sim, 0, it, 0, kappa_, buz_, bux_, buy_);
+    rwi_fdtd_update_p(sim, 0, it, 0, kappa_, buz_, bux_, buy_);
+    rwi_fdtd_update_v(sim, 0, it, 0, kappa_, buz_, bux_, buy_);
     decimate_interp_bndr(sim, 0, it, 1, sim->face1_, sim->face2_, sim->face3_);/* interp=1 */
 
     //A^H(m) lambda1=-R^H(delta_d-R delta_u)
     inject_adjoint_source(sim, acq, sim->p2, _dres, it);
-    fdtd_update_v(sim, 2, it, 1, sim->kappa, sim->buz, sim->bux, sim->buy);
-    fdtd_update_p(sim, 2, it, 1, sim->kappa, sim->buz, sim->bux, sim->buy);
+    fdtd_update_v(sim, 2, it, 1);
+    fdtd_update_p(sim, 2, it, 1);
 
     inject_source(sim, acq, sim->p1, sim->stf[it]);
-    fdtd_update_p(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);
-    fdtd_update_v(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);
+    fdtd_update_p(sim, 1, it, 0);
+    fdtd_update_v(sim, 1, it, 0);
     decimate_interp_bndr(sim, 1, it, 1, sim->face1, sim->face2, sim->face3);/* interp=1 */
 
     for(ipar=0; ipar<fwi->npar; ipar++){

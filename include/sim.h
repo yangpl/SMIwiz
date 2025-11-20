@@ -31,7 +31,10 @@ typedef struct {
   float ***ip, ***dm;//ip and dm=dln(ip) in RWI
   float ***epsil, ***delta;//TI medium parameters
   float ***azimul, ***dip;//TTI Euler angles
-  float ***kappa, ***buz, ***bux, ***buy;//bulk modulus and buoyancy=1/rho 
+  float ***kappa, ***buz, ***bux, ***buy;//bulk modulus and buoyancy=1/rho
+  float ***coef1p2epsil, ***sqrt1p2delta;//coefficient (1+2*epsil) and sqrt(1+2*delta)
+
+  float ***rho_, ***kappa_, ***buz_, ***bux_, ***buy_;//perturbed parameters only used in RWI
 
   //computing box for forward and adjoint wavefields
   int ibox;//1=add computing box;0=no computing box;
@@ -52,11 +55,13 @@ typedef struct {
   float ***vz2, ***vx2, ***vy2, ***p2;
   float ***memD1p2, ***memD2p2, ***memD3p2;
   float ***memD1vz2, ***memD2vx2, ***memD3vy2;
+  float ***ph2, ***pv2;//sigma_H, sigma_V
     
   //incident field and PML variables (used in RWI and LSRTM for scattering field)
   float ***vz0, ***vx0, ***vy0, ***p0;
   float ***memD1p0, ***memD2p0, ***memD3p0;
   float ***memD1vz0, ***memD2vx0, ***memD3vy0;
+  float ***ph0, ***pv0;//sigma_H, sigma_V
 
   //adjoint field and PML varialbes (used in RWI)
   float ***vz3, ***vx3, ***vy3, ***p3;
@@ -68,7 +73,6 @@ typedef struct {
   float **dobs, **dcal, **dres;//observed, calculated and residual data
   int dr;//decimation ratio
   int mt;//mt=nt/dr, number of time steps after decimation
-  
   
   //data weighting and muting option
   int muteopt;//mute options

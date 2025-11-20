@@ -17,11 +17,11 @@ void check_cfl(sim_t *sim);
 void fdtd_init(sim_t *sim, int flag);
 void fdtd_null(sim_t *sim, int flag);
 void fdtd_free(sim_t *sim, int flag);
-void fdtd_update_v(sim_t *sim, int flag, int it, int adj, float ***kappa, float ***buz, float ***bux, float ***buy);
-void fdtd_update_p(sim_t *sim, int flag, int it, int adj, float ***kappa, float ***buz, float ***bux, float ***buy);
+void fdtd_update_v(sim_t *sim, int flag, int it, int adj);
+void fdtd_update_p(sim_t *sim, int flag, int it, int adj);
 
 void extend_model_init(sim_t *sim);
-void extend_model(sim_t *sim, float ***vp, float ***rho, float ***kappa, float ***buz, float ***bux, float ***buy);
+void extend_model(sim_t *sim);
 void extend_model_free(sim_t *sim);
 
 void computing_box_init(acq_t *acq, sim_t *sim, int adj);
@@ -88,7 +88,6 @@ void do_rtm(sim_t *sim, acq_t *acq)
   fdtd_init(sim, 1);//flag=1, incident field
   fdtd_init(sim, 2);//flag=2, adjoint field
   decimate_interp_init(sim, 1);
-  extend_model(sim, sim->vp, sim->rho, sim->kappa, sim->buz, sim->bux, sim->buy);
   computing_box_init(acq, sim, 0);
   computing_box_init(acq, sim, 1);
 
@@ -102,8 +101,8 @@ void do_rtm(sim_t *sim, acq_t *acq)
 
     //background field modelling, p1
     decimate_interp_bndr(sim, 1, it, 0, sim->face1, sim->face2, sim->face3);//interp=0
-    fdtd_update_v(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);
-    fdtd_update_p(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);
+    fdtd_update_v(sim, 1, it, 0);
+    fdtd_update_p(sim, 1, it, 0);
     inject_source(sim, acq, sim->p1, sim->stf[it]);
     extract_wavefield(sim, acq, sim->p1, sim->dcal, it);//direct wave + diving wave
   }
@@ -138,13 +137,13 @@ void do_rtm(sim_t *sim, acq_t *acq)
 
     //adjoint field modelling
     inject_adjoint_source(sim, acq, sim->p2, sim->dres, it);
-    fdtd_update_v(sim, 2, it, 1, sim->kappa, sim->buz, sim->bux, sim->buy);
-    fdtd_update_p(sim, 2, it, 1, sim->kappa, sim->buz, sim->bux, sim->buy);
+    fdtd_update_v(sim, 2, it, 1);
+    fdtd_update_p(sim, 2, it, 1);
 
     //reconstruction of the background field p1 in reverse time order
     inject_source(sim, acq, sim->p1, sim->stf[it]);
-    fdtd_update_p(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);
-    fdtd_update_v(sim, 1, it, 0, sim->kappa, sim->buz, sim->bux, sim->buy);
+    fdtd_update_p(sim, 1, it, 0);
+    fdtd_update_v(sim, 1, it, 0);
     decimate_interp_bndr(sim, 1, it, 1, sim->face1, sim->face2, sim->face3);//interp=1
 
     //build density and bulk modulus kernels before applying chain rule to compute impedance kernel
