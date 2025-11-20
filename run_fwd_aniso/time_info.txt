@@ -1,0 +1,4 @@
+update_v      	 5.720418e+00
+update_p      	 4.373906e+00
+inject_src    	 3.693226e-03
+extract_field 	 1.319466e+00
