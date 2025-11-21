@@ -68,9 +68,9 @@ void do_modelling(sim_t *sim, acq_t *acq)
 
     if(iproc==0) t0 = MPI_Wtime();
     if(sim->aniso){
-      tmp = -sim->stf[it]/3.;
+      tmp = sim->stf[it]/3.;
       inject_source(sim, acq, sim->pv1, tmp);
-      tmp = -2.*sim->stf[it]/3.;
+      tmp = 2.*sim->stf[it]/3.;
       inject_source(sim, acq, sim->ph1, tmp);
     }else
       inject_source(sim, acq, sim->p1, sim->stf[it]);

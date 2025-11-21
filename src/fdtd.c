@@ -546,7 +546,7 @@ void fdtd_update_p(sim_t *sim, int flag, int it, int adj)
     memD2vx = sim->memD2vx0;
     memD3vy = sim->memD3vy0;
   }else if(flag==1){
-    pv = sim->aniso?sim->ph1:sim->p1;
+    pv = sim->aniso?sim->pv1:sim->p1;
     ph = sim->aniso?sim->ph1:sim->p1;
     p = sim->p1;
     vz = sim->vz1;
@@ -641,7 +641,7 @@ void fdtd_update_p(sim_t *sim, int flag, int it, int adj)
 	if(sim->aniso){
 	  ph[i3][i2][i1] += dt*sim->kappa[i3][i2][i1]*( sim->coef1p2epsil[i3][i2][i1]*(D2vx + D3vy) + sim->sqrt1p2delta[i3][i2][i1]*D1vz );
 	  pv[i3][i2][i1] += dt*sim->kappa[i3][i2][i1]*( sim->sqrt1p2delta[i3][i2][i1]*(D2vx + D3vy) + D1vz );
-	  p[i3][i2][i1] = -(pv[i3][i2][i1] + 2.*pv[i3][i2][i1])/3.;
+	  p[i3][i2][i1] = -(pv[i3][i2][i1] + 2.*ph[i3][i2][i1])/3.;
 	}else{
 	  divv = (D1vz + D2vx + D3vy);
 	  p[i3][i2][i1] -= dt*sim->kappa[i3][i2][i1]*divv;
