@@ -1,4 +1,9 @@
 /* Finite-difference time-domain (FDTD) modelling kernel
+ *
+ * Reference for VTI/TTI equation:
+ *    Duveneck, Eric, and Peter M. Bakker. "Stable P-wave modeling for 
+ *    reverse-time migration in tilted TI media." Geophysics 76.2 (2011):
+ *    S65-S75.
  *----------------------------------------------------------------------
  * Copyright (c) 2021 Harbin Institute of Technology. All rights reserved.
  * Author: Pengliang Yang 
