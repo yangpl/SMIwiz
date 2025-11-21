@@ -21,7 +21,6 @@ void fdtd_update_v(sim_t *sim, int flag, int it, int adj);
 void fdtd_update_p(sim_t *sim, int flag, int it, int adj);
 
 void extend_model_init(sim_t *sim);
-void extend_model(sim_t *sim);
 void extend_model_free(sim_t *sim);
 
 void computing_box_init(acq_t *acq, sim_t *sim, int adj);
