@@ -19,9 +19,9 @@ Governing equation: 1st order acoustic wave equation
 
 ## Credit
 
-* Pengliang Yang, SMIwiz: An integrated toolbox for multidimensional seismic modelling and imaging, Computer Physics Communications 2024, volume 295, 109011 [doi:10.1016/j.cpc.2023.109011](https://doi.org/10.1016/j.cpc.2023.109011)
+* Pengliang Yang, SMIwiz: An integrated toolbox for multidimensional seismic modelling and imaging, Computer Physics Communications 2024, 295:109011 [doi:10.1016/j.cpc.2023.109011](https://doi.org/10.1016/j.cpc.2023.109011)
 
-* Zhengyu Ji and Pengliang Yang: SMIwiz-2.0: Extended functionalities for wav­field decomposition, linearized and nonlinear inversion, Computer Physics Communications 2025, 109503 [doi:10.1016/j.cpc.2025.109503](https://doi.org/10.1016/j.cpc.2025.109503) 
+* Zhengyu Ji and Pengliang Yang: SMIwiz-2.0: Extended functionalities for wav­field decomposition, linearized and nonlinear inversion, Computer Physics Communications, 309:109503, 2025 [doi:10.1016/j.cpc.2025.109503](https://doi.org/10.1016/j.cpc.2025.109503) 
 
 * Pengliang Yang and Zhengyu Ji. A comparative study of data- and image- domain LSRTM under velocity-impedance parametrization. Computers & Geosciences, 208:106091, 2026 [doi:10.1016/j.cageo.2025.106091](https://doi.org/10.1016/j.cageo.2025.106091)
 
