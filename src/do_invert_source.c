@@ -82,17 +82,17 @@ void do_invert_source(sim_t *sim, acq_t *acq)
   fftw_plan fft=fftw_plan_dft_1d(ntpow2, tmp, tmp, FFTW_FORWARD, FFTW_ESTIMATE);
   fftw_plan ifft=fftw_plan_dft_1d(ntpow2, tmp, tmp, FFTW_BACKWARD, FFTW_ESTIMATE);
 
-  for(it=0; it<ntpow2; it++) { 
+  for(it=0; it<ntpow2; it++){ 
     num[it]=0.; 
     den[it]=0.;
   }
   for(irec=0; irec<acq->nrec; irec++){
-    for(it=0; it<sim->nt; it++) tmp[it]=sim->dcal[irec][it]*acq->xweight[irec];
+    for(it=0; it<sim->nt; it++) tmp[it]=sim->dcal[irec][it]*acq->wdat[irec][it];
     for(it=sim->nt; it<ntpow2; it++) tmp[it]=0.;
     fftw_execute(fft);
     memcpy(ft_dcal, tmp, ntpow2*sizeof(fftw_complex));
 
-    for(it=0; it<sim->nt; it++) tmp[it]=sim->dobs[irec][it]*acq->xweight[irec];
+    for(it=0; it<sim->nt; it++) tmp[it]=sim->dobs[irec][it]*acq->wdat[irec][it];
     for(it=sim->nt; it<ntpow2; it++) tmp[it]=0.;
     fftw_execute(fft);
     memcpy(ft_dobs, tmp, ntpow2*sizeof(fftw_complex));
