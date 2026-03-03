@@ -1,4 +1,5 @@
 /* Extracting angle domain common image gather (ADCIG) from RTM
+ * Be aware on the limitation: Here ADCIG extraction is only working in 2D
  *-----------------------------------------------------------------------
  * Copyright (c) 2021 Harbin Institute of Technology. All rights reserved.
  * Author: Pengliang Yang 
