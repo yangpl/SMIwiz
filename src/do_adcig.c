@@ -202,9 +202,9 @@ void do_adcig(sim_t *sim, acq_t *acq)
 		s2 = a*s1;
 	      }
 	    }
-	    //receiver side Poynting vector Sg=(g1,g2) defined according to energy density flux
-	    g1 = -sim->p2[i3_][i2_][i1_]*(sim->vz2[i3_][i2_][i1_] + sim->vz2[i3_][i2_][i1_-1]);//*0.5
-	    g2 =  sim->p2[i3_][i2_][i1_]*(sim->vx2[i3_][i2_][i1_] + sim->vx2[i3_][i2_-1][i1_]);//*0.5, add a minus sign due to opposite direction 
+	    //receiver side Poynting vector Sg=(g1,g2) defined according to energy density flux, add a minus sign due to opposite direction 
+	    g1 = sim->p2[i3_][i2_][i1_]*(sim->vz2[i3_][i2_][i1_] + sim->vz2[i3_][i2_][i1_-1]);//*0.5
+	    g2 = sim->p2[i3_][i2_][i1_]*(sim->vx2[i3_][i2_][i1_] + sim->vx2[i3_][i2_-1][i1_]);//*0.5
 	    b2 = MAX(fabs(g1), fabs(g2));
 	    if(b2>0){//Sg is not a zero vector, stable division: Sg<--Sg/|Sg|
 	      if(fabs(g1)<fabs(g2)){
