@@ -587,16 +587,16 @@ int main(int argc, char **argv) {
   gtk_container_add(GTK_CONTAINER(other_frame), other_grid);
   add_form_field(&app, other_grid, 15, 0, "eachopt", "eachopt");
   add_form_field(&app, other_grid, 4, 1, "freesurf", "freesurf");
-  add_form_field(&app, other_grid, 5, 2, "nt", "nt");
-  add_form_field(&app, other_grid, 6, 3, "dt", "dt");
-  add_form_field(&app, other_grid, 7, 4, "nb", "nb");
-  add_form_field(&app, other_grid, 8, 5, "n1", "n1");
-  add_form_field(&app, other_grid, 9, 6, "n2", "n2");
-  add_form_field(&app, other_grid, 10, 7, "n3", "n3");
-  add_form_field(&app, other_grid, 11, 8, "d1", "d1");
-  add_form_field(&app, other_grid, 12, 9, "d2", "d2");
-  add_form_field(&app, other_grid, 13, 10, "d3", "d3");
-  add_form_field(&app, other_grid, 14, 11, "order", "order");
+  add_form_field(&app, other_grid, 14, 2, "order", "order");
+  add_form_field(&app, other_grid, 8, 3, "n1", "n1");
+  add_form_field(&app, other_grid, 9, 4, "n2", "n2");
+  add_form_field(&app, other_grid, 10, 5, "n3", "n3");
+  add_form_field(&app, other_grid, 11, 6, "d1", "d1");
+  add_form_field(&app, other_grid, 12, 7, "d2", "d2");
+  add_form_field(&app, other_grid, 13, 8, "d3", "d3");
+  add_form_field(&app, other_grid, 5, 9, "nt", "nt");
+  add_form_field(&app, other_grid, 6, 10, "dt", "dt");
+  add_form_field(&app, other_grid, 7, 11, "nb", "nb");
 
   GtkWidget *sync_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
   GtkWidget *btn_load = gtk_button_new_with_label("Load inputpar.txt");
