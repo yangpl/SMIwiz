@@ -65,6 +65,11 @@ git checkout d27813a8d3752639df2aea199e534738f75d8c7f
 
   Please follow the workflow listed in  /run_Viking/0_readme.txt to reproduce this example. Version: git checkout f3d2d693ae42d0689348cbaf527ba90a99943644 (2025/11/20 updated for VTI modelling)
 
+# GUI (graphic user interface) for SMIwiz
+
+* GUI: This folder will create GUI for SMIwiz based on GTK. Therefore, make sure you install GTK before running it.
+  make (compile first);
+  ./gui (then run SMIwiz using GUI)
 
 ## Instructions to run
 
