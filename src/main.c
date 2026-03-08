@@ -61,7 +61,6 @@ int main(int argc, char* argv[])
     printf("   for seismic modeling, RTM imaging, linearized and \n");
     printf("         nonlinear full waveform inversion           \n");
     printf("             Copyright (c) Pengliang Yang            \n");
-    printf("       2021, Harbin Institute of Technology, China   \n");
     printf("             E-mail: ypl.2100@gmail.com              \n");
     printf("=====================================================\n");
     if(sim->mode==0) printf(" Forward modeling \n");
@@ -144,7 +143,7 @@ int main(int argc, char* argv[])
   acq->shot_idx = alloc1int(nproc);
   int nsrc = countparval("shots");
   if(nsrc>0){
-    if(nsrc<nproc) err("nproc > number of shot indices! ");
+    if(nsrc!=nproc) err("shots length (%d) must equal nproc (%d)", nsrc, nproc);
     getparint("shots", acq->shot_idx);/* a list of source index separated by comma */
   }
   if(nsrc==0){
@@ -220,7 +219,7 @@ int main(int argc, char* argv[])
     if(!getparstring("stffile",&stffile)) err("must give stffile= ");
     if(sim->eachopt){//read each source wavelet for every shot
       char number[sizeof("0000")];
-      char fname[10];
+      char fname[PATH_MAX];
       sprintf(number, "%04d", acq->shot_idx[iproc]);
       //sources will be named stf_0001, stf_0002, ..., where stffile='stf'
       snprintf(fname, sizeof(fname), "%s_%s", stffile, number);
@@ -256,6 +255,12 @@ int main(int argc, char* argv[])
   free(sim->stf);
   free3float(sim->vp);
   free3float(sim->rho);
+  free3float(sim->epsil);
+  free3float(sim->delta);
+  if(sim->aniso==2){
+    free3float(sim->azimul);
+    free3float(sim->dip);
+  }
 
   if(sim->mode!=8 && sim->mode!=9) acq_free(sim, acq);  
   free(sim);
@@ -265,4 +270,3 @@ int main(int argc, char* argv[])
 
   return 0;
 }
-
