@@ -1,6 +1,6 @@
 # SMIwiz GTK Launcher
 
-This is a GTK3 interface to run `SMIwiz` with editable `inputpar.txt`.
+This is a GTK3 interface to run `SMIwiz` with editable `inputpar.txt`. Make sure you install GTK first.
 
 ## Build
 
@@ -20,7 +20,7 @@ cd GUI
 
 - Select project directory, run directory, and `SMIwiz` binary.
 - Load and edit `run_dir/inputpar.txt`.
-- Edit common parameters in a form (`nt`, `dt`, `n1`, `n2`, `n3`, `d1`, `d2`, `d3`, `order`, `niter`, etc.).
+- Edit common parameters in a form (`n1`, `n2`, `n3`, `d1`, `d2`, `d3`, `order`,`nt`, `dt`, etc.).
 - Sync controls:
   - `Text -> Form` parses `inputpar.txt` into form fields.
   - `Form -> Text` writes form values back to `inputpar.txt` text.
