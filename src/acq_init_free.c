@@ -17,10 +17,11 @@ void acq_init(sim_t *sim, acq_t *acq)
   char *acquifile;
   int nrec_max;
   float *rx1, *rx2, *rx3;
-  float zs, xs, ys;
+  float zs = 0, xs = 0, ys = 0;
   float zz, xx, yy, dip, azimuth,  tmp,  frac;
   float zmin, zmax, xmin, xmax, ymin, ymax;
   int isreceiver, isrc, irec, iseof, j;
+  bool shot_found = false;
   FILE *fp;
   
   if(iproc==0) printf("--------- acquisition init -----------\n");
@@ -47,9 +48,13 @@ void acq_init(sim_t *sim, acq_t *acq)
 	  xs = xx;
 	  ys = yy;
 	  acq->nrec = 0;//start to count number of receivers from 0
+	  shot_found = true;
 	}
       }else{
 	if(acq->shot_idx[iproc]==isrc){//a receiver line associated with source-isrc
+	  if(acq->nrec>=nrec_max)
+	    err("nrec exceeds nrec_max=%d for shot %d; increase nrec_max",
+		nrec_max, acq->shot_idx[iproc]);
 	  rx1[acq->nrec] = zz;
 	  rx2[acq->nrec] = xx;
 	  rx3[acq->nrec] = yy;
@@ -59,6 +64,11 @@ void acq_init(sim_t *sim, acq_t *acq)
     }
   }
   fclose(fp);
+  if(acq->shot_idx[iproc] < 1 || acq->shot_idx[iproc] > isrc)
+    err("shots[%d]=%d out of range [1,%d] from acquifile=%s",
+	iproc, acq->shot_idx[iproc], isrc, acquifile);
+  if(!shot_found)
+    err("shot %d not found in acquifile=%s", acq->shot_idx[iproc], acquifile);
   acq->nsrc = 1;//by default, each process handles one shot
   printf("isrc=%d, nrec=%d, (zs,xs,ys)=(%.2f,%.2f,%.2f)\n",
 	 acq->shot_idx[iproc], acq->nrec, zs, xs, ys);

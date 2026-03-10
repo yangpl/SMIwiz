@@ -76,10 +76,19 @@ void lbfgs_update(int n, float *x, float *g, float **sk, float **yk, opt_t *opt)
 /*< update current sk and yk >*/
 {
   int i,j;
+  float ys, yy, ss, eps;
   j=opt->kpair-1;// kpair has been stored, index ranges between 0 and kpair-1
   for(i=0; i<n; i++){
     sk[j][i]=x[i]-sk[j][i];
     yk[j][i]=g[i]-yk[j][i];
+  }
+
+  ys = dotprod(n, yk[j], sk[j]);
+  yy = dotprod(n, yk[j], yk[j]);
+  ss = dotprod(n, sk[j], sk[j]);
+  eps = 1e-12f;
+  if(!(ys > eps*sqrtf(yy*ss))){
+    opt->kpair -= 1;
   }
 }
 
@@ -108,6 +117,7 @@ void lbfgs_descent(int n, float *g, float *d, float **sk, float **yk, opt_t *opt
   for(i=opt->kpair-1; i>=0; i--){
     // calculate rho
     tmp0=dotprod(n, yk[i], sk[i]);
+    if(tmp0 <= 0.) return;
     tmp1=dotprod(n, sk[i], q);
     rho[i]=1./tmp0;
     alpha[i]=rho[i]*tmp1;
@@ -176,6 +186,7 @@ void lbfgs_descent2(int n, float *g, float *q, float *rho, float *alpha,
   // tmp0=dotprod(n, yk[opt->kpair-1], sk[opt->kpair-1]); //same as 1./rho[opt->kpair-1]
   tmp0=1./rho[opt->kpair-1];
   tmp1=dotprod(n, yk[opt->kpair-1], yk[opt->kpair-1]);
+  if(!(tmp0 > 0. && tmp1 > 0.)) return;
   gamma=tmp0/tmp1; // initial Hessian=gamma* I
   for (j=0; j<n; j++)	q[j]=gamma*q[j];
 
@@ -213,8 +224,8 @@ void line_search(int n, //dimension of x
   float *xk;
   float inf = 0x3f3f3f3f;//this is actual infinity in computer
   
-  //use estimated stepsize from previous iteration when iter>1
-  opt->alpha = 1.;
+  // Use the last accepted step if available; otherwise start from 1.
+  if(!(opt->alpha > 0.)) opt->alpha = 1.;
   alpha1 = 0;
   alpha2 = inf;
   

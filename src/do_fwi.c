@@ -60,6 +60,7 @@ void do_fwi(sim_t *sim, acq_t *acq)
   if(!getparfloat("c2", &opt->c2)) opt->c2=0.9;  //Nocedal value for Wolfe condition
   if(!getparint("bound", &opt->bound)) opt->bound=1;//use bounds or not
   if(!getparint("preco", &opt->preco)) opt->preco=0;//1=precondition; 0=not
+  if(!getparfloat("alpha", &opt->alpha)) opt->alpha=1.0;//alpha
   opt->verb = (iproc==0)?1:0; //other process are silent.
 
   fwi = malloc(sizeof(fwi_t));
@@ -199,9 +200,11 @@ void do_fwi(sim_t *sim, acq_t *acq)
     //initialize all counters
     opt->f0 = fcost;
     opt->fk = fcost;
+    if(!(opt->alpha > 0.)) opt->alpha = 1.;
     opt->igrad = 0;
     opt->kpair = 0;
     opt->ils = 0;
+    opt->ls_fail = 0;
     if(opt->verb){
       opt->gk_norm = l2norm(fwi->n, opt->g);
       fp=fopen("iterate.txt","w");
@@ -347,4 +350,3 @@ void do_fwi(sim_t *sim, acq_t *acq)
   }
   free(opt);
 }
-
