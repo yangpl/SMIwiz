@@ -74,7 +74,7 @@ void do_psf_hessian(sim_t *sim, acq_t *acq)
   }else{
     fp=fopen(bathyfile,"rb");
     if(fp==NULL) err("cannot open bathyfile=%s",bathyfile);
-    if(fread(fwi->bathy[0],sizeof(float),sim->n2*sim->n3,fp)!=sim->n2*sim->n3) 
+    if(fread(fwi->bathy[0],sizeof(float),sim->n2*sim->n3,fp)!=(size_t)(sim->n2*sim->n3)) 
       err("error reading bathyfile=%s", bathyfile);
     fclose(fp);
   }
@@ -422,7 +422,7 @@ void do_mig_decon_fft(sim_t *sim, acq_t *acq)
   }else{
     fp=fopen(bathyfile,"rb");
     if(fp==NULL) err("cannot open bathyfile=%s",bathyfile);
-    if(fread(fwi->bathy[0],sizeof(float),sim->n2*sim->n3,fp)!=sim->n2*sim->n3) 
+    if(fread(fwi->bathy[0],sizeof(float),sim->n2*sim->n3,fp)!=(size_t)(sim->n2*sim->n3)) 
       err("error reading bathyfile=%s", bathyfile);
     fclose(fp);
   }
@@ -696,7 +696,7 @@ void do_mig_decon_pcgnr(sim_t *sim, acq_t *acq)
   }else{
     fp=fopen(bathyfile,"rb");
     if(fp==NULL) err("cannot open bathyfile=%s",bathyfile);
-    if(fread(fwi->bathy[0],sizeof(float),sim->n2*sim->n3,fp)!=sim->n2*sim->n3) 
+    if(fread(fwi->bathy[0],sizeof(float),sim->n2*sim->n3,fp)!=(size_t)(sim->n2*sim->n3)) 
       err("error reading bathyfile=%s", bathyfile);
     fclose(fp);
   }
@@ -890,7 +890,7 @@ void do_mig_decon_l1reg(sim_t *sim, acq_t *acq)
   }else{
     fp=fopen(bathyfile,"rb");
     if(fp==NULL) err("cannot open bathyfile=%s",bathyfile);
-    if(fread(fwi->bathy[0],sizeof(float),sim->n2*sim->n3,fp)!=sim->n2*sim->n3) 
+    if(fread(fwi->bathy[0],sizeof(float),sim->n2*sim->n3,fp)!=(size_t)(sim->n2*sim->n3)) 
       err("error reading bathyfile=%s", bathyfile);
     fclose(fp);
   }

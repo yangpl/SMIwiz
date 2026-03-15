@@ -16,9 +16,9 @@ float l2norm(int n, float *a);
 void flipsign(int n, float *a, float *b);
 void lbfgs_save(int n, float *x, float *g, float **sk, float **yk, opt_t *opt);
 void lbfgs_update(int n, float *x, float *g, float **sk, float **yk, opt_t *opt);
-void lbfgs_descent(int n, float *g, float *d, float **sk, float **yk, float *q, float *rho, float *alp, opt_t *opt);
-bool lbfgs_descent1(int n, float *g, float *q, float *rho, float *alp, float **sk, float **yk, opt_t *opt);
-void lbfgs_descent2(int n, float *g, float *q, float *rho, float *alp, float **sk, float **yk, opt_t *opt);
+void lbfgs_descent(int n, float *g, float *d, float **sk, float **yk, opt_t *opt);
+int lbfgs_descent1(int n, float *g, float *q, float *rho, float *alp, float **sk, float **yk, opt_t *opt);
+void lbfgs_descent2(int n, float *q, float *rho, float *alp, float **sk, float **yk, opt_t *opt);
 void boundx(float *x, int n, float *xmin, float *xmax);
 void line_search(int n, //dimension of x
 		 float *x, //input vector x
@@ -72,7 +72,7 @@ void do_fwi(sim_t *sim, acq_t *acq)
   }else{
     fp=fopen(bathyfile,"rb");
     if(fp==NULL) err("cannot open bathyfile=%s",bathyfile);
-    if(fread(fwi->bathy[0],sizeof(float),sim->n2*sim->n3,fp)!=sim->n2*sim->n3) 
+    if(fread(fwi->bathy[0],sizeof(float),sim->n2*sim->n3,fp)!=(size_t)(sim->n2*sim->n3)) 
       err("error reading bathyfile=%s", bathyfile);
     fclose(fp);
     for(i3=0; i3<sim->n3; i3++){
@@ -250,7 +250,7 @@ void do_fwi(sim_t *sim, acq_t *acq)
 	opt->loop1=lbfgs_descent1(fwi->n, opt->g, opt->q, opt->rho, opt->alp, opt->sk, opt->yk, opt);
 	if(opt->preco) precondition(sim, fwi, opt->q);
 	//2nd loop of two-loop recursion if 1st loop was done
-	if(opt->loop1) lbfgs_descent2(fwi->n, opt->g, opt->q, opt->rho, opt->alp, opt->sk, opt->yk, opt);
+	if(opt->loop1) lbfgs_descent2(fwi->n, opt->q, opt->rho, opt->alp, opt->sk, opt->yk, opt);
 	flipsign(fwi->n, opt->q, opt->d); //descent direction d=-q where q=H^{-1}g
 
 	//free allocated vector q and rho, alpha in lbfgs_descent2()

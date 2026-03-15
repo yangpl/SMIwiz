@@ -162,7 +162,7 @@ int main(int argc, char* argv[])
   sim->vp = alloc3float(sim->n1, sim->n2, sim->n3);
   fp=fopen(vpfile, "rb");
   if(fp==NULL) err("cannot open vpfile=%s", vpfile);
-  if(fread(&sim->vp[0][0][0], sizeof(float), sim->n123, fp)!=sim->n123)
+  if(fread(&sim->vp[0][0][0], sizeof(float), sim->n123, fp)!=(size_t)sim->n123)
     err("error reading vpfile=%s,  size unmatched", vpfile);
   fclose(fp);
   
@@ -170,7 +170,7 @@ int main(int argc, char* argv[])
   sim->rho = alloc3float(sim->n1, sim->n2, sim->n3);
   fp = fopen(rhofile, "rb");
   if(fp==NULL) err("cannot open rhofile=%s", rhofile);
-  if(fread(&sim->rho[0][0][0], sizeof(float), sim->n123, fp)!=sim->n123)
+  if(fread(&sim->rho[0][0][0], sizeof(float), sim->n123, fp)!=(size_t)sim->n123)
     err("error reading rhofile=%s,  size unmatched", rhofile);
   fclose(fp);
 
@@ -181,14 +181,14 @@ int main(int argc, char* argv[])
     if(!getparstring("epsilfile",&epsilfile)) err("must give epsilfile= ");
     fp = fopen(epsilfile, "rb");
     if(fp==NULL) err("cannot open epsilfile=%s", epsilfile);
-    if(fread(&sim->epsil[0][0][0], sizeof(float), sim->n123, fp)!=sim->n123)
+    if(fread(&sim->epsil[0][0][0], sizeof(float), sim->n123, fp)!=(size_t)sim->n123)
       err("error reading epsilfile=%s,  size unmatched", epsilfile);
     fclose(fp);
 
     if(!getparstring("deltafile",&deltafile)) err("must give deltafile= ");
     fp = fopen(deltafile, "rb");
     if(fp==NULL) err("cannot open deltafile=%s", deltafile);
-    if(fread(&sim->delta[0][0][0], sizeof(float), sim->n123, fp)!=sim->n123)
+    if(fread(&sim->delta[0][0][0], sizeof(float), sim->n123, fp)!=(size_t)sim->n123)
       err("error reading deltafile=%s,  size unmatched", deltafile);
     fclose(fp);
   }else{
@@ -200,7 +200,7 @@ int main(int argc, char* argv[])
     sim->azimul = alloc3float(sim->n1, sim->n2, sim->n3);
     fp = fopen(azimulfile, "rb");
     if(fp==NULL) err("cannot open azimulfile=%s", azimulfile);
-    if(fread(&sim->azimul[0][0][0], sizeof(float), sim->n123, fp)!=sim->n123)
+    if(fread(&sim->azimul[0][0][0], sizeof(float), sim->n123, fp)!=(size_t)sim->n123)
       err("error reading azimulfile=%s,  size unmatched", azimulfile);
     fclose(fp);
 
@@ -208,7 +208,7 @@ int main(int argc, char* argv[])
     sim->dip = alloc3float(sim->n1, sim->n2, sim->n3);
     fp = fopen(dipfile, "rb");
     if(fp==NULL) err("cannot open dipfile=%s", dipfile);
-    if(fread(&sim->dip[0][0][0], sizeof(float), sim->n123, fp)!=sim->n123)
+    if(fread(&sim->dip[0][0][0], sizeof(float), sim->n123, fp)!=(size_t)sim->n123)
       err("error reading dipfile=%s,  size unmatched", dipfile);
     fclose(fp);
   }
@@ -226,13 +226,13 @@ int main(int argc, char* argv[])
     
       fp=fopen(fname,"rb");
       if(fp==NULL) err("cannot open stffile=%s", fname);
-      if(fread(sim->stf, sizeof(float), sim->nt, fp)!=sim->nt) 
+      if(fread(sim->stf, sizeof(float), sim->nt, fp)!=(size_t)sim->nt) 
 	err("error reading stffile=%s,  size unmatched", fname);
       fclose(fp);
     }else{//read the same wavelet for all shots
       fp=fopen(stffile, "rb");
       if(fp==NULL) err("cannot open stffile=%s", stffile);
-      if(fread(sim->stf, sizeof(float), sim->nt, fp)!=sim->nt) 
+      if(fread(sim->stf, sizeof(float), sim->nt, fp)!=(size_t)sim->nt) 
 	err("error reading stffile=%s,  size unmatched", stffile);
       fclose(fp);
     }

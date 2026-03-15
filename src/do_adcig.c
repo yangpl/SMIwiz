@@ -62,7 +62,7 @@ void do_adcig(sim_t *sim, acq_t *acq)
   }else{
     fp=fopen(bathyfile,"rb");
     if(fp==NULL) err("cannot open bathyfile=%s",bathyfile);
-    if(fread(fwi->bathy[0],sizeof(float),sim->n2*sim->n3,fp)!=sim->n2*sim->n3) 
+    if(fread(fwi->bathy[0],sizeof(float),sim->n2*sim->n3,fp)!=(size_t)(sim->n2*sim->n3)) 
       err("error reading bathyfile=%s", bathyfile);
     fclose(fp);
     for(i3=0; i3<sim->n3; i3++){
