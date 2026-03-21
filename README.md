@@ -170,6 +170,11 @@ See [`GUI/README.md`](/home/pyang/Documents/SMIwiz/GUI/README.md) for the curren
 
 A few examples refer to specific historical revisions in their local notes. If you are trying to reproduce figures from a paper exactly, check the run directory for version-specific instructions before changing scripts or parameters.
 
+## Contact
+
+Pengliang Yang   
+Email: `ypl.2100@gmail.com`
+
 ## License
 
 This project is distributed under the GPL-3.0 license. See [`LICENSE`](/home/pyang/Documents/SMIwiz/LICENSE).
