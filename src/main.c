@@ -42,6 +42,11 @@ int main(int argc, char* argv[])
   acq_t *acq;
   sim_t *sim;
     
+  /* When stdout/stderr are redirected to log files, force line-buffered output so
+   * long forward/adjoint solves still emit progress messages immediately. */
+  setvbuf(stdout, NULL, _IOLBF, 0);
+  setvbuf(stderr, NULL, _IOLBF, 0);
+
   MPI_Init(&argc,&argv);
   ierr = MPI_Comm_rank(MPI_COMM_WORLD, &iproc);
   ierr = MPI_Comm_size(MPI_COMM_WORLD, &nproc);
