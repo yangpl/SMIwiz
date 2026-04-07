@@ -19,6 +19,8 @@
 
 void fdtd_init(sim_t *sim, int flag)
 { 
+  /* `flag` selects an independent wavefield workspace so one propagator can
+   * be reused for Born, forward, and adjoint states without aliasing memory. */
   if(flag==0){//scattering field after Born approximation
     sim->p0  = alloc3float(sim->n1pad, sim->n2pad, sim->n3pad);
     sim->vz0 = alloc3float(sim->n1pad, sim->n2pad, sim->n3pad);
@@ -32,6 +34,8 @@ void fdtd_init(sim_t *sim, int flag)
       sim->memD3p0 = alloc3float(sim->n1pad, sim->n2pad, 2*sim->nb);
       sim->memD3vy0 = alloc3float(sim->n1pad, sim->n2pad, 2*sim->nb);
     }
+    /* These auxiliary fields are consumed later by Born source construction
+     * and imaging conditions, so they travel with the scattered state. */
     //backup divergence and time derivative of particle velocity
     sim->divv0 = alloc3float(sim->n1pad, sim->n2pad, sim->n3pad);
     sim->dvzdt0 = alloc3float(sim->n1pad, sim->n2pad, sim->n3pad);
@@ -51,6 +55,8 @@ void fdtd_init(sim_t *sim, int flag)
       sim->memD3p1 = alloc3float(sim->n1pad, sim->n2pad, 2*sim->nb);
       sim->memD3vy1 = alloc3float(sim->n1pad, sim->n2pad, 2*sim->nb);
     }
+    /* The forward/source wavefield also keeps these kinematic terms because
+     * gradient assembly needs them time-aligned with the propagated field. */
     //backup divergence and time derivative of particle velocity
     sim->divv = alloc3float(sim->n1pad, sim->n2pad, sim->n3pad);
     sim->dvzdt = alloc3float(sim->n1pad, sim->n2pad, sim->n3pad);
@@ -1122,4 +1128,3 @@ void rwi_fdtd_update_p(sim_t *sim, int flag, int it, int adj, float ***kappa, fl
   }//end if freesurf
 
 }
-

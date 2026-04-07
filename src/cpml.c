@@ -26,6 +26,8 @@ void cpml_init(sim_t *sim)
   lx = sim->nb*sim->d1;
   damp0 = -3.*sim->vmax*logf(Rc)/(2.*lx);
   for(ib=0; ib<sim->nb; ib++)   {
+    /* Pressure and velocity live on staggered nodes, so CPML coefficients are
+     * tabulated at the integer grid and the two half-grid offsets. */
     x = (sim->nb-ib)*sim->d1;//should not allow x=0
     x /= lx;
     damp = damp0*x*x;    

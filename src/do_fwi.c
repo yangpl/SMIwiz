@@ -120,6 +120,8 @@ void do_fwi(sim_t *sim, acq_t *acq)
   if(opt->bound){
     opt->xmin = alloc1float(fwi->n);
     opt->xmax = alloc1float(fwi->n);
+    /* Optimization happens in transformed variables, mostly log-parameters,
+     * so the box constraints must be defined in that same space. */
     if(fwi->rwi){
       for(ipar=0; ipar<fwi->npar; ipar++){
 	for(j=0; j<sim->n123; j++){
@@ -161,6 +163,8 @@ void do_fwi(sim_t *sim, acq_t *acq)
   fg_fwi_init(sim, acq, fwi);
 	
   if(sim->mode==1||sim->mode==4) {//FWI or simply output FWI gradient
+    /* Each inversion parameter occupies one contiguous n123 slab in `opt->x`.
+     * The same flattened ordering is used throughout optimization and I/O. */
     //initialize opt->x[]
     if(fwi->rwi){
       for(ipar=0; ipar<fwi->npar; ipar++){
@@ -237,6 +241,8 @@ void do_fwi(sim_t *sim, acq_t *acq)
 	}else
 	  flipsign(fwi->n, opt->g, opt->d);//descent direction=-gradient
       }else{
+	/* From iteration 1 onward, the search direction comes from the standard
+	 * l-BFGS two-loop recursion over the stored (s_k, y_k) history. */
 	// allocate vector q and  rho, alpha in lbfgs_descent1()
 	// they will be freed in lbfgs_descent2()
 	opt->q = alloc1float(fwi->n);
