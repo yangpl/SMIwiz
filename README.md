@@ -11,7 +11,7 @@ SMIwiz currently supports:
 - 2D and 3D acoustic modelling on staggered grids
 - Isotropic, VTI, and TTI model input paths
 - Forward modelling and data generation
-- Full waveform inversion (FWI) and gradient evaluation
+- Full waveform inversion (FWI), adaptive waveform inversion (AWI), and gradient evaluation
 - Reverse time migration (RTM)
 - Data-domain least-squares RTM (LSRTM)
 - Source inversion
@@ -111,6 +111,15 @@ Most runs need at least:
 - inversion or imaging options depending on the selected mode
 
 Model files are read as binary `float` arrays with dimensions matching the declared grid size.
+
+### FWI Objective Options
+
+For `mode=1` or `mode=4`, the inversion objective is selected with `objopt=`:
+
+- `objopt=0`: conventional L2 FWI objective, using the weighted residual `dobs - dcal`
+- `objopt=1`: reverse AWI objective following Warner and Guasch (2016), using trace-by-trace Wiener filters that map observed traces to predicted traces
+
+The AWI implementation is in [`src/awi_adjoint_source.c`]. It uses the normalized lag-weighted objective, honors the data weights/mutes in `wdat`, and generates the corresponding adjoint source for the existing `dobs - dcal` back-propagation convention.
 
 ## Quick Start
 
