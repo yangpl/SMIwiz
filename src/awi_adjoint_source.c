@@ -15,11 +15,6 @@
 #include "fwi.h"
 #include <fftw3.h>
 
-static int awi_lag(int iw, int nw)
-{
-  return (iw <= nw/2) ? iw : nw - iw;
-}
-
 float awi_adjoint_source(acq_t *acqui, sim_t *sim, fwi_t *fwi)
 {
   (void)fwi;
@@ -78,7 +73,7 @@ float awi_adjoint_source(acq_t *acqui, sim_t *sim, fwi_t *fwi)
     s1 = 0.;
     s2 = 0.;
     for(it=0; it<ntpow2; it++) {
-      lag = awi_lag(it, ntpow2);
+      lag = (it <= ntpow2/2) ? it : ntpow2 - it;
       v[irec][it] = creal(ffttmp[it])/ntpow2;
       if(lag < sim->nt){
 	lag_time = lag*sim->dt;
@@ -105,7 +100,7 @@ float awi_adjoint_source(acq_t *acqui, sim_t *sim, fwi_t *fwi)
       continue;
     }
     for(it=0; it<ntpow2; it++) {
-      lag = awi_lag(it, ntpow2);
+      lag =  (it <= ntpow2/2) ? it : ntpow2 - it;
       if(lag < sim->nt){
 	lag_time = lag*sim->dt;
 	/* inject_adjoint_source follows the dobs-dcal convention used by the
