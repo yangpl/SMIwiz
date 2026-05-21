@@ -12,12 +12,14 @@
 void inject_source(sim_t *sim, acq_t *acq, float ***sp, float stf_it)
 {
   int isrc, i1, i2, i3, i1_, i2_, i3_;
+  int i3min=(sim->n3>1)?-sim->ri:0;
+  int i3max=(sim->n3>1)?+sim->ri:0;
   float w1, w2, w3, s;
 
   float dt = sim->sign_dt*sim->dt;
   s = stf_it*dt/sim->volume;
   for(isrc=0; isrc<acq->nsrc; isrc++){
-    for(i3=-sim->ri; i3<=sim->ri; i3++){
+    for(i3=i3min; i3<=i3max; i3++){
       if(sim->n3>1) {
 	w3 = acq->src_w3[isrc][i3+sim->ri];
 	i3_ = acq->src_i3[isrc] + i3;
@@ -50,11 +52,13 @@ void extract_wavefield(sim_t *sim, acq_t *acq, float ***sp, float **dat, int it)
 /*< extract data from wavefield using Kaiser windowed sinc interpolation >*/
 {   
   int irec, i1, i2, i3, i1_, i2_, i3_;
+  int i3min=(sim->n3>1)?-sim->ri:0;
+  int i3max=(sim->n3>1)?+sim->ri:0;
   float w1, w2, w3, s;
 
   for(irec=0; irec<acq->nrec; irec++) {
     s = 0;
-    for(i3=-sim->ri; i3<=sim->ri; i3++){
+    for(i3=i3min; i3<=i3max; i3++){
       if(sim->n3>1) {
 	w3 = acq->rec_w3[irec][i3+sim->ri];
 	i3_ = acq->rec_i3[irec] + i3;
@@ -87,11 +91,13 @@ void inject_adjoint_source(sim_t *sim, acq_t *acq, float ***rp, float **dres, in
 /*< inject adjoint source using Kaiser windowed sinc interpolation >*/
 {   
   int irec, i1, i2, i3, i1_, i2_, i3_;
+  int i3min=(sim->n3>1)?-sim->ri:0;
+  int i3max=(sim->n3>1)?+sim->ri:0;
   float w1, w2, w3, s;
 
   float dt = -sim->sign_dt*sim->dt;
   for(irec=0; irec<acq->nrec; irec++){
-    for(i3=-sim->ri; i3<=sim->ri; i3++){
+    for(i3=i3min; i3<=i3max; i3++){
       if(sim->n3>1) {
 	w3 = acq->rec_w3[irec][i3+sim->ri];
 	i3_ = acq->rec_i3[irec] + i3;
