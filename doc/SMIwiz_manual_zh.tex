@@ -1,0 +1,768 @@
+% ===========================================================================
+%  SMIwiz &mdash; 地震建模、成像与反演工具包  中文使用手册
+%  Compile:  xelatex SMIwiz_manual_zh.tex
+%  Author:   Pengliang Yang  (ypl.2100@gmail.com)
+% ===========================================================================
+\documentclass[11pt,a4paper]{ctexart}
+\usepackage[top=2cm, bottom=2cm, left=2.2cm, right=2.2cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage[inline]{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{caption}
+\usepackage[T1]{fontenc}
+
+\lstset{
+  basicstyle=\footnotesize\ttfamily,
+  columns=flexible,
+  breaklines=true,
+  frame=leftline,
+  numbers=left,
+  numberstyle=\tiny,
+  keywordstyle=\color{blue},
+  commentstyle=\color{green!50!black},
+  stringstyle=\color{red},
+  backgroundcolor=\color{gray!5},
+  tabsize=2,
+  xleftmargin=2.5em,
+  aboveskip=0.5ex,
+  belowskip=0.5ex
+}
+
+\setlength{\headheight}{14.5pt}
+\setlength{\headsep}{8pt}
+\setlength{\floatsep}{4pt plus 2pt minus 2pt}
+\setlength{\textfloatsep}{6pt plus 2pt minus 2pt}
+\setlength{\intextsep}{4pt plus 2pt minus 2pt}
+
+% Tighten display math spacing
+\AtBeginDocument{%
+  \setlength{\abovedisplayskip}{4pt plus 2pt minus 2pt}%
+  \setlength{\belowdisplayskip}{4pt plus 2pt minus 2pt}%
+  \setlength{\abovedisplayshortskip}{2pt plus 1pt}%
+  \setlength{\belowdisplayshortskip}{2pt plus 1pt}%
+}
+
+% Compact lists and spacing
+\setlist{nosep,leftmargin=*}
+\setlist[itemize]{label=\textbullet}
+\setlength{\parskip}{0pt}
+\setlength{\parindent}{2em}
+\titlespacing*{\section}{0pt}{1ex}{0.5ex}
+\titlespacing*{\subsection}{0pt}{0.8ex}{0.3ex}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE,RO]{\leftmark}
+\fancyhead[RE,LO]{SMIwiz 中文手册}
+\fancyfoot[C]{\thepage}
+
+\titleformat{\section}{\centering\Large\bfseries}{第\,\thesection\,节}{12pt}{}
+
+\begin{document}
+
+\begin{titlepage}
+\centering
+\vspace*{2cm}
+{\Huge\bfseries SMIwiz 使用手册}\\[0.6cm]
+{\Large 地震声波建模、成像与反演工具包}\\[1cm]
+{\large 杨鹏亮}\\[0.2cm]
+{\large \texttt{ypl.2100@gmail.com}}\\[0.2cm]
+{\large 版本对应：SMIwiz-2.0}\\[0.2cm]
+{\large \today}\\[1.5cm]
+\noindent\rule{\textwidth}{0.5pt}\\[0.6cm]
+{\large\itshape
+本手册详细描述 SMIwiz 软件的安装、配置、运行模式及参数说明，
+涵盖正演模拟、全波形反演（FWI）、逆时偏移（RTM）、
+最小二乘偏移（LSRTM）、震源反演、角度域共成像点道集（ADCIG）
+提取及上下行波场分离等全部功能。}
+\end{titlepage}
+
+
+% ===== 第一节 =====
+\section{软件概述}
+
+\subsection{简介}
+
+SMIwiz（Seismic Modeling, Imaging and Waveform Inversion Wizard）是一个基于 C 语言和 MPI 并行的地震声波建模、成像与反演工具包。它采用高阶交错网格有限差分（FDTD）时域传播方法，支持 2D 和 3D 声波方程求解，集成了各向同性（Isotropic）、VTI（Vertical Transverse Isotropy）和 TTI（Tilted Transverse Isotropy）各向异性介质模拟能力。
+
+SMIwiz 目前支持的完整功能列表：
+
+\begin{itemize}
+  \item 2D/3D 声波正演模拟（Forward Modelling）
+  \item 全波形反演（Full Waveform Inversion, FWI）及梯度构建
+  \item 自适应波形反演（Adaptive Waveform Inversion, AWI）
+  \item 反射波波形反演（Reflection Waveform Inversion, RWI）
+  \item 逆时偏移（Reverse Time Migration, RTM）
+  \item 数据域最小二乘逆时偏移（Data-domain Least-Squares RTM, LSRTM）
+  \item 震源子波反演（Source Wavelet Inversion）
+  \item 角度域共成像点道集提取（ADCIG Extraction）
+  \item 点扩散函数（PSF）Hessian 计算
+  \item 基于 PSF 的迭代偏移反褶积（PCGNR 方法）
+  \item 基于 FFT-Wiener 滤波的偏移反褶积
+  \item 上下行波场分离（Up/Down Wavefield Separation）
+  \item Computing Box 自动缩减计算区域以提高效率
+  \item 基于 Kaiser 窗函数 sinc 插值的震源注入和波场提取
+  \item 边界存储与重建的降采样/插值技术（Yang et al., 2016）
+\end{itemize}
+
+\subsection{引用}
+
+如在研究中使用本软件，请引用以下相关论文：
+
+\begin{enumerate}
+  \item Pengliang Yang, ``SMIwiz: An integrated toolbox for multidimensional seismic modelling and imaging'', \emph{Computer Physics Communications} 295, 109011, 2024. DOI: 10.1016/j.cpc.2023.109011
+  \item Zhengyu Ji and Pengliang Yang, ``SMIwiz-2.0: Extended functionalities for wavefield decomposition, linearized and nonlinear inversion'', \emph{Computer Physics Communications} 309, 109503, 2025. DOI: 10.1016/j.cpc.2025.109503
+  \item Pengliang Yang and Zhengyu Ji, ``A comparative study of data- and image-domain LSRTM under velocity-impedance parametrization'', \emph{Computers \& Geosciences} 208, 106091, 2026. DOI: 10.1016/j.cageo.2025.106091
+\end{enumerate}
+
+\subsection{版本历史}
+
+\begin{itemize}
+  \item \textbf{SMIwiz-1.0}（2024）：基础建模、RTM、FWI、LSRTM
+  \item \textbf{SMIwiz-2.0}（2025）：新增 ADCIG、PSF Hessian、偏移反褶积、上下行波场分离、AWI、RWI
+\end{itemize}
+
+\subsection{许可证}
+
+本项目基于 GPL-3.0 许可证发布。
+
+% ===== 第二节 =====
+\section{安装与编译}
+
+\subsection{系统要求}
+
+\begin{itemize}
+  \item \textbf{操作系统}：Linux（推荐 Ubuntu 20.04+ 或 CentOS 7+）
+  \item \textbf{编译器}：MPI C 编译器（推荐 OpenMPI 或 MPICH）
+  \item \textbf{FFTW3}：FFTW 开发库（\texttt{libfftw3-dev}）
+  \item \textbf{make}：GNU make
+  \item \textbf{可选}：\texttt{gfortran}（部分辅助程序）
+  \item \textbf{可选}：GTK3 开发包（GUI 启动器）
+\end{itemize}
+
+\subsection{安装 FFTW3}
+
+\begin{lstlisting}[language=bash]
+# Ubuntu/Debian
+sudo apt-get install libfftw3-dev
+
+# CentOS/RHEL
+sudo yum install fftw-devel
+
+# 手动编译
+wget http://www.fftw.org/fftw-3.3.10.tar.gz
+tar zxvf fftw-3.3.10.tar.gz
+cd fftw-3.3.10
+./configure --enable-openmp --prefix=/path/to/fftw3
+make -j4 && make install
+\end{lstlisting}
+
+\subsection{编译 SMIwiz}
+
+\begin{lstlisting}[language=bash]
+export fftw3=/path/to/fftw3
+cd src
+make
+\end{lstlisting}
+
+可执行文件生成在 \texttt{bin/SMIwiz}。Makefile 关键变量：
+
+\begin{itemize}
+  \item \texttt{CC = mpicc}：MPI C 编译器
+  \item \texttt{fftw3\_lib = \$(fftw3)/lib}
+  \item \texttt{fftw3\_inc = \$(fftw3)/include}
+  \item \texttt{BIN = ../bin}
+  \item \texttt{LIB = -L\$(fftw3\_lib) -lfftw3 -lm -fopenmp -lpthread -lmpi}
+\end{itemize}
+
+\subsection{GUI 启动器（可选）}
+
+\begin{lstlisting}[language=bash]
+cd GUI
+make
+./gui
+\end{lstlisting}
+
+提供图形界面编辑 \texttt{inputpar.txt} 并启动 MPI 任务。
+
+% ===== 第三节 =====
+\section{输入参数与文件格式}
+
+SMIwiz 通过命令行接收参数，通常写入 \texttt{inputpar.txt} 通过 \texttt{\$(cat inputpar.txt)} 传递。
+
+\begin{lstlisting}[language=bash]
+mpirun -n <N> ../bin/SMIwiz $(cat inputpar.txt)
+\end{lstlisting}
+
+\subsection{网格与时间参数}
+
+以下参数所有模式均为必选。
+
+\begin{longtable}{lllp{5cm}}
+\toprule
+\textbf{参数} & \textbf{类型} & \textbf{默认值} & \textbf{说明} \\
+\midrule
+\endhead
+\texttt{nt}      & int   & 无默认 & 时间步总数（必选）\\
+\texttt{dt}      & float & 无默认 & 时间采样间隔（秒，必选）\\
+\texttt{n1}      & int   & 无默认 & 深度方向网格点数（必选）\\
+\texttt{n2}      & int   & 无默认 & 水平方向网格点数（必选）\\
+\texttt{d1}      & float & 无默认 & 深度方向网格间距（米，必选）\\
+\texttt{d2}      & float & 无默认 & 水平方向网格间距（米，必选）\\
+\texttt{n3}      & int   & 1      & 第三方向网格点数。1 表示 2D \\
+\texttt{d3}      & float & 1      & 第三方向网格间距（n3$>$1 时必选）\\
+\texttt{nb}      & int   & 20     & PML 吸收边界层数 \\
+\texttt{order}   & int   & 4      & 有限差分精度（4 或 8）\\
+\texttt{dr}      & int   & 1(2D)/10(3D) & 边界降采样比例（mode$\neq$0 时生效）\\
+\texttt{eachopt} & int   & 0      & 每炮不同震源子波（0=同一子波，1=单独子波）\\
+\texttt{freesurf} & int  & 1      & 自由表面（1=施加，0=无）\\
+\texttt{freq}    & float & 15     & PML 参考频率（Hz）\\
+\bottomrule
+\end{longtable}
+
+\textbf{维度约定}：n1/d1 = 深度 z（向下为正），n2/d2 = 水平 x，n3/d3 = 第三方向 y。
+内部填充后尺寸为 \texttt{n1pad = n1 + 2*nb}，\texttt{n2pad = n2 + 2*nb}，3D 时 \texttt{n3pad = n3 + 2*nb}。
+
+\subsection{模型文件}
+
+所有模型为二进制 float，维度 n1$\times$n2$\times$n3。
+
+\begin{longtable}{llp{8cm}}
+\toprule
+\textbf{参数} & \textbf{类型} & \textbf{说明} \\
+\midrule
+\endhead
+\texttt{vpfile}   & string & 纵波速度模型（必选）\\
+\texttt{rhofile}  & string & 密度模型（必选）\\
+\texttt{epsilfile} & string & VTI/TTI epsilon（aniso$>$0 时必选）\\
+\texttt{deltafile} & string & VTI/TTI delta（aniso$>$0 时必选）\\
+\texttt{azimulfile} & string & TTI 方位角（aniso=2 时必选）\\
+\texttt{dipfile}   & string & TTI 倾角（aniso=2 时必选）\\
+\bottomrule
+\end{longtable}
+
+\subsection{震源子波}
+
+参数 \texttt{stffile} 指定震源时间函数文件（二进制 float，长度 nt）。
+\texttt{eachopt=1} 时，按 \texttt{stffile\_0001}、\texttt{stffile\_0002} 等读取各炮子波。
+mode=5 时 \texttt{stffile} 为输出文件名。
+
+\subsection{采集系统}
+
+\subsubsection{通过 acquisition 文件（suopt=0，默认）}
+
+参数 \texttt{acquifile} 指定采集系统文本文件，每行格式：
+
+\begin{lstlisting}
+z x y dip azimuth isreceiver
+\end{lstlisting}
+
+\texttt{isreceiver=0} 为炮点，\texttt{1} 为检波点。首行被跳过（文件头）。
+参数 \texttt{nrec\_max}（默认 100000）设定每炮最大检波器数。
+
+\subsubsection{通过 SU 格式数据（suopt=1）}
+
+程序从 \texttt{dat\_0001.su}、\texttt{dat\_0002.su} 等文件中读取观测数据和采集几何。
+每个 SU 道包含 240 字节道头和 ns 个 float 样点。
+提取的坐标信息包括：gelev（高程）、gx/gy（检波器坐标）、selev/sdepth（炮点高程和深度）、
+scalel/scalco（坐标缩放因子）。观测数据通过线性插值重采样到模拟网格。
+
+\subsection{数据加权与切除}
+
+\subsubsection{加权}
+
+\begin{tabular}{lllp{5cm}}
+\textbf{参数} & \textbf{类型} & \textbf{默认值} & \textbf{说明} \\
+\texttt{dxwdat} & float & 100 & 加权函数空间采样间隔 \\
+\texttt{xwdat}  & float[] & 1.0$\times$6 & 偏移距加权系数向量 \\
+\end{tabular}
+
+\subsubsection{切除（Muting）}
+
+\begin{tabular}{lllp{5cm}}
+\textbf{参数} & \textbf{类型} & \textbf{默认值} & \textbf{说明} \\
+\texttt{muteopt} & int & 0 & 0=不切除, 1=切除以上, 2=切除以下, 3=上下切除 \\
+\texttt{ntaper}  & int & 10 & 余弦 taper 点数 \\
+\texttt{xmute1,tmute1} & float[] & 无 & 切除线偏移距-时间对（muteopt=1/3 必选）\\
+\texttt{xmute2,tmute2} & float[] & 无 & 第二切除线（muteopt=2/3 必选）\\
+\end{tabular}
+
+\subsection{炮索引}
+
+参数 \texttt{shots} 指定各 MPI 进程处理的炮索引，长度必须等于 nproc。
+默认每进程处理第 rank+1 炮。
+
+% ===== 第四节 =====
+\section{运行模式总览}
+
+\begin{longtable}{cll}
+\toprule
+\textbf{mode} & \textbf{功能} & \textbf{源文件} \\
+\midrule
+\endhead
+0  & 正演模拟 & \texttt{do\_modelling.c} \\
+1  & 时间域 FWI & \texttt{do\_fwi.c}, \texttt{fg\_fwi.c} \\
+2  & 逆时偏移 RTM & \texttt{do\_rtm.c} \\
+3  & 数据域 LSRTM & \texttt{do\_lsrtm.c} \\
+4  & FWI 梯度构建 & \texttt{do\_fwi.c}, \texttt{fg\_fwi.c} \\
+5  & 震源子波反演 & \texttt{do\_invert\_source.c} \\
+6  & ADCIG 提取 & \texttt{do\_adcig.c} \\
+7  & PSF Hessian 计算 & \texttt{do\_mig\_decon.c} \\
+8  & 迭代偏移反褶积（PSF-PCGNR）& \texttt{do\_mig\_decon.c} \\
+9  & FFT-Wiener 偏移反褶积 & \texttt{do\_mig\_decon.c} \\
+10 & 上下行波场分离 & \texttt{do\_updown.c} \\
+\bottomrule
+\end{longtable}
+
+\subsection*{模式简述}
+
+\begin{itemize}
+  \item \textbf{mode=0}：正演模拟（第五节）
+  \item \textbf{mode=1,4}：FWI 与梯度构建（第六节）
+  \item \textbf{mode=2}：逆时偏移（第七节）
+  \item \textbf{mode=3}：数据域 LSRTM（第八节）
+  \item \textbf{mode=5}：震源子波反演（第九节）
+  \item \textbf{mode=6}：ADCIG 提取（第十章，仅 2D）
+  \item \textbf{mode=7,8,9}：PSF Hessian 与偏移反褶积（第十一节）
+  \item \textbf{mode=10}：上下行波场分离（第十二节）
+\end{itemize}
+
+% ===== 第五节 =====
+\section{正演模拟（mode=0）}
+
+\subsection{概述}
+
+基于声波方程的一阶速度-应力形式，高阶交错网格有限差分求解。
+
+\subsection{控制方程}
+
+\begin{align*}
+  \frac{\partial p}{\partial t} &= -\kappa \left( \frac{\partial v_z}{\partial z} + \frac{\partial v_x}{\partial x} + \frac{\partial v_y}{\partial y} \right) \\
+  \frac{\partial v_z}{\partial t} &= -b_z \frac{\partial p}{\partial z},\quad
+  \frac{\partial v_x}{\partial t} = -b_x \frac{\partial p}{\partial x},\quad
+  \frac{\partial v_y}{\partial t} = -b_y \frac{\partial p}{\partial y}
+\end{align*}
+
+其中 $\kappa = \rho v_p^2$ 为体积模量，$b = 1/\rho$ 为浮力。
+时间离散为交错网格蛙跳格式，空间离散为 4 阶或 8 阶中心差分。
+
+\subsection{特定参数}
+
+\begin{tabular}{lllp{5cm}}
+\textbf{参数} & \textbf{类型} & \textbf{默认值} & \textbf{说明} \\
+\texttt{itcheck} & int & nt/2 & 输出波场快照的时间步 \\
+\end{tabular}
+
+\subsection{输出文件}
+
+\begin{tabular}{llp{5cm}}
+\textbf{文件} & \textbf{格式} & \textbf{说明} \\
+\texttt{dat\_0001} 等 & binary float & 合成数据（nrec $\times$ nt）\\
+\texttt{snapshot.bin} & binary float & itcheck 时刻波场快照 \\
+\texttt{time\_info.txt} & 文本 & 各阶段耗时统计 \\
+\end{tabular}
+
+\subsection{运行示例}
+
+\begin{lstlisting}[language=bash]
+cd run_fwd
+bash run.sh
+\end{lstlisting}
+
+% ===== 第六节 =====
+\section{全波形反演（mode=1/4）}
+
+\subsection{概述}
+
+FWI 通过最小化观测与模拟数据差异反演地下参数。支持 L-BFGS 优化，AWI 目标函数，FWI/RWI。
+
+\subsection{目标函数}
+
+\begin{itemize}
+  \item \textbf{L2-FWI}（objopt=0）：$J(m) = \frac12 \| d_{\text{obs}} - d_{\text{cal}}(m) \|^2$
+  \item \textbf{AWI}（objopt=1）：基于 Warner \& Guasch (2016) 的自适应目标函数
+\end{itemize}
+
+\subsection{参数化}
+
+\begin{tabular}{lllp{5cm}}
+\textbf{参数} & \textbf{类型} & \textbf{默认值} & \textbf{说明} \\
+\texttt{family} & int & 1 & 1=vp-rho；2=vp-Ip（波阻抗）\\
+\texttt{npar}   & int & 1 & 反演参数数量 \\
+\texttt{idxpar} & int[] & 必选 & 参数索引：family=1 时 1=vp,2=rho；family=2 时 1=vp,2=Ip \\
+\end{tabular}
+
+\subsection{优化参数}
+
+\begin{tabular}{lllp{4cm}}
+\textbf{参数} & \textbf{类型} & \textbf{默认值} & \textbf{说明} \\
+\texttt{niter} & int & 50 & 最大迭代次数 \\
+\texttt{nls}   & int & 20 & 最大线搜索次数 \\
+\texttt{tol}   & float & 1e-8 & 收敛容差 \\
+\texttt{npair} & int & 5 & L-BFGS 内存长度 \\
+\texttt{c1}    & float & 1e-4 & Wolfe 条件 c1 \\
+\texttt{c2}    & float & 0.9 & Wolfe 条件 c2 \\
+\texttt{bound} & int & 1 & 边界约束 \\
+\texttt{preco} & int & 0 & 0=无；1=深度预条件；2=伪 Hessian \\
+\texttt{alpha} & float & 1.0 & 初始步长 \\
+\end{tabular}
+
+\subsection{模型约束}
+
+\texttt{vpmin=1000, vpmax=6000, rhomin=1000, rhomax=3000}。
+bound=1 时在对数参数空间施加上下限。
+
+\subsection{海底地形}
+
+\texttt{bathyfile}（二进制 float，n2$\times$n3）指定海底界面。\texttt{transition}（默认 0）为过渡带厚度。
+
+\subsection{正则化}
+
+\texttt{gamma1}（Tikhonov，默认 0），\texttt{gamma2}（TV，默认 0）。
+\texttt{r1,r2,r3} 为三角形平滑半径（默认 1），\texttt{repeat} 为重复次数。
+
+\subsection{FWI / RWI 选择}
+
+\texttt{objopt=0}（L2-FWI），\texttt{objopt=1}（AWI）。\texttt{rwi=0}（FWI），\texttt{rwi=1}（RWI）。
+RWI 模式下自动使用 family=2，需要提供 \texttt{dmfile}（反射系数模型），并关闭预条件。
+
+\subsection{输出文件}
+
+\begin{tabular}{llp{5cm}}
+\textbf{文件} & \textbf{格式} & \textbf{说明} \\
+\texttt{param\_final} & binary float & 最终模型（npar$\times$n1$\times$n2$\times$n3）\\
+\texttt{param\_iter} & binary float & 每次迭代模型 \\
+\texttt{gradient\_final} & binary float & 最终梯度 \\
+\texttt{gradient\_iter} & binary float & 每次迭代梯度 \\
+\end{tabular}
+
+\subsection{运行示例}
+
+\begin{lstlisting}[language=bash]
+cd run_fwi2d
+bash run.sh
+bash run_inv_rand.sh   # 随机起始 FWI
+bash run_fwd_seq.sh    # 顺序正演测试
+\end{lstlisting}
+
+% ===== 第七节 =====
+\section{逆时偏移（mode=2）}
+
+\subsection{概述}
+
+RTM 采用双程波动方程成像，基于波阻抗核（Impedance Kernel）。
+
+\subsection{成像条件}
+
+阻抗核由体模量核和密度核组成：
+\[
+\frac{\partial J}{\partial \ln(I_p)} =
+\frac{\partial J}{\partial \ln(\kappa)} +
+\frac{\partial J}{\partial \ln(\rho)}
+\]
+
+体模量核：$\frac{\partial J}{\partial \ln(\kappa)} = -\Delta t \Delta V \sum_t (\nabla \cdot \mathbf{v}_f) p_b$ \\
+密度核：$\frac{\partial J}{\partial \ln(\rho)} = -\frac{\rho}{4} \Delta t \Delta V \sum_t
+(\frac{\partial v_z^f}{\partial t} v_z^b + \frac{\partial v_x^f}{\partial t} v_x^b + \frac{\partial v_y^f}{\partial t} v_y^b)$
+
+\subsection{算法流程}
+
+\begin{enumerate}
+  \item 正向传播背景波场 p1，降采样存储边界
+  \item 计算残差 $d_{\text{res}} = (d_{\text{obs}} - d_{\text{cal}}) \cdot w_{\text{dat}}$
+  \item 残差作为伴随震源反向传播 p2
+  \item 同步从边界重建 p1
+  \item 每时间步应用成像条件
+  \item MPI 归约各炮，输出成像
+\end{enumerate}
+
+\subsection{输出文件}
+
+\texttt{param\_final\_rtm}（二进制 float）：最终成像结果。
+\texttt{dres\_0001} 等：残差数据。\texttt{d0\_0001} 等：背景波场数据。
+
+\subsection{运行示例}
+
+\begin{lstlisting}[language=bash]
+cd run_rtm
+bash run_rtm.sh
+\end{lstlisting}
+
+% ===== 第八节 =====
+\section{数据域最小二乘偏移（mode=3）}
+
+\subsection{概述}
+
+数据域 LSRTM 通过求解线性化 Born 近似反问题获得更高分辨率和更均衡的成像。使用 PCGNR（Preconditioned Conjugate Gradient on Normal Residual）算法。
+
+\subsection{Born 正演}
+
+散射波场 $p_0$ 满足 Born 近似下的波动方程，其震源项为：
+\[
+f_{\text{Born}} = -2\rho v_p^2 \delta\ln(v_p) \nabla \cdot \mathbf{v}_f
+- v_p^2 \delta\ln(\rho) \nabla \cdot \mathbf{v}_f
+\]
+
+\subsection{特定参数}
+
+\begin{tabular}{lllp{5cm}}
+\textbf{参数} & \textbf{类型} & \textbf{默认值} & \textbf{说明} \\
+\texttt{family} & int & 1 & 参数族 \\
+\texttt{npar}   & int & 2 & 反演参数数 \\
+\texttt{idxpar} & int[] & 必选 & 参数索引 \\
+\texttt{niter}  & int & 15 & PCGNR 迭代次数 \\
+\texttt{preco}  & int & 0  & 1=伪 Hessian 对角预条件 \\
+\end{tabular}
+
+\subsection{输出文件}
+
+\texttt{param\_final}（二进制 float）：最终反演结果。\texttt{param\_iter}：每次 CG 迭代结果。
+
+\subsection{运行示例}
+
+\begin{lstlisting}[language=bash]
+cd run_lsrtm2d
+bash run_lsrtm.sh
+# 3D 版本
+cd ../run_lsrtm3d
+bash run.sh
+\end{lstlisting}
+
+
+% ===== 第九节 =====
+\section{震源子波反演（mode=5）}
+
+\subsection{概述}
+
+根据 Pratt（1999）的方法在频率域估计震源子波。先用 Dirac delta 震源进行正演获得格林函数，再通过频域 Wiener 滤波求解最优子波：
+
+\[
+\hat{s}(\omega) = \frac{\sum_i G_i^*(\omega) d_i^{\text{obs}}(\omega)}
+                         {\sum_i |G_i(\omega)|^2 + \varepsilon}
+\]
+
+其中 $G$ 为格林函数，$\varepsilon$ 为正则化参数。
+
+\subsection{参数}
+
+\texttt{stffile}（string，必选）：输出震源子波文件路径。
+
+\subsection{输出}
+
+二进制 float 格式的震源子波（长度 nt）。\texttt{eachopt=1} 时输出为 \texttt{stf\_0001}、\texttt{stf\_0002} 等各炮独立子波。
+
+
+% ===== 第十节 =====
+\section{角度域共成像点道集（mode=6）}
+
+\subsection{概述}
+
+ADCIG 基于 RTM 框架，利用 Poynting 矢量计算地下反射角，将成像按角度排列。\textbf{仅支持 2D。}
+
+\subsection{原理}
+
+在 RTM 正向传播中计算震源侧 Poynting 矢量 $\mathbf{S} = -p_1 \mathbf{v}_1$，根据矢量方向计算反射角，分配到对应角度道集。
+
+\subsection{参数}
+
+\begin{tabular}{lllp{5cm}}
+\textbf{参数} & \textbf{类型} & \textbf{默认值} & \textbf{说明} \\
+\texttt{na}    & int & 90  & 离散角度数（0\textdegree--90\textdegree）\\
+\texttt{awh}   & int & 1   & 角度平滑半窗长 \\
+\texttt{xadcig} & float[] & 全部 x 网格 & 提取位置 x 坐标 \\
+\texttt{yadcig} & float[] & 全部 y 网格 & 提取位置 y 坐标 \\
+\end{tabular}
+
+\subsection{输出}
+
+角度域共成像点道集及角度叠加成像结果。
+
+
+% ===== 第十一节 =====
+\section{PSF Hessian 与偏移反褶积（mode=7/8/9）}
+
+\subsection{概述}
+
+偏移 Hessian 的逆可以补偿非均匀照明和带限效应。提供三种操作：
+
+\begin{itemize}
+  \item \textbf{mode=7}：计算 PSF Hessian——逐点放置散射体，计算偏移响应
+  \item \textbf{mode=8}：基于 PSF 的迭代 PCGNR 反褶积
+  \item \textbf{mode=9}：FFT-Wiener 频率域反褶积
+\end{itemize}
+
+\subsection{PSF 计算（mode=7）}
+
+在模型空间按间隔（\texttt{cw1, cw2, cw3}）选取散射点，逐个计算其 Born 正演 + RTM 偏移响应，构成 Hessian 的稀疏表示。
+
+\subsection{偏移反褶积（mode=8, 9）}
+
+mode=8 求解 $\min_m \| H m - m_{\text{RTM}} \|^2$（PCGNR 迭代）。
+mode=9 在频率域进行 Wiener 滤波。
+\textbf{前置依赖}：需先运行 mode=2（RTM 成像）和 mode=7（PSF Hessian）。
+
+\subsection{参数}
+
+\begin{tabular}{lllp{5cm}}
+\textbf{参数} & \textbf{类型} & \textbf{默认值} & \textbf{说明} \\
+\texttt{family} & int & 2 & 参数族 \\
+\texttt{npar}   & int & 1 & 参数数 \\
+\texttt{idxpar} & int[] & 必选 & 参数索引 \\
+\texttt{niter}  & int & 20 & 迭代次数（mode=8）\\
+\texttt{preco}  & int & 1  & 1=启用预条件 \\
+\texttt{mdopt}  & int & 1  & 1=迭代 PSF；2=Wiener 滤波 \\
+\texttt{cw1}    & int & 25 & 深度方向 PSF 采样间隔 \\
+\texttt{cw2}    & int & 25 & 水平方向 PSF 采样间隔 \\
+\texttt{cw3}    & int & nw3/2 & 第三方向 PSF 采样间隔（3D）\\
+\end{tabular}
+
+\subsection{工作流}
+
+\begin{lstlisting}[language=bash]
+# Step 1: RTM 成像
+mpirun -n N ../bin/SMIwiz mode=2 ...
+# Step 2: PSF Hessian
+mpirun -n N ../bin/SMIwiz mode=7 ...
+# Step 3a: 迭代反褶积
+mpirun -n N ../bin/SMIwiz mode=8 ...
+# Step 3b: 或 FFT-Wiener
+mpirun -n N ../bin/SMIwiz mode=9 ...
+\end{lstlisting}
+
+完整示例见 \texttt{run\_decon\_1par/}。
+
+
+% ===== 第十二节 =====
+\section{上下行波场分离（mode=10）}
+
+\subsection{概述}
+
+利用 Hilbert 变换构造解析波场，在 $f$-$k_z$ 域实现上下行波场分离。
+
+\subsection{原理}
+
+正向传播震源 $f(t)$ 得 $p_1$，传播 $\mathcal{H}[f(t)]$（Hilbert 变换）得 $p_0$，构造解析波场 $p_a = p_1 + i p_0$。沿深度方向做 FFT，保留正波数分量（$k_z > 0$），IFFT 得上行波 $p_u$，下行波 $p_d = p_1 - p_u$。
+
+\subsection{参数}
+
+\begin{tabular}{lllp{5cm}}
+\textbf{参数} & \textbf{类型} & \textbf{默认值} & \textbf{说明} \\
+\texttt{itcheck} & int & nt/2 & 波场快照输出时刻 \\
+\texttt{ntaper}  & int & 10 & FFT 余弦 taper 点数 \\
+\end{tabular}
+
+\subsection{输出}
+
+\texttt{wave\_up.bin}、\texttt{wave\_down.bin}：itcheck 时刻的上下行波场快照。
+\texttt{dat\_0001} 等：分离后的检波点数据。
+
+
+% ===== 第十三节 =====
+\section{各向异性支持}
+
+\subsection{介质类型}
+
+参数 \texttt{aniso} 控制介质类型：
+
+\begin{itemize}
+  \item \texttt{aniso=0}：各向同性（Isotropic）
+  \item \texttt{aniso=1}：VTI（Vertical Transverse Isotropy）
+  \item \texttt{aniso=2}：TTI（Tilted Transverse Isotropy）
+\end{itemize}
+
+\subsection{VTI/TTI 波动方程}
+
+参考 Duveneck \& Bakker（2011），引入两个压力分量 $p_v$（准纵波主应力）和 $p_h$（水平应力）：
+
+\begin{align*}
+  \frac{\partial p_v}{\partial t} &=
+  -\kappa (1+2\varepsilon) [ \cos^2\theta \,\partial_z v_z + \sin^2\theta \,\partial_x v_x
+  - \sin\theta\cos\theta (\partial_x v_z + \partial_z v_x) ] \\
+  \frac{\partial p_h}{\partial t} &=
+  -\kappa \sqrt{1+2\delta} [ \sin^2\theta \,\partial_z v_z + \cos^2\theta \,\partial_x v_x
+  + \sin\theta\cos\theta (\partial_x v_z + \partial_z v_x) ]
+\end{align*}
+
+其中 $\varepsilon,\delta$ 为 Thomsen 参数，$\theta$ 为倾角。VTI（$\theta=0$）退化为标准 VTI 声波方程。
+
+震源注入时 VTI/TTI 模式下 $p_v$ 注入 $1/3$ 能量，$p_h$ 注入 $2/3$ 能量。
+
+\subsection{所需文件}
+
+除 \texttt{vpfile}、\texttt{rhofile} 外：
+\begin{itemize}
+  \item aniso=1：\texttt{epsilfile}、\texttt{deltafile}
+  \item aniso=2：还需 \texttt{azimulfile}、\texttt{dipfile}
+\end{itemize}
+
+所有参数文件为二进制 float，n1$\times$n2$\times$n3。
+
+
+% ===== 第十四节 =====
+\section{示例运行指南}
+
+\subsection{快速入门：2D FWI}
+
+\begin{lstlisting}[language=bash]
+export fftw3=/path/to/fftw3
+cd src
+make
+cd ../run_fwi2d
+bash run.sh
+\end{lstlisting}
+
+自动生成 \texttt{inputpar.txt}，启动 2 进程 FWI。
+
+\subsection{Marmousi 模型}
+
+\begin{lstlisting}[language=bash]
+cd ../run_marmousi
+bash create_rho_vp_init.sh
+mpirun -n N ../bin/SMIwiz $(cat inputpar.txt)
+\end{lstlisting}
+
+\subsection{各向异性正演}
+
+\begin{lstlisting}[language=bash]
+cd ../run_fwd_aniso
+bash run.sh
+\end{lstlisting}
+
+\subsection{偏移反褶积（完整工作流）}
+
+\begin{lstlisting}[language=bash]
+cd ../run_decon_1par
+bash create_rho_vp_init.sh
+# RTM 成像
+mpirun -n 4 ../bin/SMIwiz $(cat inputpar.txt) mode=2 ...
+# PSF Hessian
+mpirun -n 4 ../bin/SMIwiz $(cat inputpar.txt) mode=7 ...
+# 迭代反褶积
+mpirun -n 4 ../bin/SMIwiz $(cat inputpar.txt) mode=8 ...
+# 或 FFT-Wiener
+mpirun -n 4 ../bin/SMIwiz $(cat inputpar.txt) mode=9 ...
+\end{lstlisting}
+
+\subsection{Viking 实际数据}
+
+\begin{lstlisting}[language=bash]
+cd ../run_Viking
+# 按 0_readme.txt 指引逐步操作
+\end{lstlisting}
+
+详细步骤包括：
+\begin{enumerate}
+  \item 拆分炮集（\texttt{1\_split\_shots.sh}）
+  \item 创建初始速度/密度模型（\texttt{2\_create\_vp\_rho.sh}）
+  \item 运行 LSRTM（\texttt{3\_run\_lsrtm.sh}）
+  \item 结果可视化（\texttt{4\_plot\_image.sh}）
+\end{enumerate}
+
+
+\end{document}
