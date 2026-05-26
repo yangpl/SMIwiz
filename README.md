@@ -175,10 +175,6 @@ make
 
 See [`GUI/README.md`](/home/pyang/Documents/SMIwiz/GUI/README.md) for the current GUI behavior and requirements.
 
-## Reproducibility and Version Notes
-
-A few examples refer to specific historical revisions in their local notes. If you are trying to reproduce figures from a paper exactly, check the run directory for version-specific instructions before changing scripts or parameters.
-
 ## Contact
 
 Pengliang Yang   
