@@ -148,8 +148,9 @@ void setup_data_mask(acq_t *acq, sim_t *sim)
     sprintf(fname, "mask_%04d", acq->shot_idx[iproc]);
 
     fp=fopen(fname,"wb");
-    fwrite(&acq->wdat[0][0], acq->nrec*sim->nt*sizeof(float), 1, fp);
-    fclose(fp);
+    if(fp==NULL) err("cannot open data mask file=%s", fname);
+    if(fwrite(&acq->wdat[0][0], sizeof(float), (size_t)acq->nrec*sim->nt, fp)
+	!=(size_t)acq->nrec*sim->nt) err("cannot write data mask file=%s", fname);
+    if(fclose(fp)!=0) err("cannot close data mask file=%s", fname);
   }
 }
-

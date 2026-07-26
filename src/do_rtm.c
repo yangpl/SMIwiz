@@ -51,6 +51,7 @@ void do_rtm(sim_t *sim, acq_t *acq)
   char fname[sizeof("dres_0000")];
 
   fwi = (fwi_t*)malloc(sizeof(fwi_t));
+  if(fwi==NULL) err("cannot allocate RTM state");
   fwi->bathy = alloc2float(sim->n2, sim->n3);
   fwi->ibathy = alloc2int(sim->n2, sim->n3);
   if(!getparstring("bathyfile",&bathyfile)){
@@ -114,16 +115,18 @@ void do_rtm(sim_t *sim, acq_t *acq)
   
   sprintf(fname, "dres_%04d", acq->shot_idx[iproc]);
   fp=fopen(fname,"wb");
-  if(fp==NULL) { fprintf(stderr,"error opening file\n"); exit(1);}
-  fwrite(&sim->dres[0][0], sim->nt*acq->nrec*sizeof(float), 1, fp);
-  fclose(fp);
+  if(fp==NULL) err("cannot open residual file=%s", fname);
+  if(fwrite(&sim->dres[0][0], sizeof(float), (size_t)sim->nt*acq->nrec, fp)
+	!=(size_t)sim->nt*acq->nrec) err("cannot write residual file=%s", fname);
+  if(fclose(fp)!=0) err("cannot close residual file=%s", fname);
   fflush(stdout);
 
   sprintf(fname, "d0_%04d", acq->shot_idx[iproc]);
   fp=fopen(fname,"wb");
-  if(fp==NULL) { fprintf(stderr,"error opening file\n"); exit(1);}
-  fwrite(&sim->dcal[0][0], sim->nt*acq->nrec*sizeof(float), 1, fp);
-  fclose(fp);
+  if(fp==NULL) err("cannot open modelled data file=%s", fname);
+  if(fwrite(&sim->dcal[0][0], sizeof(float), (size_t)sim->nt*acq->nrec, fp)
+	!=(size_t)sim->nt*acq->nrec) err("cannot write modelled data file=%s", fname);
+  if(fclose(fp)!=0) err("cannot close modelled data file=%s", fname);
   fflush(stdout);
   
   if(iproc==0) printf("----Migration for reflections--------\n");
@@ -177,8 +180,10 @@ void do_rtm(sim_t *sim, acq_t *acq)
   MPI_Allreduce(&mm[0][0][0], &g1[0][0][0], sim->n123, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
   if(iproc==0){
     fp = fopen("param_final_rtm", "wb");
-    fwrite(&g1[0][0][0], fwi->n*sizeof(float), 1, fp);
-    fclose(fp);
+    if(fp==NULL) err("cannot open param_final_rtm for writing");
+    if(fwrite(&g1[0][0][0], sizeof(float), fwi->n, fp)!=(size_t)fwi->n)
+      err("cannot write param_final_rtm");
+    if(fclose(fp)!=0) err("cannot close param_final_rtm");
   }
   
   cpml_free(sim);

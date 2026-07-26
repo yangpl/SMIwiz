@@ -67,6 +67,7 @@ void do_psf_hessian(sim_t *sim, acq_t *acq)
   if(sim->muteopt==0) err("RTM must assign muteopt=1");
   
   fwi = (fwi_t*)malloc(sizeof(fwi_t));
+  if(fwi==NULL) err("cannot allocate migration state");
   fwi->bathy=alloc2float(sim->n2, sim->n3);
   fwi->ibathy=alloc2int(sim->n2, sim->n3);
   if(!getparstring("bathyfile",&bathyfile)){
@@ -153,15 +154,15 @@ void do_psf_hessian(sim_t *sim, acq_t *acq)
 
   sprintf(fname, "dres_%04d", acq->shot_idx[iproc]);
   fp=fopen(fname,"wb");
-  if(fp==NULL) { fprintf(stderr,"error opening file\n"); exit(1);}
-  fwrite(&sim->dres[0][0], sim->nt*acq->nrec*sizeof(float), 1, fp);
+  if(fp==NULL) err("cannot open migration output file=%s", fname);
+  if(fwrite(&sim->dres[0][0], sizeof(float), (size_t)sim->nt*acq->nrec, fp)!=(size_t)sim->nt*acq->nrec) err("cannot write residual data");
   fclose(fp);
   fflush(stdout);
 
   sprintf(fname, "d0_%04d", acq->shot_idx[iproc]);
   fp=fopen(fname,"wb");
-  if(fp==NULL) { fprintf(stderr,"error opening file\n"); exit(1);}
-  fwrite(&sim->dcal[0][0], sim->nt*acq->nrec*sizeof(float), 1, fp);
+  if(fp==NULL) err("cannot open migration output file=%s", fname);
+  if(fwrite(&sim->dcal[0][0], sizeof(float), (size_t)sim->nt*acq->nrec, fp)!=(size_t)sim->nt*acq->nrec) err("cannot write modelled data");
   fclose(fp);
   fflush(stdout);
   
@@ -229,7 +230,8 @@ void do_psf_hessian(sim_t *sim, acq_t *acq)
   }//end for ipar
   if(iproc==0){
     fp = fopen("param_final_rtm", "wb");
-    fwrite(&mr[0][0][0][0], fwi->n*sizeof(float), 1, fp);
+    if(fp==NULL) err("cannot open param_final_rtm for writing");
+    if(fwrite(&mr[0][0][0][0], sizeof(float), fwi->n, fp)!=(size_t)fwi->n) err("cannot write param_final_rtm");
     fclose(fp);
   }
     
@@ -263,7 +265,8 @@ void do_psf_hessian(sim_t *sim, acq_t *acq)
   }//end for ipar
   if(iproc==0){
     fp = fopen("param_final_m1", "wb");
-    fwrite(&m1[0][0][0][0], fwi->n*sizeof(float), 1, fp);
+    if(fp==NULL) err("cannot open param_final_m1 for writing");
+    if(fwrite(&m1[0][0][0][0], sizeof(float), fwi->n, fp)!=(size_t)fwi->n) err("cannot write param_final_m1");
     fclose(fp);
   }
   fdtd_null(sim, 0);//flag=0, scattering field
@@ -380,7 +383,8 @@ void do_psf_hessian(sim_t *sim, acq_t *acq)
   }//end for ipar
   if(iproc==0){
     fp = fopen("param_final_m2", "wb");
-    fwrite(&m2[0][0][0][0], fwi->n*sizeof(float), 1, fp);
+    if(fp==NULL) err("cannot open param_final_m2 for writing");
+    if(fwrite(&m2[0][0][0][0], sizeof(float), fwi->n, fp)!=(size_t)fwi->n) err("cannot write param_final_m2");
     fclose(fp);
   }
 
@@ -415,6 +419,7 @@ void do_mig_decon_fft(sim_t *sim, acq_t *acq)
   FILE *fp;
   
   fwi = (fwi_t*)malloc(sizeof(fwi_t));
+  if(fwi==NULL) err("cannot allocate migration state");
   fwi->bathy=alloc2float(sim->n2, sim->n3);
   fwi->ibathy=alloc2int(sim->n2, sim->n3);
   if(!getparstring("bathyfile",&bathyfile)){
@@ -464,15 +469,18 @@ void do_mig_decon_fft(sim_t *sim, acq_t *acq)
   valence = alloc4float(sim->n1, sim->n2, sim->n3, fwi->npar);//valence
   
   fp = fopen("param_final_rtm", "rb");
-  fread(&mr[0][0][0][0], fwi->n*sizeof(float), 1, fp);
+  if(fp==NULL) err("cannot open param_final_rtm");
+  if(fread(&mr[0][0][0][0], sizeof(float), fwi->n, fp)!=(size_t)fwi->n) err("cannot read param_final_rtm");
   fclose(fp);
 
   fp = fopen("param_final_m1", "rb");
-  fread(&m1[0][0][0][0], fwi->n*sizeof(float), 1, fp);
+  if(fp==NULL) err("cannot open param_final_m1");
+  if(fread(&m1[0][0][0][0], sizeof(float), fwi->n, fp)!=(size_t)fwi->n) err("cannot read param_final_m1");
   fclose(fp);
 
   fp = fopen("param_final_m2", "rb");
-  fread(&m2[0][0][0][0], fwi->n*sizeof(float), 1, fp);
+  if(fp==NULL) err("cannot open param_final_m2");
+  if(fread(&m2[0][0][0][0], sizeof(float), fwi->n, fp)!=(size_t)fwi->n) err("cannot read param_final_m2");
   fclose(fp);
 
   //======================================
@@ -497,6 +505,7 @@ void do_mig_decon_fft(sim_t *sim, acq_t *acq)
   fftw_complex *ft_tmp = fftw_malloc(sizeof(fftw_complex)*n123fft);
   fftw_complex *ft_m1 = fftw_malloc(sizeof(fftw_complex)*n123fft);
   fftw_complex *ft_m2 = fftw_malloc(sizeof(fftw_complex)*n123fft);
+  if(ft_tmp==NULL || ft_m1==NULL || ft_m2==NULL) err("cannot allocate FFT migration arrays");
   fftw_plan fft = fftw_plan_dft(rank, n, ft_tmp, ft_tmp, FFTW_FORWARD, FFTW_MEASURE);
   fftw_plan ifft = fftw_plan_dft(rank, n, ft_tmp, ft_tmp, FFTW_BACKWARD, FFTW_MEASURE);
 
@@ -664,7 +673,8 @@ void do_mig_decon_fft(sim_t *sim, acq_t *acq)
       }
     }
     fp = fopen("param_final_decon", "wb");
-    fwrite(&md[0][0][0][0], fwi->n*sizeof(float), 1, fp);
+    if(fp==NULL) err("cannot open param_final_decon for writing");
+    if(fwrite(&md[0][0][0][0], sizeof(float), fwi->n, fp)!=(size_t)fwi->n) err("cannot write param_final_decon");
     fclose(fp);
   }
   
@@ -689,6 +699,7 @@ void do_mig_decon_pcgnr(sim_t *sim, acq_t *acq)
   FILE *fp;
   
   fwi = (fwi_t*)malloc(sizeof(fwi_t));
+  if(fwi==NULL) err("cannot allocate migration state");
   fwi->bathy=alloc2float(sim->n2, sim->n3);
   fwi->ibathy=alloc2int(sim->n2, sim->n3);
   if(!getparstring("bathyfile",&bathyfile)){
@@ -738,15 +749,18 @@ void do_mig_decon_pcgnr(sim_t *sim, acq_t *acq)
   md = alloc4float(sim->n1, sim->n2, sim->n3, fwi->npar);
 
   fp = fopen("param_final_rtm", "rb");
-  fread(&mr[0][0][0][0], fwi->n*sizeof(float), 1, fp);
+  if(fp==NULL) err("cannot open param_final_rtm");
+  if(fread(&mr[0][0][0][0], sizeof(float), fwi->n, fp)!=(size_t)fwi->n) err("cannot read param_final_rtm");
   fclose(fp);
 
   fp = fopen("param_final_m1", "rb");
-  fread(&m1[0][0][0][0], fwi->n*sizeof(float), 1, fp);
+  if(fp==NULL) err("cannot open param_final_m1");
+  if(fread(&m1[0][0][0][0], sizeof(float), fwi->n, fp)!=(size_t)fwi->n) err("cannot read param_final_m1");
   fclose(fp);
 
   fp = fopen("param_final_m2", "rb");
-  fread(&m2[0][0][0][0], fwi->n*sizeof(float), 1, fp);
+  if(fp==NULL) err("cannot open param_final_m2");
+  if(fread(&m2[0][0][0][0], sizeof(float), fwi->n, fp)!=(size_t)fwi->n) err("cannot read param_final_m2");
   fclose(fp);
     
   if(fwi->mdopt==1){
@@ -846,7 +860,8 @@ void do_mig_decon_pcgnr(sim_t *sim, acq_t *acq)
 	  }//end for i3
 	}//end for ipar
 	fp = fopen("param_final_decon", "wb");
-	fwrite(&md[0][0][0][0], fwi->n*sizeof(float), 1, fp);
+	if(fp==NULL) err("cannot open param_final_decon for writing");
+	if(fwrite(&md[0][0][0][0], sizeof(float), fwi->n, fp)!=(size_t)fwi->n) err("cannot write param_final_decon");
 	fclose(fp);
       }//end if
 
@@ -883,6 +898,7 @@ void do_mig_decon_l1reg(sim_t *sim, acq_t *acq)
   FILE *fp;
   
   fwi = (fwi_t*)malloc(sizeof(fwi_t));
+  if(fwi==NULL) err("cannot allocate migration state");
   fwi->bathy=alloc2float(sim->n2, sim->n3);
   fwi->ibathy=alloc2int(sim->n2, sim->n3);
   if(!getparstring("bathyfile",&bathyfile)){
@@ -933,15 +949,18 @@ void do_mig_decon_l1reg(sim_t *sim, acq_t *acq)
   md = alloc4float(sim->n1, sim->n2, sim->n3, fwi->npar);
 
   fp = fopen("param_final_rtm", "rb");
-  fread(&mr[0][0][0][0], fwi->n*sizeof(float), 1, fp);
+  if(fp==NULL) err("cannot open param_final_rtm");
+  if(fread(&mr[0][0][0][0], sizeof(float), fwi->n, fp)!=(size_t)fwi->n) err("cannot read param_final_rtm");
   fclose(fp);
 
   fp = fopen("param_final_m1", "rb");
-  fread(&m1[0][0][0][0], fwi->n*sizeof(float), 1, fp);
+  if(fp==NULL) err("cannot open param_final_m1");
+  if(fread(&m1[0][0][0][0], sizeof(float), fwi->n, fp)!=(size_t)fwi->n) err("cannot read param_final_m1");
   fclose(fp);
 
   fp = fopen("param_final_m2", "rb");
-  fread(&m2[0][0][0][0], fwi->n*sizeof(float), 1, fp);
+  if(fp==NULL) err("cannot open param_final_m2");
+  if(fread(&m2[0][0][0][0], sizeof(float), fwi->n, fp)!=(size_t)fwi->n) err("cannot read param_final_m2");
   fclose(fp);
     
   if(fwi->mdopt==1){
@@ -1015,7 +1034,8 @@ void do_mig_decon_l1reg(sim_t *sim, acq_t *acq)
 	  }//end for i3
 	}//end for ipar
 	fp = fopen("param_final_decon", "wb");
-	fwrite(&md[0][0][0][0], fwi->n*sizeof(float), 1, fp);
+	if(fp==NULL) err("cannot open param_final_decon for writing");
+	if(fwrite(&md[0][0][0][0], sizeof(float), fwi->n, fp)!=(size_t)fwi->n) err("cannot write param_final_decon");
 	fclose(fp);
       }//end if
 

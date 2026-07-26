@@ -52,6 +52,7 @@ void do_fwi(sim_t *sim, acq_t *acq)
   FILE *fp;
 
   opt = malloc(sizeof(opt_t));
+  if(opt==NULL) err("cannot allocate optimizer state");
   if(!getparint("niter", &opt->niter)) opt->niter=50;//maximum number of iterations
   if(!getparint("nls", &opt->nls)) opt->nls=20;//maximum number of line searches
   if(!getparfloat("tol", &opt->tol)) opt->tol=1e-8;//convergence tolerance 
@@ -64,6 +65,7 @@ void do_fwi(sim_t *sim, acq_t *acq)
   opt->verb = (iproc==0)?1:0; //other process are silent.
 
   fwi = malloc(sizeof(fwi_t));
+  if(fwi==NULL) err("cannot allocate FWI state");
   fwi->bathy=alloc2float(sim->n2, sim->n3);
   fwi->ibathy=alloc2int(sim->n2, sim->n3);
   if(!getparstring("bathyfile",&bathyfile)){
@@ -212,6 +214,7 @@ void do_fwi(sim_t *sim, acq_t *acq)
     if(opt->verb){
       opt->gk_norm = l2norm(fwi->n, opt->g);
       fp=fopen("iterate.txt","w");
+      if(fp==NULL) err("cannot open iterate.txt for writing");
       fprintf(fp,"==========================================================\n");
       fprintf(fp,"l-BFGS memory length: %d\n",opt->npair);
       fprintf(fp,"Maximum number of iterations: %d\n",opt->niter);
@@ -229,6 +232,7 @@ void do_fwi(sim_t *sim, acq_t *acq)
 	printf("# iter=%d  fk/f0=%g\n", fwi->iter,opt->fk/opt->f0);
 	opt->gk_norm = l2norm(fwi->n, opt->g);
 	fp=fopen("iterate.txt","a");
+	if(fp==NULL) err("cannot open iterate.txt for appending");
 	fprintf(fp,"%3d   %3.2e  %3.2e   %3.2e  %3.2e  %3d  %4d\n",
 		fwi->iter,opt->fk,opt->fk/opt->f0,opt->gk_norm,opt->alpha,opt->ils,opt->igrad);
 	fclose(fp);
@@ -270,6 +274,7 @@ void do_fwi(sim_t *sim, acq_t *acq)
       if(opt->ls_fail){
 	if(opt->verb) {
 	  fp=fopen("iterate.txt","a");
+	  if(fp==NULL) err("cannot open iterate.txt for appending");
 	  fprintf(fp, "==>Line search failed!\n");
 	  fclose(fp);
 	}
@@ -281,49 +286,56 @@ void do_fwi(sim_t *sim, acq_t *acq)
 	  for(ipar=0; ipar<fwi->npar; ipar++){
 	    if(fwi->idxpar[ipar]==1){
 	      fp = fopen("param_final_m0","wb");
-	      fwrite(&opt->x[ipar*sim->n123], sim->n123*sizeof(float), 1, fp);
-	      fclose(fp);
+	      if(fp==NULL) err("cannot open param_final_m0 for writing");
+	      if(fwrite(&opt->x[ipar*sim->n123], sizeof(float), sim->n123, fp)!=(size_t)sim->n123) err("cannot write param_final_m0");
+	      if(fclose(fp)!=0) err("cannot close param_final_m0");
 	    }
 	    if(fwi->idxpar[ipar]==2){
 	      fp = fopen("param_final_dm","wb");
-	      fwrite(&opt->x[ipar*sim->n123], sim->n123*sizeof(float), 1, fp);
-	      fclose(fp);
+	      if(fp==NULL) err("cannot open param_final_dm for writing");
+	      if(fwrite(&opt->x[ipar*sim->n123], sizeof(float), sim->n123, fp)!=(size_t)sim->n123) err("cannot write param_final_dm");
+	      if(fclose(fp)!=0) err("cannot close param_final_dm");
 	    }
 	  }
 
 	}else{
 	  fp = fopen("param_final","wb");
+	  if(fp==NULL) err("cannot open param_final for writing");
 	  for(j=0; j<fwi->n; j++){
 	    tmp = exp(opt->x[j]);
-	    fwrite(&tmp, sizeof(float), 1, fp);
+	    if(fwrite(&tmp, sizeof(float), 1, fp)!=1) err("cannot write param_final");
 	  }
-	  fclose(fp);
+	  if(fclose(fp)!=0) err("cannot close param_final");
 	}
 
 	fp=fopen("gradient_final","wb");
-	fwrite(opt->g, fwi->n*sizeof(float),1,fp);
-	fclose(fp);
+	if(fp==NULL) err("cannot open gradient_final for writing");
+	if(fwrite(opt->g, sizeof(float), fwi->n, fp)!=(size_t)fwi->n) err("cannot write gradient_final");
+	if(fclose(fp)!=0) err("cannot close gradient_final");
 	
 	if(sim->n3==1){//we only store intermediate models and gradients in 2D 
 	  if(fwi->iter==0) fp = fopen("param_iter","wb");
 	  else             fp = fopen("param_iter","ab");
+	  if(fp==NULL) err("cannot open param_iter for writing");
 	  for(j=0; j<fwi->n; j++){	    
 	    tmp = exp(opt->x[j]);
 	    if(fwi->rwi) tmp = opt->x[j];
-	    fwrite(&tmp, sizeof(float), 1, fp);
+	    if(fwrite(&tmp, sizeof(float), 1, fp)!=1) err("cannot write param_iter");
 	  }
-	  fclose(fp);
+	  if(fclose(fp)!=0) err("cannot close param_iter");
 
 	  if(fwi->iter==0) fp = fopen("gradient_iter","wb");
 	  else             fp = fopen("gradient_iter","ab");
-	  fwrite(opt->g, fwi->n*sizeof(float),1,fp);
-	  fclose(fp);
+	  if(fp==NULL) err("cannot open gradient_iter for writing");
+	  if(fwrite(opt->g, sizeof(float), fwi->n, fp)!=(size_t)fwi->n) err("cannot write gradient_iter");
+	  if(fclose(fp)!=0) err("cannot close gradient_iter");
 	}//end if n3>1
       }
 
       if(opt->fk < opt->tol * opt->f0){//here we assume misfit function is always positive
 	if(opt->verb){
 	  fp=fopen("iterate.txt","a");
+	  if(fp==NULL) err("cannot open iterate.txt for appending");
 	  fprintf(fp, "==>Convergence reached!\n");
 	  fclose(fp);
 	}
@@ -333,6 +345,7 @@ void do_fwi(sim_t *sim, acq_t *acq)
     } 
     if(opt->verb && fwi->iter==opt->niter) {
       fp=fopen("iterate.txt","a");
+      if(fp==NULL) err("cannot open iterate.txt for appending");
       fprintf(fp, "==>Maximum iteration number reached!\n");
       fclose(fp);
     }

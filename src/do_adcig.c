@@ -54,6 +54,7 @@ void do_adcig(sim_t *sim, acq_t *acq)
   char fname[sizeof("dres_0000")];
 
   fwi = (fwi_t*)malloc(sizeof(fwi_t));
+  if(fwi==NULL) err("cannot allocate ADCIG state");
   fwi->bathy = alloc2float(sim->n2, sim->n3);
   fwi->ibathy = alloc2int(sim->n2, sim->n3);
   if(!getparstring("bathyfile",&bathyfile)){
@@ -141,16 +142,18 @@ void do_adcig(sim_t *sim, acq_t *acq)
   
   sprintf(fname, "dres_%04d", acq->shot_idx[iproc]);
   fp=fopen(fname,"wb");
-  if(fp==NULL) { fprintf(stderr,"error opening file\n"); exit(1);}
-  fwrite(&sim->dres[0][0], sim->nt*acq->nrec*sizeof(float), 1, fp);
-  fclose(fp);
+  if(fp==NULL) err("cannot open residual file=%s", fname);
+  if(fwrite(&sim->dres[0][0], sizeof(float), (size_t)sim->nt*acq->nrec, fp)
+	!=(size_t)sim->nt*acq->nrec) err("cannot write residual file=%s", fname);
+  if(fclose(fp)!=0) err("cannot close residual file=%s", fname);
   fflush(stdout);
 
   sprintf(fname, "d0_%04d", acq->shot_idx[iproc]);
   fp=fopen(fname,"wb");
-  if(fp==NULL) { fprintf(stderr,"error opening file\n"); exit(1);}
-  fwrite(&sim->dcal[0][0], sim->nt*acq->nrec*sizeof(float), 1, fp);
-  fclose(fp);
+  if(fp==NULL) err("cannot open modelled data file=%s", fname);
+  if(fwrite(&sim->dcal[0][0], sizeof(float), (size_t)sim->nt*acq->nrec, fp)
+	!=(size_t)sim->nt*acq->nrec) err("cannot write modelled data file=%s", fname);
+  if(fclose(fp)!=0) err("cannot close modelled data file=%s", fname);
   fflush(stdout);
   
   if(iproc==0) printf("----Migration for reflections--------\n");
@@ -262,16 +265,18 @@ void do_adcig(sim_t *sim, acq_t *acq)
   }//end for ia
   if(iproc==0){
     fp = fopen("adcig", "wb");
+    if(fp==NULL) err("cannot open adcig for writing");
     for(i3=0; i3<sim->n3; i3++){
       for(i2=0; i2<sim->n2; i2++){
 	for(ia=0; ia<sim->na; ia++){
 	  for(i1=0; i1<sim->n1; i1++){
-	    fwrite(&image[ia][i3][i2][i1], sizeof(float), 1, fp);
+		    if(fwrite(&image[ia][i3][i2][i1], sizeof(float), 1, fp)!=1)
+		      err("cannot write adcig");
 	  }
 	}
       }
     }
-    fclose(fp);
+    if(fclose(fp)!=0) err("cannot close adcig");
   }
     
   cpml_free(sim);

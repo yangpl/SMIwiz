@@ -50,6 +50,7 @@ void do_updown(sim_t *sim, acq_t *acq)
   while(ntpow2<=sim->nt) { ntpow2 *= 2; } //ntpow2=2^power, ntpow2>=nt
 
   fftw_complex *tmp_time = (fftw_complex*)fftw_malloc(sizeof(fftw_complex)*ntpow2);
+  if(tmp_time==NULL) err("cannot allocate up/down FFT time array");
   fftw_plan fft_time = fftw_plan_dft_1d(ntpow2, tmp_time, tmp_time, FFTW_FORWARD, FFTW_ESTIMATE);
   fftw_plan ifft_time = fftw_plan_dft_1d(ntpow2, tmp_time, tmp_time, FFTW_BACKWARD, FFTW_ESTIMATE);
   memset(tmp_time, 0, ntpow2*sizeof(fftw_complex));
@@ -70,6 +71,7 @@ void do_updown(sim_t *sim, acq_t *acq)
   int howmany = sim->n2pad*sim->n3pad;
   int len = nzpow2*howmany;
   fftw_complex *tmp = (fftw_complex*)fftw_malloc(sizeof(fftw_complex)*len);
+  if(tmp==NULL) err("cannot allocate up/down FFT workspace");
   fftw_plan fft_zaxis = fftw_plan_many_dft(1, n, howmany,
 					   tmp, n,  1, nzpow2,
 					   tmp, n,  1, nzpow2,
@@ -139,6 +141,7 @@ void do_updown(sim_t *sim, acq_t *acq)
     
     if(iproc==0 && it==sim->itcheck){
       fp = fopen("wave_up.bin", "wb");
+      if(fp==NULL) err("cannot open wave_up.bin for writing");
       for(i3=0; i3<sim->n3; i3++){
       	i3_ = (sim->n3>1)?i3 + sim->nb:0;
       	for(i2=0; i2<sim->n2; i2++){
@@ -147,13 +150,14 @@ void do_updown(sim_t *sim, acq_t *acq)
       	    i1_ = i1 + sim->nb;
 
 	    float val = pu[i3_][i2_][i1_]; 
-      	    fwrite(&val, sizeof(float), 1, fp);
+	            if(fwrite(&val, sizeof(float), 1, fp)!=1) err("cannot write wave_up.bin");
       	  }
       	}
       }
-      fclose(fp);
+      if(fclose(fp)!=0) err("cannot close wave_up.bin");
 
       fp = fopen("wave_down.bin", "wb");
+      if(fp==NULL) err("cannot open wave_down.bin for writing");
       for(i3=0; i3<sim->n3; i3++){
       	i3_ = (sim->n3>1)?i3 + sim->nb:0;
       	for(i2=0; i2<sim->n2; i2++){
@@ -162,11 +166,11 @@ void do_updown(sim_t *sim, acq_t *acq)
       	    i1_ = i1 + sim->nb;
 
 	    float val = sim->p1[i3_][i2_][i1_] - pu[i3_][i2_][i1_]; 
-      	    fwrite(&val, sizeof(float), 1, fp);
+	            if(fwrite(&val, sizeof(float), 1, fp)!=1) err("cannot write wave_down.bin");
       	  }
       	}
       }
-      fclose(fp);
+      if(fclose(fp)!=0) err("cannot close wave_down.bin");
     }//end if
   }
   write_data(sim, acq);

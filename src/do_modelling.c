@@ -82,17 +82,19 @@ void do_modelling(sim_t *sim, acq_t *acq)
     
     if(iproc==0 && it==sim->itcheck){
       fp = fopen("snapshot.bin", "wb");
+      if(fp==NULL) err("cannot open snapshot.bin for writing");
       for(i3=0; i3<sim->n3; i3++){
       	i3_ = (sim->n3>1)?i3 + sim->nb:0;
       	for(i2=0; i2<sim->n2; i2++){
       	  i2_ = i2 + sim->nb;
       	  for(i1=0; i1<sim->n1; i1++){
       	    i1_ = i1 + sim->nb;
-      	    fwrite(&sim->p1[i3_][i2_][i1_], sizeof(float), 1, fp);
+	            if(fwrite(&sim->p1[i3_][i2_][i1_], sizeof(float), 1, fp)!=1)
+		      err("cannot write snapshot.bin");
       	  }
       	}
       }
-      fclose(fp);
+      if(fclose(fp)!=0) err("cannot close snapshot.bin");
     }//end if
   }
   write_data(sim, acq);
@@ -100,6 +102,7 @@ void do_modelling(sim_t *sim, acq_t *acq)
   if(iproc==0) {
     t0 = t_update_v + t_update_p + t_inject_src + t_extract_field;
     FILE *fp = fopen("time_info.txt", "w");
+    if(fp==NULL) err("cannot open time_info.txt for writing");
     fprintf(fp, "update_v      \t %e\n", t_update_v);
     fprintf(fp, "update_p      \t %e\n", t_update_p);
     fprintf(fp, "inject_src    \t %e\n", t_inject_src);

@@ -35,6 +35,8 @@ float awi_adjoint_source(acq_t *acqui, sim_t *sim, fwi_t *fwi)
   fftw_complex *ft_dcal = (fftw_complex*)fftw_malloc(sizeof(fftw_complex)*ntpow2*acqui->nrec);
   fftw_complex *ft_dobs = (fftw_complex*)fftw_malloc(sizeof(fftw_complex)*ntpow2*acqui->nrec);
   fftw_complex *ffttmp = (fftw_complex*)fftw_malloc(sizeof(fftw_complex)*ntpow2);
+  if(num==NULL || ft_dcal==NULL || ft_dobs==NULL || ffttmp==NULL)
+    err("cannot allocate AWI FFT arrays");
   fftw_plan fft = fftw_plan_dft_1d(ntpow2, ffttmp, ffttmp, FFTW_FORWARD, FFTW_ESTIMATE);
   fftw_plan ifft = fftw_plan_dft_1d(ntpow2, ffttmp, ffttmp, FFTW_BACKWARD, FFTW_ESTIMATE);
 

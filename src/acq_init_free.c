@@ -20,13 +20,15 @@ void acq_init(sim_t *sim, acq_t *acq)
   float zs = 0, xs = 0, ys = 0;
   float zz, xx, yy, dip, azimuth,  tmp,  frac;
   float zmin, zmax, xmin, xmax, ymin, ymax;
-  int isreceiver, isrc, irec, iseof, j;
+  int isreceiver, isrc, irec, j, line_number;
   bool shot_found = false;
+  char line[1024];
   FILE *fp;
   
   if(iproc==0) printf("--------- acquisition init -----------\n");
   if(!getparstring("acquifile", &acquifile)) err("must give acquifile= ");
   if(!getparint("nrec_max", &nrec_max)) nrec_max = 100000;//maximum dimensions/receivers per shot
+  if(nrec_max<1) err("nrec_max must be positive");
 
   rx1 = alloc1float(nrec_max);
   rx2 = alloc1float(nrec_max);
@@ -34,13 +36,15 @@ void acq_init(sim_t *sim, acq_t *acq)
   
   fp = fopen(acquifile,"r");
   if(fp==NULL) err("file %s does not exist!", acquifile); 
-  iseof = fscanf(fp, "%*[^\n]\n");//skip a line at the beginning of the file
+  if(fgets(line, sizeof(line), fp)==NULL) err("acquifile=%s is empty", acquifile);
   isrc = 0;
-  while(1){
-    iseof = fscanf(fp,"%f %f %f %f %f %d",&zz,&xx,&yy,&dip,&azimuth,&isreceiver);
-    if(iseof==EOF)
-      break;
-    else{
+  line_number = 1;
+  while(fgets(line, sizeof(line), fp)!=NULL){
+      line_number++;
+      if(sscanf(line,"%f %f %f %f %f %d",&zz,&xx,&yy,&dip,&azimuth,&isreceiver)!=6)
+	err("invalid acquisition record at %s:%d", acquifile, line_number);
+      if(isreceiver!=0 && isreceiver!=1)
+	err("src/rec flag must be 0 or 1 at %s:%d", acquifile, line_number);
       if(isreceiver==0){// a source line, origin of axes stripped outsh
 	isrc++;
 	if(acq->shot_idx[iproc]==isrc){
@@ -60,8 +64,7 @@ void acq_init(sim_t *sim, acq_t *acq)
 	  rx3[acq->nrec] = yy;
 	  acq->nrec++;
 	}
-      }
-    }
+  }
   }
   fclose(fp);
   if(acq->shot_idx[iproc] < 1 || acq->shot_idx[iproc] > isrc)
@@ -69,6 +72,8 @@ void acq_init(sim_t *sim, acq_t *acq)
 	iproc, acq->shot_idx[iproc], isrc, acquifile);
   if(!shot_found)
     err("shot %d not found in acquifile=%s", acq->shot_idx[iproc], acquifile);
+  if(acq->nrec<1)
+    err("shot %d has no receivers in acquifile=%s", acq->shot_idx[iproc], acquifile);
   acq->nsrc = 1;//by default, each process handles one shot
   printf("isrc=%d, nrec=%d, (zs,xs,ys)=(%.2f,%.2f,%.2f)\n",
 	 acq->shot_idx[iproc], acq->nrec, zs, xs, ys);
@@ -91,7 +96,7 @@ void acq_init(sim_t *sim, acq_t *acq)
   acq->src_i1m = alloc1int(acq->nsrc);
   acq->src_i2 = alloc1int(acq->nsrc);
   acq->src_i3 = alloc1int(acq->nsrc);
-  acq->src_nm = alloc1int(acq->nrec);
+  acq->src_nm = alloc1int(acq->nsrc);
   for(isrc=0; isrc< acq->nsrc; isrc++){
     acq->src_x1[isrc] = zs;
     acq->src_x2[isrc] = xs;

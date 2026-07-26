@@ -79,6 +79,8 @@ void do_invert_source(sim_t *sim, acq_t *acq)
   fftw_complex *ft_dcal=(fftw_complex*)fftw_malloc(sizeof(fftw_complex)*ntpow2);
   fftw_complex *ft_dobs=(fftw_complex*)fftw_malloc(sizeof(fftw_complex)*ntpow2);
   fftw_complex *tmp=(fftw_complex*)fftw_malloc(sizeof(fftw_complex)*ntpow2);
+  if(num==NULL || ft_dcal==NULL || ft_dobs==NULL || tmp==NULL)
+    err("cannot allocate source-inversion FFT arrays");
   fftw_plan fft=fftw_plan_dft_1d(ntpow2, tmp, tmp, FFTW_FORWARD, FFTW_ESTIMATE);
   fftw_plan ifft=fftw_plan_dft_1d(ntpow2, tmp, tmp, FFTW_BACKWARD, FFTW_ESTIMATE);
 
@@ -151,13 +153,17 @@ void do_invert_source(sim_t *sim, acq_t *acq)
     snprintf(fname, sizeof(fname), "%s_%s", stffile, number);
     
     fp=fopen(fname,"wb");
-    fwrite(sim->stf, sim->nt*sizeof(float), 1, fp);
-    fclose(fp);
+    if(fp==NULL) err("cannot open source output file=%s", fname);
+    if(fwrite(sim->stf, sizeof(float), sim->nt, fp)!=(size_t)sim->nt)
+      err("cannot write source output file=%s", fname);
+    if(fclose(fp)!=0) err("cannot close source output file=%s", fname);
   }else{
     if(iproc==0){
       fp=fopen(stffile,"wb");
-      fwrite(sim->stf, sim->nt*sizeof(float), 1, fp);
-      fclose(fp);
+      if(fp==NULL) err("cannot open source output file=%s", stffile);
+      if(fwrite(sim->stf, sizeof(float), sim->nt, fp)!=(size_t)sim->nt)
+	err("cannot write source output file=%s", stffile);
+      if(fclose(fp)!=0) err("cannot close source output file=%s", stffile);
     }
   }
 

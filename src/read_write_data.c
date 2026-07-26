@@ -16,7 +16,7 @@ double kaiser_windowed_sinc(double x, double dx, int r);
 void read_data(sim_t *sim, acq_t *acq)
 {
   unsigned short ns;
-  unsigned long int filesize;
+  long int filesize;
   float dt_trace, tmp, frac;
   float zmin, zmax, xmin, xmax, ymin, ymax;
   int it, j, isrc, irec;
@@ -28,15 +28,21 @@ void read_data(sim_t *sim, acq_t *acq)
     sprintf(fname, "dat_%04d.su", acq->shot_idx[iproc]);
     
     fp = fopen(fname,"rb");
-    if(fp==NULL) { fprintf(stderr,"error in read_data in SU format"); exit(1); }
-    fseek(fp, 114, SEEK_SET );//pointer skips first 114 bytes
-    fread(&ns, 2, 1,fp); // ns 115-116 byte in the trace header
+    if(fp==NULL) err("cannot open SU data file=%s", fname);
+    if(fseek(fp, 114, SEEK_SET)!=0) err("cannot seek in SU data file=%s", fname);
+    if(fread(&ns, sizeof(ns), 1, fp)!=1) err("cannot read ns from SU data file=%s", fname);
+    if(ns==0) err("invalid ns=0 in SU data file=%s", fname);
     if(iproc==0) printf("ns=%d\n", ns);
     
-    fseek(fp, 0, SEEK_END);//pointer goes to the end of the file
+    if(fseek(fp, 0, SEEK_END)!=0) err("cannot seek to end of SU data file=%s", fname);
     filesize = ftell(fp);//ftell tells you the number of bytes the file has
+    if(filesize<0) err("cannot determine size of SU data file=%s", fname);
+    if(filesize%(240+ns*sizeof(float))!=0) err("invalid size of SU data file=%s", fname);
     //each trace starts with 240 bytes header, proceeds with ns samples in float point.
+    if((unsigned long)filesize/(240+ns*sizeof(float))>INT_MAX)
+      err("too many traces in SU data file=%s", fname);
     acq->nrec = filesize/(240+ns*4);
+    if(acq->nrec<1) err("SU data file=%s contains no traces", fname);
     acq->nsrc = 1;//by default 1 shot per process
     if(iproc==0) printf("nrec=%d\n", acq->nrec);
 
@@ -46,10 +52,12 @@ void read_data(sim_t *sim, acq_t *acq)
 
     trace_header *trhdr = malloc(acq->nrec*sizeof(trace_header));
     float *trace = malloc(ns*sizeof(float));
+    if(trhdr==NULL || trace==NULL) err("cannot allocate SU trace buffers");
 
     rewind(fp);//pointer goes to the beginning of the file
-    fread(&trhdr[0], 240, 1, fp);//240 Byte for trace header
+    if(fread(&trhdr[0], 240, 1, fp)!=1) err("cannot read first SU header from %s", fname);
     dt_trace = trhdr[0].dt*1e-6;//convert micro-seconds to seconds
+    if(dt_trace<=0) err("invalid trace sampling interval in SU data file=%s", fname);
     if(iproc==0){
       printf("dt_trace=%g\n", dt_trace);
       if(ns*dt_trace<sim->nt*sim->dt) printf("traces will be extrapolated longer\n");
@@ -58,8 +66,10 @@ void read_data(sim_t *sim, acq_t *acq)
 
     rewind(fp);//pointer goes to the beginning of the file
     for(irec=0; irec<acq->nrec; irec++){
-      fread(&trhdr[irec], 240, 1, fp);//sizeof(trace_header)=240 Byte
-      fread(trace, ns*sizeof(float), 1, fp);//then ns float numbers as one trace
+      if(fread(&trhdr[irec], 240, 1, fp)!=1)
+	err("cannot read SU header %d from %s", irec+1, fname);
+      if(fread(trace, sizeof(float), ns, fp)!=(size_t)ns)
+	err("cannot read SU trace %d from %s", irec+1, fname);
 
       //linearly interpolate trace obtained from SU file
       for(it=0; it<sim->nt; it++){
@@ -152,7 +162,7 @@ void read_data(sim_t *sim, acq_t *acq)
     acq->src_i1m = alloc1int(acq->nsrc);
     acq->src_i2 = alloc1int(acq->nsrc);
     acq->src_i3 = alloc1int(acq->nsrc);
-    acq->src_nm = alloc1int(acq->nrec);
+    acq->src_nm = alloc1int(acq->nsrc);
     for(isrc=0; isrc<acq->nsrc; isrc++){
       //source position from SU header
       if(trhdr[0].scalel==0) tmp=1.;
@@ -218,8 +228,10 @@ void read_data(sim_t *sim, acq_t *acq)
     sprintf(fname, "dat_%04d", acq->shot_idx[iproc]);
     
     fp = fopen(fname,"rb");
-    if(fp==NULL) { fprintf(stderr,"error in read_data in binary format\n"); exit(1);}
-    fread(&sim->dobs[0][0], sim->nt*acq->nrec*sizeof(float), 1, fp);
+    if(fp==NULL) err("cannot open binary data file=%s", fname);
+    if(fread(&sim->dobs[0][0], sizeof(float), (size_t)sim->nt*acq->nrec, fp)
+	!=(size_t)sim->nt*acq->nrec)
+      err("binary data file=%s is truncated or has the wrong dimensions", fname);
     fclose(fp);
   }
 
@@ -234,9 +246,10 @@ void write_data(sim_t *sim, acq_t *acq)
 
   sprintf(fname, "dat_%04d", acq->shot_idx[iproc]);
   fp=fopen(fname,"wb");
-  if(fp==NULL) { fprintf(stderr,"write_data, error opening file\n"); exit(1);}
-  fwrite(&sim->dcal[0][0], sim->nt*acq->nrec*sizeof(float), 1, fp);
-  fflush(fp);
-  fclose(fp);
+  if(fp==NULL) err("cannot open output data file=%s", fname);
+  if(fwrite(&sim->dcal[0][0], sizeof(float), (size_t)sim->nt*acq->nrec, fp)
+	!=(size_t)sim->nt*acq->nrec)
+    err("cannot write output data file=%s", fname);
+  if(fclose(fp)!=0) err("cannot close output data file=%s", fname);
 
 }

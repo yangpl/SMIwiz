@@ -54,8 +54,10 @@ int main(int argc, char* argv[])
   initargs(argc, argv);  
   acq = (acq_t *)malloc(sizeof(acq_t));
   sim = (sim_t *)malloc(sizeof(sim_t));
+  if(acq==NULL || sim==NULL) err("cannot allocate main structures");
   
   if(!getparint("mode", &sim->mode)) sim->mode=0;
+  if(sim->mode<0 || sim->mode>10) err("mode must be in [0,10]");
   if(iproc==0){
     t = time(NULL);
     ptm = localtime(&t);
@@ -90,25 +92,44 @@ int main(int argc, char* argv[])
   if(!getparint("n2",&sim->n2)) err("must give n2= for FD grid");
   if(!getparfloat("d1",&sim->d1)) err("must give d1= for FD grid"); 
   if(!getparfloat("d2",&sim->d2)) err("must give d2= for FD grid");
+  if(sim->nt<=0) err("nt must be positive");
+  if(sim->dt<=0) err("dt must be positive");
+  if(sim->n1<=0 || sim->n2<=0) err("n1 and n2 must be positive");
+  if(sim->d1<=0 || sim->d2<=0) err("d1 and d2 must be positive");
+  if(sim->nb<0) err("nb must be nonnegative");
+  if(sim->nb>(INT_MAX-sim->n1)/2 || sim->nb>(INT_MAX-sim->n2)/2)
+    err("padded grid dimension exceeds INT_MAX");
   sim->n1pad = sim->n1+2*sim->nb;
   sim->n2pad = sim->n2+2*sim->nb;
-  if(!getparint("n3",&sim->n3)) { //default, 2D
-    sim->n3=1;
-    sim->d3=1;
-    sim->n3pad=1;
-  }
+  if(!getparint("n3",&sim->n3)) sim->n3=1;//default, 2D
+  if(sim->n3<1) err("n3 must be positive");
   if(sim->n3>1) {//ny>1, 3D
     if(!getparfloat("d3",&sim->d3)) err("must give d3= for FD grid");
+    if(sim->d3<=0) err("d3 must be positive");
+    if(sim->nb>(INT_MAX-sim->n3)/2) err("padded n3 exceeds INT_MAX");
     sim->n3pad = sim->n3+2*sim->nb;
     sim->volume = sim->d1*sim->d2*sim->d3;
-  }else  sim->volume = sim->d1*sim->d2;
+  }else{
+    sim->d3 = 1;
+    sim->n3pad = 1;
+    sim->volume = sim->d1*sim->d2;
+  }
   if(!getparint("order",&sim->order)) sim->order = 4;//only accepts 4 or 8-th order FD
+  if(sim->order!=4 && sim->order!=8) err("order must be 4 or 8");
   sim->ri = sim->order/2;//interpolation radius of Bessel I0 function for sinc
+  if(sim->nb<sim->ri) err("nb must be at least order/2");
   sim->ibox = 1;//by default, computing box should be applied
+  if((size_t)sim->n1>(size_t)INT_MAX/sim->n2 ||
+     (size_t)sim->n1*sim->n2>(size_t)INT_MAX/sim->n3)
+    err("grid size n1*n2*n3 exceeds INT_MAX");
+  if((size_t)sim->n1pad>(size_t)INT_MAX/sim->n2pad ||
+     (size_t)sim->n1pad*sim->n2pad>(size_t)INT_MAX/sim->n3pad)
+    err("padded grid size exceeds INT_MAX");
   sim->n123 = sim->n1*sim->n2*sim->n3;
   sim->n123pad = sim->n1pad*sim->n2pad*sim->n3pad;
   if(sim->mode!=0){
     if(!getparint("dr", &sim->dr)) sim->dr = (sim->n3>1)?10:1;//decimation ratio dr=5*vmax/vmin, assume vmax/vmin>=2
+    if(sim->dr<=0) err("dr must be positive");
     sim->mt = sim->nt/sim->dr;/* decimation ratio */
     if(sim->mt*sim->dr!=sim->nt) err("nt must be multiple of dr!");
   }
@@ -116,6 +137,9 @@ int main(int argc, char* argv[])
   if(!getparint("eachopt", &sim->eachopt)) sim->eachopt = 0;//1=each shot use different source wavelet
   if(!getparint("freesurf", &sim->freesurf)) sim->freesurf = 1;// 1=free surface; 0=no freesurf
   if(!getparfloat("freq",&sim->freq)) sim->freq = 15;//reference frequency for PML
+  if(sim->eachopt!=0 && sim->eachopt!=1) err("eachopt must be 0 or 1");
+  if(sim->freesurf!=0 && sim->freesurf!=1) err("freesurf must be 0 or 1");
+  if(sim->freq<=0) err("freq must be positive");
   if(iproc==0){
     printf("nt=%d (number of time steps)\n", sim->nt);
     printf("dt=%g (time step)\n", sim->dt);
@@ -133,12 +157,15 @@ int main(int argc, char* argv[])
 
   //=================== specify acquisition ================
   if(!getparint("suopt", &acq->suopt)) acq->suopt = 0;//0=default, 1=for real data precessing using RTM,FWI,LSRTM
+  if(acq->suopt!=0 && acq->suopt!=1) err("suopt must be 0 or 1");
   if(!getparfloat("zmin", &acq->zmin)) acq->zmin = 0;
   if(!getparfloat("zmax", &acq->zmax)) acq->zmax = acq->zmin+(sim->n1-1)*sim->d1;
   if(!getparfloat("xmin", &acq->xmin)) acq->xmin = 0;
   if(!getparfloat("xmax", &acq->xmax)) acq->xmax = acq->xmin+(sim->n2-1)*sim->d2;
   if(!getparfloat("ymin", &acq->ymin)) acq->ymin = 0;
   if(!getparfloat("ymax", &acq->ymax)) acq->ymax = acq->ymin+(sim->n3-1)*sim->d3;
+  if(acq->zmax<acq->zmin || acq->xmax<acq->xmin || acq->ymax<acq->ymin)
+    err("model coordinate maximum must not be less than its minimum");
   if(iproc==0){
     printf("-------- input model range -----------\n");
     printf("[zmin, zmax]=[%g, %g]\n", acq->zmin, acq->zmax);
@@ -180,6 +207,7 @@ int main(int argc, char* argv[])
   fclose(fp);
 
   if(!getparint("aniso", &sim->aniso)) sim->aniso = 0;//0=isotropic, 1=VTI, 2=TTI
+  if(sim->aniso<0 || sim->aniso>2) err("aniso must be 0, 1, or 2");
   sim->epsil = alloc3float(sim->n1, sim->n2, sim->n3);
   sim->delta = alloc3float(sim->n1, sim->n2, sim->n3);
   if(sim->aniso>0){

@@ -84,7 +84,9 @@ void fg_fwi_init(sim_t *sim_, acq_t *acq_, fwi_t *fwi_)
     }
     
     FILE *fp = fopen(dmfile, "rb");
-    fread(&sim->dm[0][0][0], sim->n123*sizeof(float), 1, fp);
+    if(fp==NULL) err("cannot open dmfile=%s", dmfile);
+    if(fread(&sim->dm[0][0][0], sizeof(float), sim->n123, fp)!=(size_t)sim->n123)
+      err("error reading dmfile=%s", dmfile);
     fclose(fp);
   }
   if(fwi->preco==2){
@@ -265,6 +267,7 @@ float fg_fwi(float *x, float *g)
     
       if(iproc==0 && it==sim->itcheck){
 	fp = fopen("wave1.bin", "wb");
+	if(fp==NULL) err("cannot open wave1.bin for writing");
 	for(i3=0; i3<sim->n3; i3++){
 	  i3_ = (sim->n3>1)?i3 + sim->nb:0;
 	  for(i2=0; i2<sim->n2; i2++){
@@ -272,11 +275,12 @@ float fg_fwi(float *x, float *g)
 	    for(i1=0; i1<sim->n1; i1++){
 	      i1_ = i1 + sim->nb;
 	    
-	      fwrite(&sim->p1[i3_][i2_][i1_], sizeof(float), 1, fp);
+	      if(fwrite(&sim->p1[i3_][i2_][i1_], sizeof(float), 1, fp)!=1)
+		err("cannot write wave1.bin");
 	    }
 	  }
 	}
-	fclose(fp);
+	if(fclose(fp)!=0) err("cannot close wave1.bin");
       }
     }
   
@@ -299,15 +303,17 @@ float fg_fwi(float *x, float *g)
   
     sprintf(fname, "dsyn_%04d", acq->shot_idx[iproc]);
     fp=fopen(fname,"wb");
-    if(fp==NULL) { fprintf(stderr,"error opening file\n"); exit(1);}
-    fwrite(&sim->dcal[0][0], sim->nt*acq->nrec*sizeof(float), 1, fp);
-    fclose(fp);
+    if(fp==NULL) err("cannot open synthetic data file=%s", fname);
+    if(fwrite(&sim->dcal[0][0], sizeof(float), (size_t)sim->nt*acq->nrec, fp)
+	!=(size_t)sim->nt*acq->nrec) err("cannot write synthetic data file=%s", fname);
+    if(fclose(fp)!=0) err("cannot close synthetic data file=%s", fname);
     fflush(stdout);
     sprintf(fname, "dres_%04d", acq->shot_idx[iproc]);
     fp=fopen(fname,"wb");
-    if(fp==NULL) { fprintf(stderr,"error opening file\n"); exit(1);}
-    fwrite(&sim->dres[0][0], sim->nt*acq->nrec*sizeof(float), 1, fp);
-    fclose(fp);
+    if(fp==NULL) err("cannot open residual file=%s", fname);
+    if(fwrite(&sim->dres[0][0], sizeof(float), (size_t)sim->nt*acq->nrec, fp)
+	!=(size_t)sim->nt*acq->nrec) err("cannot write residual file=%s", fname);
+    if(fclose(fp)!=0) err("cannot close residual file=%s", fname);
     fflush(stdout);
   
     /*--------------------------------------------------------------*/
@@ -327,6 +333,7 @@ float fg_fwi(float *x, float *g)
 
       if(iproc==0 && it==sim->itcheck){
 	fp = fopen("wave2.bin", "wb");
+	if(fp==NULL) err("cannot open wave2.bin for writing");
 	for(i3=0; i3<sim->n3; i3++){
 	  i3_ = (sim->n3>1)?i3 + sim->nb:0;
 	  for(i2=0; i2<sim->n2; i2++){
@@ -334,11 +341,12 @@ float fg_fwi(float *x, float *g)
 	    for(i1=0; i1<sim->n1; i1++){
 	      i1_ = i1 + sim->nb;
 	    
-	      fwrite(&sim->p1[i3_][i2_][i1_], sizeof(float), 1, fp);
+	      if(fwrite(&sim->p1[i3_][i2_][i1_], sizeof(float), 1, fp)!=1)
+		err("cannot write wave2.bin");
 	    }
 	  }
 	}
-	fclose(fp);
+	if(fclose(fp)!=0) err("cannot close wave2.bin");
       }
     
       for(i3=0; i3<sim->n3; i3++){
@@ -408,9 +416,9 @@ float fg_fwi(float *x, float *g)
 	      if(fwi->idxpar[ipar]==1) g[j] = g1[i3][i2][i1] - g2[i3][i2][i1];//dJ/dln(vp)
 	      if(fwi->idxpar[ipar]==2) g[j] = g1[i3][i2][i1] + g2[i3][i2][i1];//dJ/dln(ip)
 	    }
-	  }
-	}
-      }
+		    }
+		  }
+	      }
     }
     if(fwi->preco==2){
       MPI_Allreduce(&h1[0][0][0], fwi->hess, sim->n123, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
@@ -457,8 +465,9 @@ float fg_fwi(float *x, float *g)
     fg_mod_reg(sim, fwi, x, g);
     if(iproc==0 && fwi->firstgrad){
       fp=fopen("gradient_fwi","wb");
-      fwrite(g, fwi->n*sizeof(float), 1, fp);
-      fclose(fp);
+      if(fp==NULL) err("cannot open gradient_fwi for writing");
+      if(fwrite(g, sizeof(float), fwi->n, fp)!=(size_t)fwi->n) err("cannot write gradient_fwi");
+      if(fclose(fp)!=0) err("cannot close gradient_fwi");
     }
   
     if(sim->mode==1 && fwi->firstgrad){
@@ -596,9 +605,10 @@ float fg_rwi(float *x, float *g)
 
   sprintf(fname, "dres_%04d", acq->shot_idx[iproc]);
   fp=fopen(fname,"wb");
-  if(fp==NULL) { fprintf(stderr, "error opening file\n"); exit(1);}
-  fwrite(&sim->dres[0][0], sim->nt*acq->nrec*sizeof(float), 1, fp);
-  fclose(fp);
+  if(fp==NULL) err("cannot open residual file=%s", fname);
+  if(fwrite(&sim->dres[0][0], sizeof(float), (size_t)sim->nt*acq->nrec, fp)
+	!=(size_t)sim->nt*acq->nrec) err("cannot write residual file=%s", fname);
+  if(fclose(fp)!=0) err("cannot close residual file=%s", fname);
   fflush(stdout);
   
   /*--------------------------------------------------------------*/
@@ -695,13 +705,17 @@ float fg_rwi(float *x, float *g)
     for(ipar=0; ipar<fwi->npar; ipar++){
       if(fwi->idxpar[ipar]==1){//grad_m0
 	fp = fopen("gradient_fwi_m0", "wb");
-	fwrite(&g[ipar*sim->n123], sim->n123*sizeof(float), 1, fp);
-	fclose(fp);
+	if(fp==NULL) err("cannot open gradient output for writing");
+	if(fwrite(&g[ipar*sim->n123], sizeof(float), sim->n123, fp)!=(size_t)sim->n123)
+	  err("cannot write gradient output");
+	if(fclose(fp)!=0) err("cannot close gradient output");
       }
       if(fwi->idxpar[ipar]==2){//grad_dm
 	fp = fopen("gradient_fwi_dm", "wb");
-	fwrite(&g[ipar*sim->n123], sim->n123*sizeof(float), 1, fp);
-	fclose(fp);
+	if(fp==NULL) err("cannot open gradient_fwi_dm for writing");
+	if(fwrite(&g[ipar*sim->n123], sizeof(float), sim->n123, fp)!=(size_t)sim->n123)
+	  err("cannot write gradient_fwi_dm");
+	if(fclose(fp)!=0) err("cannot close gradient_fwi_dm");
       }
     }
   }
@@ -736,4 +750,3 @@ float fg_rwi(float *x, float *g)
   
   return fwi->fcost;
 }
-

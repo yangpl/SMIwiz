@@ -54,6 +54,7 @@ void do_lsrtm(sim_t *sim, acq_t *acq)
   char fname[sizeof("dres_0000")];
 
   fwi = (fwi_t*)malloc(sizeof(fwi_t));
+  if(fwi==NULL) err("cannot allocate LSRTM state");
   fwi->bathy=alloc2float(sim->n2, sim->n3);
   fwi->ibathy=alloc2int(sim->n2, sim->n3);
   if(!getparstring("bathyfile",&bathyfile)){
@@ -201,16 +202,18 @@ void do_lsrtm(sim_t *sim, acq_t *acq)
   
   sprintf(fname, "b_%04d", acq->shot_idx[iproc]);
   fp=fopen(fname,"wb");
-  if(fp==NULL) { fprintf(stderr,"error opening file\n"); exit(1);}
-  fwrite(&cg_b[0][0], sim->nt*acq->nrec*sizeof(float), 1, fp);
-  fclose(fp);
+  if(fp==NULL) err("cannot open background data file=%s", fname);
+  if(fwrite(&cg_b[0][0], sizeof(float), (size_t)sim->nt*acq->nrec, fp)!=(size_t)sim->nt*acq->nrec)
+    err("cannot write background data file=%s", fname);
+  if(fclose(fp)!=0) err("cannot close background data file=%s", fname);
   fflush(stdout);
 
   sprintf(fname, "d0_%04d", acq->shot_idx[iproc]);
   fp=fopen(fname,"wb");
-  if(fp==NULL) { fprintf(stderr,"error opening file\n"); exit(1);}
-  fwrite(&sim->dcal[0][0], sim->nt*acq->nrec*sizeof(float), 1, fp);
-  fclose(fp);
+  if(fp==NULL) err("cannot open modelled data file=%s", fname);
+  if(fwrite(&sim->dcal[0][0], sizeof(float), (size_t)sim->nt*acq->nrec, fp)!=(size_t)sim->nt*acq->nrec)
+    err("cannot write modelled data file=%s", fname);
+  if(fclose(fp)!=0) err("cannot close modelled data file=%s", fname);
   fflush(stdout);
   
   if(iproc==0) printf("----migration: z0=L^H r0, r0=b-Lx0--------\n");
@@ -285,7 +288,8 @@ void do_lsrtm(sim_t *sim, acq_t *acq)
   }//end for ipar
   if(iproc==0){
     fp = fopen("param_final_rtm", "wb");
-    fwrite(&cg_rt[0][0][0][0], fwi->n*sizeof(float), 1, fp);
+    if(fp==NULL) err("cannot open param_final_rtm for writing");
+    if(fwrite(&cg_rt[0][0][0][0], sizeof(float), fwi->n, fp)!=(size_t)fwi->n) err("cannot write param_final_rtm");
     fclose(fp);
   }
   
@@ -293,7 +297,8 @@ void do_lsrtm(sim_t *sim, acq_t *acq)
   for(fwi->iter=0; fwi->iter<fwi->niter; fwi->iter++){
     if(iproc==0){
       if(fwi->iter==0){
-	fp = fopen("iterate.txt","w");
+		fp = fopen("iterate.txt","w");
+		if(fp==NULL) err("cannot open iterate.txt for writing");
 	fprintf(fp,"===========================================\n");
 	fprintf(fp,"Number of PCGNR iterations: %d\n", fwi->niter);
 	fprintf(fp,"fcost=0.5||Lx- delta_d||^2,  with x0=0\n");
@@ -303,18 +308,21 @@ void do_lsrtm(sim_t *sim, acq_t *acq)
 	fclose(fp);
       }
       fp=fopen("iterate.txt","a");
+      if(fp==NULL) err("cannot open iterate.txt for appending");
       fprintf(fp,"%d    %.4e\n", fwi->iter, rs/rs0);
       fclose(fp);
       printf("======= iter=%d, fcost=%.4e ========\n", fwi->iter, rs/rs0);
 
       fp = fopen("param_final", "wb");
-      fwrite(&cg_x[0][0][0][0], fwi->n*sizeof(float), 1, fp);
+      if(fp==NULL) err("cannot open param_final for writing");
+      if(fwrite(&cg_x[0][0][0][0], sizeof(float), fwi->n, fp)!=(size_t)fwi->n) err("cannot write param_final");
       fclose(fp);
 
       if(sim->n3==1){//we only store intermediate models for 2D case
 	if(fwi->iter==0) fp = fopen("param_iter", "wb");
 	else             fp = fopen("param_iter", "ab");
-	fwrite(&cg_x[0][0][0][0], fwi->n*sizeof(float), 1, fp);
+	if(fp==NULL) err("cannot open param_iter for writing");
+	if(fwrite(&cg_x[0][0][0][0], sizeof(float), fwi->n, fp)!=(size_t)fwi->n) err("cannot write param_iter");
 	fclose(fp);
       }
     }
@@ -419,9 +427,10 @@ void do_lsrtm(sim_t *sim, acq_t *acq)
     
     sprintf(fname, "dres_%04d", acq->shot_idx[iproc]);
     fp=fopen(fname,"wb");
-    if(fp==NULL) { fprintf(stderr,"error opening file\n"); exit(1);}
-    fwrite(&cg_r[0][0], sim->nt*acq->nrec*sizeof(float), 1, fp);
-    fclose(fp);
+    if(fp==NULL) err("cannot open residual data file=%s", fname);
+    if(fwrite(&cg_r[0][0], sizeof(float), (size_t)sim->nt*acq->nrec, fp)!=(size_t)sim->nt*acq->nrec)
+      err("cannot write residual data file=%s", fname);
+    if(fclose(fp)!=0) err("cannot close residual data file=%s", fname);
     fflush(stdout);
 
     if(iproc==0) printf("-------- Migration: z_{k+1}=L^H r_{k+1} ----------\n");
@@ -532,4 +541,3 @@ void do_lsrtm(sim_t *sim, acq_t *acq)
   free1int(fwi->idxpar);
   free(fwi);
 }
-
