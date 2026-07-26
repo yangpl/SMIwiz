@@ -1,10 +1,11 @@
 /* read/write seismic data 
  *---------------------------------------------------------------------------
+ *  Copyright (c) Pengliang Yang, 2026, Laoshan Laboratory, China
  *  Copyright (c) Pengliang Yang, 2020, Harbin Institute of Technology, China
  *  Copyright (c) Pengliang Yang, 2018, University Grenoble Alpes, France
  *  Homepage: https://yangpl.wordpress.com
  *  E-mail: ypl.2100@gmail.com
- *-------------------------------------------------------------------------*/
+ *--------------------------------------------------------------------------*/
 #include "cstd.h"
 #include "sim.h"
 #include "acq.h"

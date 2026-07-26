@@ -1,11 +1,12 @@
 /* function and gradient evaluation for full waveform inversion (FWI) 
  * and reflection waveform inversion (RWI)
  *--------------------------------------------------------------------
- * Copyright (c) Pengliang Yang, 2020, Harbin Institute of Technology
- * Copyright (c) Pengliang Yang, 2018, University Grenoble Alpes
- * Homepage: https://yangpl.wordpress.com
- * E-mail: ypl.2100@gmail.com
- *-------------------------------------------------------------------*/
+ *  Copyright (c) Pengliang Yang, 2026, Laoshan Laboratory, China
+ *  Copyright (c) Pengliang Yang, 2020, Harbin Institute of Technology, China
+ *  Copyright (c) Pengliang Yang, 2018, University Grenoble Alpes, France
+ *  Homepage: https://yangpl.wordpress.com
+ *  E-mail: ypl.2100@gmail.com
+ *--------------------------------------------------------------------------*/
 #include <mpi.h>
 #include "cstd.h"
 #include "sim.h"

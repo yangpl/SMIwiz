@@ -14,11 +14,12 @@
  *  Algorithm 7.4 p. 178, Algorithm 7.5 p. 179
  *  [2] https://en.wikipedia.org/wiki/Limited-memory_BFGS
  *----------------------------------------------------------------------------
+ *  Copyright (c) Pengliang Yang, 2026, Laoshan Laboratory, China
  *  Copyright (c) Pengliang Yang, 2020, Harbin Institute of Technology, China
  *  Copyright (c) Pengliang Yang, 2018, University Grenoble Alpes, France
  *  Homepage: https://yangpl.wordpress.com
  *  E-mail: ypl.2100@gmail.com
- *------------------------------------------------------------------------*/
+ *--------------------------------------------------------------------------*/
 #include "cstd.h"
 #include "opt.h"
 

@@ -1,5 +1,6 @@
 /* nonlinear optimization for full waveform inversion (FWI)
  *---------------------------------------------------------------------------
+ *  Copyright (c) Pengliang Yang, 2026, Laoshan Laboratory, China
  *  Copyright (c) Pengliang Yang, 2020, Harbin Institute of Technology, China
  *  Copyright (c) Pengliang Yang, 2018, University Grenoble Alpes, France
  *  Homepage: https://yangpl.wordpress.com
