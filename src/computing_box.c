@@ -92,15 +92,6 @@ void computing_box_init(acq_t *acq, sim_t *sim, int adj)
 	sim->i3max_fwd[0]=MAX(sim->i3max_fwd[0],acq->src_i3[isrc]);
       }
     }
-    sim->i1min_fwd[sim->nt-1] -= shift;
-    sim->i1max_fwd[sim->nt-1] += shift;
-    sim->i2min_fwd[sim->nt-1] -= shift;
-    sim->i2max_fwd[sim->nt-1] += shift;
-    if(sim->n3>1){
-      sim->i3min_fwd[sim->nt-1] -= shift;
-      sim->i3max_fwd[sim->nt-1] += shift;
-    }
-
     for(it=1; it<sim->nt; it++){
       t=it*sim->dt;
       nze=NINT(sim->vmax*t/sim->d1)+shift;

@@ -303,28 +303,30 @@ void fdtd_update_v(sim_t *sim, int flag, int it, int adj)
   }
 
   if(sim->ibox){
+    /* Computing-box limits are pressure-node bounds.  A forward pressure
+     * derivative also updates the staggered velocity just below each minimum. */
     if(adj){
-      i1min = MAX(sim->i1min_adj[it], i1min);
+      i1min = MAX(sim->i1min_adj[it]-1, i1min);
       i1max = MIN(sim->i1max_adj[it], i1max);
-      i2min = MAX(sim->i2min_adj[it], i2min);
+      i2min = MAX(sim->i2min_adj[it]-1, i2min);
       i2max = MIN(sim->i2max_adj[it], i2max);
-      i3min = (sim->n3>1)?MAX(sim->i3min_adj[it], i3min):0;
+      i3min = (sim->n3>1)?MAX(sim->i3min_adj[it]-1, i3min):0;
       i3max = (sim->n3>1)?MIN(sim->i3max_adj[it], i3max):0;
     }else{
-      i1min = MAX(sim->i1min_fwd[it], i1min);
+      i1min = MAX(sim->i1min_fwd[it]-1, i1min);
       i1max = MIN(sim->i1max_fwd[it], i1max);
-      i2min = MAX(sim->i2min_fwd[it], i2min);
+      i2min = MAX(sim->i2min_fwd[it]-1, i2min);
       i2max = MIN(sim->i2max_fwd[it], i2max);
-      i3min = (sim->n3>1)?MAX(sim->i3min_fwd[it], i3min):0;
+      i3min = (sim->n3>1)?MAX(sim->i3min_fwd[it]-1, i3min):0;
       i3max = (sim->n3>1)?MIN(sim->i3max_fwd[it], i3max):0;
     }
     if(sim->sign_dt<0 && flag==1){
-      i1min = sim->nb;
+      i1min = sim->nb-1;
       i1max = sim->n1+sim->nb-1;
-      i2min = sim->nb;
+      i2min = sim->nb-1;
       i2max = sim->n2+sim->nb-1;
       if(sim->n3>1){
-	i3min = sim->nb;
+	i3min = sim->nb-1;
 	i3max = sim->n3pad-1-sim->nb;
       }
     }
@@ -391,19 +393,21 @@ void fdtd_update_v(sim_t *sim, int flag, int it, int adj)
 	if(i1<sim->nb) {
 	  memD1p[i3][i2][i1] = sim->pmlb_ph[i1]*memD1p[i3][i2][i1] + sim->pmla_ph[i1]*D1p;
 	  D1p += memD1p[i3][i2][i1];
-	}else if(i1>=sim->n1pad-sim->nb){
-	  j1 = sim->n1pad -1 - i1;
+	}else if(i1>=sim->n1pad-sim->nb-1){
+	  /* vz[i1] is located at i1+1/2. Reflect it onto the left
+	   * half-grid node n1pad-2-i1 so both PMLs use the same profile. */
+	  j1 = sim->n1pad-2-i1;
 	  k1 = j1 + sim->nb;
-	  memD1p[i3][i2][k1] = sim->pmlb_mh[j1]*memD1p[i3][i2][k1] + sim->pmla_mh[j1]*D1p;
+	  memD1p[i3][i2][k1] = sim->pmlb_ph[j1]*memD1p[i3][i2][k1] + sim->pmla_ph[j1]*D1p;
 	  D1p += memD1p[i3][i2][k1];
 	}
 	if(i2<sim->nb) {
 	  memD2p[i3][i2][i1] = sim->pmlb_ph[i2]*memD2p[i3][i2][i1] + sim->pmla_ph[i2]*D2p;
 	  D2p += memD2p[i3][i2][i1];
-	}else if(i2>=sim->n2pad-sim->nb){
-	  j2 = sim->n2pad-1-i2;
+	}else if(i2>=sim->n2pad-sim->nb-1){
+	  j2 = sim->n2pad-2-i2;
 	  k2 = j2 + sim->nb;
-	  memD2p[i3][k2][i1] = sim->pmlb_mh[j2]*memD2p[i3][k2][i1] + sim->pmla_mh[j2]*D2p;
+	  memD2p[i3][k2][i1] = sim->pmlb_ph[j2]*memD2p[i3][k2][i1] + sim->pmla_ph[j2]*D2p;
 	  D2p += memD2p[i3][k2][i1];
 	}
 
@@ -437,10 +441,10 @@ void fdtd_update_v(sim_t *sim, int flag, int it, int adj)
 	  if(i3<sim->nb){
 	    memD3p[i3][i2][i1] = sim->pmlb_ph[i3]*memD3p[i3][i2][i1] + sim->pmla_ph[i3]*D3p;
 	    D3p += memD3p[i3][i2][i1];
-	  }else if(i3>=sim->n3pad-sim->nb){
-	    j3 = sim->n3pad-1-i3;
+	  }else if(i3>=sim->n3pad-sim->nb-1){
+	    j3 = sim->n3pad-2-i3;
 	    k3 = j3 + sim->nb;
-	    memD3p[k3][i2][i1] = sim->pmlb_mh[j3]*memD3p[k3][i2][i1] + sim->pmla_mh[j3]*D3p;
+	    memD3p[k3][i2][i1] = sim->pmlb_ph[j3]*memD3p[k3][i2][i1] + sim->pmla_ph[j3]*D3p;
 	    D3p += memD3p[k3][i2][i1];
 	  }
 
@@ -504,18 +508,18 @@ void fdtd_update_p(sim_t *sim, int flag, int it, int adj)
 
   if(sim->order==4){
     i1min = 2;
-    i1max = sim->n1pad-2;
+    i1max = sim->n1pad-3;
     i2min = 2;
-    i2max = sim->n2pad-2;
+    i2max = sim->n2pad-3;
     i3min = (sim->n3>1)?2:0;
-    i3max = (sim->n3>1)?(sim->n3pad-2):0;
+    i3max = (sim->n3>1)?(sim->n3pad-3):0;
   }else if(sim->order==8){
     i1min = 4;
-    i1max = sim->n1pad-4;
+    i1max = sim->n1pad-5;
     i2min = 4;
-    i2max = sim->n2pad-4;
+    i2max = sim->n2pad-5;
     i3min = (sim->n3>1)?4:0;
-    i3max = (sim->n3>1)?(sim->n3pad-4):0;
+    i3max = (sim->n3>1)?(sim->n3pad-5):0;
   }
   
   if(sim->ibox){
@@ -738,27 +742,27 @@ void rwi_fdtd_update_v(sim_t *sim, int flag, int it, int adj, float ***kappa, fl
 
   if(sim->ibox){
     if(adj){
-      i1min = MAX(sim->i1min_adj[it], i1min);
+      i1min = MAX(sim->i1min_adj[it]-1, i1min);
       i1max = MIN(sim->i1max_adj[it], i1max);
-      i2min = MAX(sim->i2min_adj[it], i2min);
+      i2min = MAX(sim->i2min_adj[it]-1, i2min);
       i2max = MIN(sim->i2max_adj[it], i2max);
-      i3min = (sim->n3>1)?MAX(sim->i3min_adj[it], i3min):0;
+      i3min = (sim->n3>1)?MAX(sim->i3min_adj[it]-1, i3min):0;
       i3max = (sim->n3>1)?MIN(sim->i3max_adj[it], i3max):0;
     }else{
-      i1min = MAX(sim->i1min_fwd[it], i1min);
+      i1min = MAX(sim->i1min_fwd[it]-1, i1min);
       i1max = MIN(sim->i1max_fwd[it], i1max);
-      i2min = MAX(sim->i2min_fwd[it], i2min);
+      i2min = MAX(sim->i2min_fwd[it]-1, i2min);
       i2max = MIN(sim->i2max_fwd[it], i2max);
-      i3min = (sim->n3>1)?MAX(sim->i3min_fwd[it], i3min):0;
+      i3min = (sim->n3>1)?MAX(sim->i3min_fwd[it]-1, i3min):0;
       i3max = (sim->n3>1)?MIN(sim->i3max_fwd[it], i3max):0;
     }
     if(sim->sign_dt<0 && flag==1){
-      i1min = sim->nb;
+      i1min = sim->nb-1;
       i1max = sim->n1+sim->nb-1;
-      i2min = sim->nb;
+      i2min = sim->nb-1;
       i2max = sim->n2+sim->nb-1;
       if(sim->n3>1){
-	i3min = sim->nb;
+	i3min = sim->nb-1;
 	i3max = sim->n3pad-1-sim->nb;
       }
     }
@@ -831,19 +835,19 @@ void rwi_fdtd_update_v(sim_t *sim, int flag, int it, int adj, float ***kappa, fl
 	if(i1<sim->nb) {
 	  memD1p[i3][i2][i1] = sim->pmlb_ph[i1]*memD1p[i3][i2][i1] + sim->pmla_ph[i1]*D1p;
 	  D1p += memD1p[i3][i2][i1];
-	}else if(i1>=sim->n1pad-sim->nb){
-	  j1 = sim->n1pad -1 - i1;
+	}else if(i1>=sim->n1pad-sim->nb-1){
+	  j1 = sim->n1pad-2-i1;
 	  k1 = j1 + sim->nb;
-	  memD1p[i3][i2][k1] = sim->pmlb_mh[j1]*memD1p[i3][i2][k1] + sim->pmla_mh[j1]*D1p;
+	  memD1p[i3][i2][k1] = sim->pmlb_ph[j1]*memD1p[i3][i2][k1] + sim->pmla_ph[j1]*D1p;
 	  D1p += memD1p[i3][i2][k1];
 	}
 	if(i2<sim->nb) {
 	  memD2p[i3][i2][i1] = sim->pmlb_ph[i2]*memD2p[i3][i2][i1] + sim->pmla_ph[i2]*D2p;
 	  D2p += memD2p[i3][i2][i1];
-	}else if(i2>=sim->n2pad-sim->nb){
-	  j2 = sim->n2pad-1-i2;
+	}else if(i2>=sim->n2pad-sim->nb-1){
+	  j2 = sim->n2pad-2-i2;
 	  k2 = j2 + sim->nb;
-	  memD2p[i3][k2][i1] = sim->pmlb_mh[j2]*memD2p[i3][k2][i1] + sim->pmla_mh[j2]*D2p;
+	  memD2p[i3][k2][i1] = sim->pmlb_ph[j2]*memD2p[i3][k2][i1] + sim->pmla_ph[j2]*D2p;
 	  D2p += memD2p[i3][k2][i1];
 	}
       
@@ -872,10 +876,10 @@ void rwi_fdtd_update_v(sim_t *sim, int flag, int it, int adj, float ***kappa, fl
 	  if(i3<sim->nb){
 	    memD3p[i3][i2][i1] = sim->pmlb_ph[i3]*memD3p[i3][i2][i1] + sim->pmla_ph[i3]*D3p;
 	    D3p += memD3p[i3][i2][i1];
-	  }else if(i3>=sim->n3pad-sim->nb){
-	    j3 = sim->n3pad-1-i3;
+	  }else if(i3>=sim->n3pad-sim->nb-1){
+	    j3 = sim->n3pad-2-i3;
 	    k3 = j3 + sim->nb;
-	    memD3p[k3][i2][i1] = sim->pmlb_mh[j3]*memD3p[k3][i2][i1] + sim->pmla_mh[j3]*D3p;
+	    memD3p[k3][i2][i1] = sim->pmlb_ph[j3]*memD3p[k3][i2][i1] + sim->pmla_ph[j3]*D3p;
 	    D3p += memD3p[k3][i2][i1];
 	  }
 	  
@@ -938,18 +942,18 @@ void rwi_fdtd_update_p(sim_t *sim, int flag, int it, int adj, float ***kappa, fl
 
   if(sim->order==4){
     i1min = 2;
-    i1max = sim->n1pad-2;
+    i1max = sim->n1pad-3;
     i2min = 2;
-    i2max = sim->n2pad-2;
+    i2max = sim->n2pad-3;
     i3min = (sim->n3>1)?2:0;
-    i3max = (sim->n3>1)?(sim->n3pad-2):0;
+    i3max = (sim->n3>1)?(sim->n3pad-3):0;
   }else if(sim->order==8){
     i1min = 4;
-    i1max = sim->n1pad-4;
+    i1max = sim->n1pad-5;
     i2min = 4;
-    i2max = sim->n2pad-4;
+    i2max = sim->n2pad-5;
     i3min = (sim->n3>1)?4:0;
-    i3max = (sim->n3>1)?(sim->n3pad-4):0;
+    i3max = (sim->n3>1)?(sim->n3pad-5):0;
   }
   
   if(sim->ibox){

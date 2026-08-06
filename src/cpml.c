@@ -19,8 +19,6 @@ void cpml_init(sim_t *sim)
 
   sim->pmla = alloc1float(sim->nb);
   sim->pmlb = alloc1float(sim->nb);
-  sim->pmla_mh = alloc1float(sim->nb);
-  sim->pmlb_mh = alloc1float(sim->nb);
   sim->pmla_ph = alloc1float(sim->nb);
   sim->pmlb_ph = alloc1float(sim->nb);
 
@@ -28,7 +26,7 @@ void cpml_init(sim_t *sim)
   damp0 = -3.*sim->vmax*logf(Rc)/(2.*lx);
   for(ib=0; ib<sim->nb; ib++)   {
     /* Pressure and velocity live on staggered nodes, so CPML coefficients are
-     * tabulated at the integer grid and the two half-grid offsets. */
+     * tabulated at integer and half-grid nodes. */
     x = (sim->nb-ib)*sim->d1;//should not allow x=0
     x /= lx;
     damp = damp0*x*x;    
@@ -40,12 +38,6 @@ void cpml_init(sim_t *sim)
     damp = damp0*x*x;    
     sim->pmlb_ph[ib] = exp(-(damp+alpha)*sim->dt);
     sim->pmla_ph[ib] = damp*(sim->pmlb_ph[ib] - 1.0)/(damp + alpha);
-
-    x = (sim->nb-ib+0.5)*sim->d1;//should not allow x=0, half grid shifted
-    x /= lx;
-    damp = damp0*x*x;    
-    sim->pmlb_mh[ib] = exp(-(damp+alpha)*sim->dt);
-    sim->pmla_mh[ib] = damp*(sim->pmlb_mh[ib] - 1.0)/(damp + alpha);
   }
 
 }
@@ -56,6 +48,4 @@ void cpml_free(sim_t *sim)
   free1float(sim->pmlb);
   free1float(sim->pmla_ph);
   free1float(sim->pmlb_ph);
-  free1float(sim->pmla_mh);
-  free1float(sim->pmlb_mh);
 }

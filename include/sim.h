@@ -20,11 +20,11 @@ typedef struct {
   int sign_dt;//sign of dt used for back propagation
   float cfl;//CFL number for stability
   float vmax, vmin;//maximum and minimum velocity
+  float vphasemax;//maximum phase velocity considering VTI anisotropy
   float rhomax, rhomin;//maximum and minimum density
 
   int ri;//radius for Kaiser windowed sinc interpolation, 2*ri+1 points in total    
   float *pmla, *pmlb;//CPML damping factor
-  float *pmla_mh, *pmlb_mh;//CPML damping factor with half grid shift
   float *pmla_ph, *pmlb_ph;//CPML damping factor with half grid shift
   
   float ***vp, ***rho;//model of original size
