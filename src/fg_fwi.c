@@ -306,14 +306,14 @@ float fg_fwi(float *x, float *g)
     fp=fopen(fname,"wb");
     if(fp==NULL) err("cannot open synthetic data file=%s", fname);
     if(fwrite(&sim->dcal[0][0], sizeof(float), (size_t)sim->nt*acq->nrec, fp)
-	!=(size_t)sim->nt*acq->nrec) err("cannot write synthetic data file=%s", fname);
+       !=(size_t)sim->nt*acq->nrec) err("cannot write synthetic data file=%s", fname);
     if(fclose(fp)!=0) err("cannot close synthetic data file=%s", fname);
     fflush(stdout);
     sprintf(fname, "dres_%04d", acq->shot_idx[iproc]);
     fp=fopen(fname,"wb");
     if(fp==NULL) err("cannot open residual file=%s", fname);
     if(fwrite(&sim->dres[0][0], sizeof(float), (size_t)sim->nt*acq->nrec, fp)
-	!=(size_t)sim->nt*acq->nrec) err("cannot write residual file=%s", fname);
+       !=(size_t)sim->nt*acq->nrec) err("cannot write residual file=%s", fname);
     if(fclose(fp)!=0) err("cannot close residual file=%s", fname);
     fflush(stdout);
   
@@ -417,9 +417,9 @@ float fg_fwi(float *x, float *g)
 	      if(fwi->idxpar[ipar]==1) g[j] = g1[i3][i2][i1] - g2[i3][i2][i1];//dJ/dln(vp)
 	      if(fwi->idxpar[ipar]==2) g[j] = g1[i3][i2][i1] + g2[i3][i2][i1];//dJ/dln(ip)
 	    }
-		    }
-		  }
-	      }
+	  }
+	}
+      }
     }
     if(fwi->preco==2){
       MPI_Allreduce(&h1[0][0][0], fwi->hess, sim->n123, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
@@ -608,7 +608,7 @@ float fg_rwi(float *x, float *g)
   fp=fopen(fname,"wb");
   if(fp==NULL) err("cannot open residual file=%s", fname);
   if(fwrite(&sim->dres[0][0], sizeof(float), (size_t)sim->nt*acq->nrec, fp)
-	!=(size_t)sim->nt*acq->nrec) err("cannot write residual file=%s", fname);
+     !=(size_t)sim->nt*acq->nrec) err("cannot write residual file=%s", fname);
   if(fclose(fp)!=0) err("cannot close residual file=%s", fname);
   fflush(stdout);
   
