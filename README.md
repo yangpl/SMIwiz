@@ -24,11 +24,11 @@ SMIwiz currently supports:
 
 If you use this code in research, cite the relevant paper(s):
 
-- Pengliang Yang, “SMIwiz: An integrated toolbox for multidimensional seismic modelling and imaging”, Computer Physics Communications 295, 109011, 2024. DOI: [10.1016/j.cpc.2023.109011](https://doi.org/10.1016/j.cpc.2023.109011)
-- Zhengyu Ji and Pengliang Yang, “SMIwiz-2.0: Extended functionalities for wavefield decomposition, linearized and nonlinear inversion”, Computer Physics Communications 309, 109503, 2025. DOI: [10.1016/j.cpc.2025.109503](https://doi.org/10.1016/j.cpc.2025.109503)
 - Pengliang Yang and Zhengyu Ji, “A comparative study of data- and image-domain LSRTM under velocity-impedance parametrization”, Computers & Geosciences 208, 106091, 2026. DOI: [10.1016/j.cageo.2025.106091](https://doi.org/10.1016/j.cageo.2025.106091)
-- Pengliang Yang, Jinghuai Gao, and Baoli Wang, “RTM using effective boundary saving: A staggered grid GPU implementation”, Computers & Geosciences 68, 64–72, 2014. DOI: [10.1016/j.cageo.2014.04.004](https://doi.org/10.1016/j.cageo.2014.04.004)
+- Zhengyu Ji and Pengliang Yang, “SMIwiz-2.0: Extended functionalities for wavefield decomposition, linearized and nonlinear inversion”, Computer Physics Communications 309, 109503, 2025. DOI: [10.1016/j.cpc.2025.109503](https://doi.org/10.1016/j.cpc.2025.109503)
+- Pengliang Yang, “SMIwiz: An integrated toolbox for multidimensional seismic modelling and imaging”, Computer Physics Communications 295, 109011, 2024. DOI: [10.1016/j.cpc.2023.109011](https://doi.org/10.1016/j.cpc.2023.109011)
 - Pengliang Yang, Romain Brossier, and Jean Virieux, “Wavefield reconstruction from significantly decimated boundaries”, Geophysics 80 (5), T197–T209, 2016. DOI: [10.1190/GEO2015-0711.1](https://doi.org/10.1190/GEO2015-0711.1)
+- Pengliang Yang, Jinghuai Gao, and Baoli Wang, “RTM using effective boundary saving: A staggered grid GPU implementation”, Computers & Geosciences 68, 64–72, 2014. DOI: [10.1016/j.cageo.2014.04.004](https://doi.org/10.1016/j.cageo.2014.04.004)
 
 Project talk: <https://cassyni.com/events/P4W1QfiGXffuSf6Rv5VzJZ>
 
